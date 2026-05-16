@@ -20,9 +20,14 @@ class ModelCapabilities:
         return self.asr and self.t2tt
 
     @property
+    def supports_audio_input(self) -> bool:
+        """True if the pipeline can accept raw audio (direct or cascade)."""
+        return self.direct_s2tt or (self.is_cascade and self.asr)
+
+    @property
     def enabled_strategies(self) -> list[str]:
         out = []
-        if self.direct_s2tt:
+        if self.supports_audio_input:
             out += ["baseline_direct", "normalized_audio", "trimmed_audio", "chunk_based_audio"]
         if self.t2tt:
             out += ["transcript_translation"]

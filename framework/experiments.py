@@ -125,7 +125,7 @@ class ExperimentRunner:
         self._strategy_rationale = select_strategies_from_eda(self._eda_compact)
         if self.caps.t2tt and self._t_text is not None:
             self._run_text_experiments()
-        if self.cfg.run_audio and self.caps.direct_s2tt and self._t_audio is not None:
+        if self.cfg.run_audio and self.caps.supports_audio_input and self._t_audio is not None:
             self._run_audio_experiments()
         if self.caps.asr and self._asr is not None:
             self._run_asr_experiments()
