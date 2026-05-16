@@ -45,7 +45,7 @@ if IN_COLAB:
     import subprocess
     subprocess.run([sys.executable, "-m", "pip", "-q", "install", "-U",
         "transformers>=4.40", "datasets", "sacrebleu", "librosa", "soundfile",
-        "sentencepiece", "accelerate", "jiwer", "pandas", "pyarrow>=15.0.0"],
+        "sentencepiece", "accelerate", "jiwer", "pandas==2.2.2", "pyarrow>=15.0.0"],
         check=True)
     print("Dependencies installed.")
 
@@ -195,9 +195,12 @@ print(f"Output : {BASE_OUTPUT_DIR}")
 # %% --- 5. Google Drive setup (Colab only) ---
 GOOGLE_DRIVE_AVAILABLE = False
 if IN_COLAB and _colab_drive is not None:
-    _colab_drive.mount("/content/drive")
-    GOOGLE_DRIVE_AVAILABLE = True
-    print("Google Drive mounted.")
+    try:
+        _colab_drive.mount("/content/drive")
+        GOOGLE_DRIVE_AVAILABLE = True
+        print("Google Drive mounted.")
+    except Exception as e:
+        print(f"Drive mount skipped (mount it manually if needed): {e}")
 else:
     print("Local run — Google Drive backup will be skipped.")
 
