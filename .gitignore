@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Virtual environment
+venv/
+.venv/
+env/
+
+# Experiment outputs (generated at run time)
+results/
+outputs/
+checkpoints/
+
+# macOS
+.DS_Store
+
+# Archives
+*.zip
+*.tar.gz
+
+# HuggingFace cache (large model files)
+.cache/
+
+# Secrets
+.env
+*.env
