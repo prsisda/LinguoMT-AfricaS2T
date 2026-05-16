@@ -14,821 +14,130 @@
 # %% [markdown]
 # # LinguoMT — African-Celtic + SeamlessM4T-v2-Large
 #
-# **Dataset:** McGill-NLP/african_celtic_dataset  (IWSLT 2026 African & Celtic ST track)
-# **Model:**   facebook/seamless-m4t-v2-large
+# End-to-end speech translation on the African-Celtic dataset.
+# Supported African languages auto-detected from both model card and dataset.
 #
-# Dataset languages: Igbo, Yoruba, Hausa  (no Swahili or Wolof)
-# Active languages:  Igbo, Yoruba
-# Disabled: Hausa — SeamlessM4T-v2 does not support it
-#
-# IMPORTANT: The African-Celtic dataset is associated with IWSLT 2026.
-# If it requires authentication on HuggingFace, run:
-#   huggingface-cli login
-# before executing this script.
-#
-# Run locally: `python run_experiment.py`
-# Run on Colab: upload and execute all cells
+# Run locally : python run_experiment.py
+# Run on Colab: set DEBUG_MODE below, then Run All
 
-# %% --- 1. Colab detection and matplotlib backend ---
+# %% --- bootstrap ---
 import sys
-
-try:
-    from google.colab import drive as _colab_drive
-    IN_COLAB = True
-except Exception:
-    _colab_drive = None
-    IN_COLAB = False
-
-import matplotlib
-if not IN_COLAB:
-    matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-
-# %% --- 2. Dependency installation ---
-# Google Colab : runs automatically below.
-# Mac / local  : pip install transformers datasets sacrebleu librosa soundfile
-#                           sentencepiece accelerate jiwer pandas pyarrow torchcodec
-# Note: torchcodec is required by datasets>=4.x to decode Audio columns.
-if IN_COLAB:
-    import subprocess
-    subprocess.run([sys.executable, "-m", "pip", "-q", "install", "-U",
-        "transformers>=4.40", "datasets", "sacrebleu", "librosa", "soundfile",
-        "sentencepiece", "accelerate", "jiwer", "pandas==2.2.2", "pyarrow>=15.0.0"],
-        check=True)
-    # torchcodec: install from PyTorch index (required for HuggingFace Audio decoding)
-    subprocess.run([sys.executable, "-m", "pip", "-q", "install", "torchcodec",
-        "--extra-index-url", "https://download.pytorch.org/whl/cu121"], check=False)
-    print("Dependencies installed.")
-
-# %% --- 2b. HuggingFace Hub authentication ---
-# The african_celtic_dataset (IWSLT 2026) may require HF authentication.
-# Get your token at: https://huggingface.co/settings/tokens
-# import os; os.environ["HF_TOKEN"] = "hf_YOUR_TOKEN_HERE"
-# from huggingface_hub import login; login(token=os.environ["HF_TOKEN"])
-
-# %% --- 3. Imports ---
-import os
-import re
-import json
-import random
-import shutil
-import warnings
-import unicodedata
-import time
-from datetime import datetime
 from pathlib import Path
+_REPO = Path(__file__).resolve().parent.parent.parent
+sys.path.insert(0, str(_REPO))
 
+from framework import detect_environment, install_colab_dependencies
+ENV = detect_environment()
+if ENV["in_colab"]:
+    install_colab_dependencies()
+
+# %% --- imports ---
+import random, warnings
 import numpy as np
-import pandas as pd
 import torch
-import librosa
-import sacrebleu
-from jiwer import wer, cer
-
-from datasets import load_dataset, load_dataset_builder, Audio
 from transformers import AutoProcessor, SeamlessM4Tv2Model
-
+from framework import (
+    detect_model_capabilities, select_supported_languages, get_adapter_type,
+    DatasetCache, StepMonitor, create_run_dirs, save_config,
+    zip_run_outputs, drive_backup, mount_google_drive,
+    ExperimentRunner, RunConfig, default_experiment_configs,
+)
 warnings.filterwarnings("ignore")
 
-# %% --- 4. Configuration ---
-
-# ── Model / Dataset ───────────────────────────────────────────────
-MODEL_ID               = "facebook/seamless-m4t-v2-large"
-DATASET_ID             = "McGill-NLP/african_celtic_dataset"
-BASELINE_MODEL_NAME    = "SeamlessM4T-v2 Large"
-BASELINE_DATASET_NAME  = "African-Celtic"
-BASELINE_PIPELINE_TYPE = "end_to_end_speech_translation"
-EXPERIMENT_FAMILY      = "AfricanCeltic__SeamlessM4Tv2_Large"
-
-# ── Runtime ───────────────────────────────────────────────────────
-TARGET_SR  = 16000
-DEVICE     = "cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu")
-SEED       = 42
-# ── DEBUG / FULL SWITCH ── change this line only ──────────────────
-# True  → debug run  : 8 text pairs, 3 audio pairs, fast (~5-15 min on GPU)
-# False → full run   : 50/100/200 samples across 3 experiments (~1-3 hrs on GPU)
-DEBUG_MODE = True   # ← SET HERE
+# %% --- configuration ---
+DEBUG_MODE       = True
+FAST_MODE        = False
 SKIP_AUDIO_DEBUG = True
-RUN_FULL_GRID    = True
-RUN_TEXT_EVALUATION  = True
-RUN_AUDIO_EVALUATION = True
-RUN_SAMPLE_CHECK     = True
-RUN_DATA_EXPLORATION = True
-DIRECTIONS_TO_RUN    = ["african_to_english", "english_to_african"]
-SELECTED_LANGUAGE_PAIRS = ["igbo", "yoruba"]
-SPLIT_FOR_EXPERIMENT = "dev"    # African-Celtic has only "train" and "dev" splits
-MIN_DURATION = 1.0
-MAX_DURATION = 20.0
+FORCE_RERUN      = False
+MODEL_ID         = "facebook/seamless-m4t-v2-large"
+DATASET_ID       = "McGill-NLP/african_celtic_dataset"
+MODEL_NAME       = "SeamlessM4T-v2 Large"
+DATASET_NAME     = "African-Celtic"
+EXPERIMENT_FAMILY= "AfricanCeltic__SeamlessM4Tv2_Large"
+SPLIT            = "dev"
+MANUAL_LANGUAGES = None   # None = auto | e.g. ["igbo", "yoruba", "hausa"]
+SEED             = 42
 
+if FAST_MODE: DEBUG_MODE = True
 random.seed(SEED); np.random.seed(SEED); torch.manual_seed(SEED)
 
-# ── Experiment sizes ──────────────────────────────────────────────
-if DEBUG_MODE:
-    # dev split has ~5500 items; English items appear first (~1375 rows) so we must scan
-    # past them to find African items with matching text_ids — 3000 rows covers igbo/yoruba blocks
-    EXPERIMENT_CONFIGS = [{"experiment": "debug", "max_text_dev": 8,   "max_audio_dev": 3,  "max_scan_rows": 3000}]
-else:
-    EXPERIMENT_CONFIGS = [
-        {"experiment": "Experiment_1", "max_text_dev": 50,  "max_audio_dev": 10, "max_scan_rows": 1000},
-        {"experiment": "Experiment_2", "max_text_dev": 100, "max_audio_dev": 30, "max_scan_rows": 1500},
-        {"experiment": "Experiment_3", "max_text_dev": 200, "max_audio_dev": 50, "max_scan_rows": 2000},
-    ]
-
-# ── EDA settings ──────────────────────────────────────────────────
-EDA_SPLITS_TO_ANALYZE              = ["train", "dev"]  # African-Celtic only has "train" and "dev"
-EDA_SAMPLE_SIZE_PER_LANGUAGE_SPLIT = 10 if DEBUG_MODE else 200
-EDA_MAX_SCAN_ROWS                  = 3000 if DEBUG_MODE else 4000  # must scan past English block
-EDA_AUDIO_EXAMPLES_PER_LANGUAGE    = 1 if DEBUG_MODE else 2
-
-# ── Audio optimization strategies ─────────────────────────────────
-CHUNK_SECONDS         = 6
-CHUNK_OVERLAP_SECONDS = 1
-RUN_EXPENSIVE_AUDIO_STRATEGIES_ONLY_IN_EXP1 = False
-
-AUDIO_OPTIMIZATION_STRATEGIES = [
-    {"strategy_key": "baseline_direct",   "method": "Direct audio → English",     "category": "Direct Speech Translation", "enabled": True,  "normalize": False, "trim": False, "chunk": False, "expensive": False},
-    {"strategy_key": "normalized_audio",  "method": "Normalized audio → English",  "category": "Audio Normalization",       "enabled": True,  "normalize": True,  "trim": False, "chunk": False, "expensive": False},
-    {"strategy_key": "trimmed_audio",     "method": "Trimmed audio → English",     "category": "Silence Trimming",          "enabled": True,  "normalize": True,  "trim": True,  "chunk": False, "expensive": True},
-    {"strategy_key": "chunk_based_audio", "method": "Chunk-based audio → English", "category": "Audio Segmentation",        "enabled": True,  "normalize": True,  "trim": False, "chunk": True,  "expensive": True},
-]
-
-# ── Language configs ──────────────────────────────────────────────
-# African-Celtic dataset schema (confirmed via metadata):
-#   - Single HuggingFace config: "default"
-#   - Language field: item["language"] — values like "igbo", "yoruba", "hausa", "english"
-#   - Source text field: item["text"]
-#   - Alignment key: item["text_id"] — shared across all language variants of the same sentence
-#   - English items (same split, language="english") are the translation references
-#   - Audio: 48 kHz — resampled to 16 kHz by extract_audio_array()
-#
-# SeamlessM4T-v2 supports: Igbo (ibo), Yoruba (yor)
-# SeamlessM4T-v2 does NOT support: Hausa
-#
-# language_value: exact string in item["language"] (run discover_dataset_schema() to verify)
-ENGLISH_LANGUAGE_VALUE = "english"  # value of item["language"] for English items
-
-ALL_LANGUAGE_CONFIGS = [
-    {
-        "language": "igbo",   "language_value": "igbo",   "source_lang_code": "ibo",
-        "display_name": "Igbo",   "dataset_supported": True, "model_supported": True,  "enabled": True,
-        "skip_reason": "",
-    },
-    {
-        "language": "yoruba", "language_value": "yoruba", "source_lang_code": "yor",
-        "display_name": "Yoruba", "dataset_supported": True, "model_supported": True,  "enabled": True,
-        "skip_reason": "",
-    },
-    {
-        "language": "hausa",  "language_value": "hausa",  "source_lang_code": None,
-        "display_name": "Hausa",  "dataset_supported": True, "model_supported": False, "enabled": False,
-        "skip_reason": "SeamlessM4T-v2 does not support Hausa",
-    },
-]
-
-# ── Filter to active languages ────────────────────────────────────
-if RUN_FULL_GRID:
-    _candidates = [c for c in ALL_LANGUAGE_CONFIGS if c.get("enabled")]
-else:
-    _sel = set(SELECTED_LANGUAGE_PAIRS)
-    _candidates = [c for c in ALL_LANGUAGE_CONFIGS if c["language"] in _sel]
-
-LANGUAGE_CONFIGS, SKIPPED_LANGUAGE_CONFIGS = [], []
-for _cfg in _candidates:
-    _reasons = []
-    if not _cfg.get("dataset_supported"):          _reasons.append("not in African-Celtic dataset")
-    if not _cfg.get("model_supported"):            _reasons.append("not supported by SeamlessM4T-v2")
-    if _cfg.get("source_lang_code") is None:       _reasons.append("missing SeamlessM4T language code")
-    if _reasons:
-        SKIPPED_LANGUAGE_CONFIGS.append({**_cfg, "skip_reason": "; ".join(_reasons)})
-    else:
-        LANGUAGE_CONFIGS.append(_cfg)
-
-LANGUAGE_LOOKUP = {c["language"]: c for c in LANGUAGE_CONFIGS}
-
-# ── Output directory ──────────────────────────────────────────────
-_FOLDER_NAME = f"Results_{EXPERIMENT_FAMILY}" + ("_DEBUG" if DEBUG_MODE else "")
-if IN_COLAB:
-    BASE_OUTPUT_DIR = Path("/content") / _FOLDER_NAME
-else:
-    BASE_OUTPUT_DIR = Path(__file__).parent.parent / "results" / _FOLDER_NAME
-
-BASE_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-METRICS_DIR = BASE_OUTPUT_DIR / "metrics"
-FIGURES_DIR = BASE_OUTPUT_DIR / "figures"
-EDA_DIR     = BASE_OUTPUT_DIR / "eda"
-QUAL_DIR    = BASE_OUTPUT_DIR / "qualitative"
-for _d in [METRICS_DIR, FIGURES_DIR, EDA_DIR, QUAL_DIR]:
-    _d.mkdir(parents=True, exist_ok=True)
-
-print(f"Model  : {MODEL_ID}")
-print(f"Dataset: {DATASET_ID}")
-print(f"Device : {DEVICE} | CUDA: {torch.cuda.is_available()}")
-print(f"Active : {[c['display_name'] for c in LANGUAGE_CONFIGS]}")
-print(f"Skipped: {[(c['display_name'], c['skip_reason']) for c in SKIPPED_LANGUAGE_CONFIGS]}")
-print(f"Output : {BASE_OUTPUT_DIR}")
-
-# %% --- 5. Google Drive setup (Colab only) ---
-GOOGLE_DRIVE_AVAILABLE = False
-if IN_COLAB and _colab_drive is not None:
-    try:
-        _colab_drive.mount("/content/drive")
-        GOOGLE_DRIVE_AVAILABLE = True
-        print("Google Drive mounted.")
-    except Exception as e:
-        print(f"Drive mount skipped (mount it manually if needed): {e}")
-else:
-    print("Local run — Google Drive backup will be skipped.")
-
-# %% --- 6. Dataset schema discovery ---
-# Run this cell first to inspect the actual column names and splits in the dataset.
-# Adjust ALL_LANGUAGE_CONFIGS["language_value"] if the actual language strings differ.
-
-def discover_dataset_schema(split=None):
-    """Print the column names and a sample item from the African-Celtic dataset."""
-    print(f"\n=== Schema discovery: {DATASET_ID} / default ===")
-    try:
-        from datasets import get_dataset_config_names
-        configs = get_dataset_config_names(DATASET_ID)
-        print(f"Available configs: {configs}")
-    except Exception as e:
-        print(f"Could not list configs: {e}")
-    for try_split in ([split] if split else ["dev", "train"]):
-        try:
-            ds = load_dataset(DATASET_ID, "default", split=try_split, streaming=True)
-            ds = ds.cast_column("audio", Audio(decode=False))
-            item = next(iter(ds))
-            print(f"\nSplit '{try_split}' columns: {list(item.keys())}")
-            for k, v in item.items():
-                if k != "audio":
-                    print(f"  {k}: {repr(v)[:120]}")
-                else:
-                    print(f"  audio: {repr(v)[:120]}")
-            return try_split, list(item.keys())
-        except Exception as e:
-            print(f"  Split '{try_split}' failed: {e}")
-    print("Could not load any split. Check dataset ID or HuggingFace login.")
-    return None, []
-
-# Uncomment to discover schema before running the full experiment:
-# discover_dataset_schema()
-
-# %% --- 7. Model loading ---
-if not LANGUAGE_CONFIGS:
-    raise RuntimeError("No active supported language pairs. Check language config flags.")
-
+# %% --- capabilities + languages ---
+DEVICE = ENV["device"]
+caps   = detect_model_capabilities(MODEL_ID)
+print(f"Loading processor: {MODEL_ID}")
 processor = AutoProcessor.from_pretrained(MODEL_ID)
-model     = SeamlessM4Tv2Model.from_pretrained(MODEL_ID).to(DEVICE)
+lang_cfgs = select_supported_languages(caps, DATASET_ID, processor=processor,
+                                        max_langs=3, manual_override=MANUAL_LANGUAGES)
+if not lang_cfgs:
+    raise RuntimeError("No supported languages found.")
+print(f"Languages : {[c['display'] for c in lang_cfgs]}")
+print(f"Strategies: {caps.enabled_strategies}  |  Device: {DEVICE}")
+
+# %% --- model ---
+model = SeamlessM4Tv2Model.from_pretrained(MODEL_ID).to(DEVICE)
 model.eval()
-print(f"Loaded {BASELINE_MODEL_NAME} on {DEVICE}")
+print("Model loaded.")
 
-# %% --- 8. Data helpers ---
+# %% --- output setup ---
+dirs    = create_run_dirs("seamlessm4t", "african_celtic", DEBUG_MODE, ENV["in_colab"], script_path=Path(__file__))
+monitor = StepMonitor(dirs.monitoring)
+monitor.step("Experiment started", f"mode={'DEBUG' if DEBUG_MODE else 'FULL'}")
+drive_available = mount_google_drive(ENV["_colab_drive"]) if ENV["in_colab"] else False
 
-def get_item_text(item):
-    """Return the transcription text from an African-Celtic item (field: 'text')."""
-    return str(item.get("text") or "").strip()
-
-def normalize_text(text):
-    text = unicodedata.normalize("NFKC", str(text))
-    return re.sub(r"\s+", " ", text).strip()
-
-def resample_audio(audio, sr, target_sr=TARGET_SR):
-    audio = np.asarray(audio, dtype=np.float32).flatten()
-    return audio if sr == target_sr else librosa.resample(audio, orig_sr=sr, target_sr=target_sr).astype(np.float32)
-
-def normalize_audio_waveform(audio):
-    audio = np.nan_to_num(np.asarray(audio, dtype=np.float32).flatten())
-    if len(audio) == 0: return audio
-    audio -= np.mean(audio)
-    mx = np.max(np.abs(audio))
-    return (audio / mx).astype(np.float32) if mx > 0 else audio
-
-def trim_silence(audio, threshold=0.01):
-    audio = np.asarray(audio, dtype=np.float32).flatten()
-    nsi = np.where(np.abs(audio) > threshold)[0]
-    if len(nsi) == 0: return audio
-    trimmed = audio[nsi[0]:nsi[-1]+1]
-    return trimmed if len(trimmed) >= int(MIN_DURATION * TARGET_SR) else audio.astype(np.float32)
-
-def ensure_min_audio_length(audio, min_sec=MIN_DURATION, sr=TARGET_SR):
-    audio = np.nan_to_num(np.asarray(audio, dtype=np.float32).flatten())
-    mn = int(min_sec * sr)
-    if len(audio) == 0: return np.zeros(mn, dtype=np.float32)
-    return audio if len(audio) >= mn else np.pad(audio, (0, mn - len(audio))).astype(np.float32)
-
-def audio_duration(audio, sr=TARGET_SR):
-    return len(np.asarray(audio, dtype=np.float32).flatten()) / float(sr)
-
-def extract_audio_array(audio_obj, target_sr=TARGET_SR):
-    if isinstance(audio_obj, dict):
-        sr, audio = audio_obj.get("sampling_rate", target_sr), audio_obj.get("array")
-    else:
-        sr, audio = target_sr, audio_obj
-    if audio is None: return np.zeros(int(MIN_DURATION * target_sr), dtype=np.float32)
-    try: audio = np.asarray(audio, dtype=np.float32)
-    except Exception: audio = np.array([], dtype=np.float32)
-    audio = np.nan_to_num(audio.flatten())
-    if sr != target_sr:
-        audio = librosa.resample(audio, orig_sr=sr, target_sr=target_sr).astype(np.float32)
-    return ensure_min_audio_length(audio)
-
-def split_audio_into_chunks(audio, chunk_sec=CHUNK_SECONDS, overlap_sec=CHUNK_OVERLAP_SECONDS, sr=TARGET_SR):
-    audio      = np.asarray(audio, dtype=np.float32).flatten()
-    chunk_size = int(chunk_sec * sr)
-    step_size  = max(1, chunk_size - int(overlap_sec * sr))
-    chunks = []
-    for start in range(0, len(audio), step_size):
-        chunk = audio[start:start + chunk_size]
-        if len(chunk) >= int(MIN_DURATION * sr): chunks.append(chunk.astype(np.float32))
-        if start + chunk_size >= len(audio): break
-    return chunks
-
-# %% --- 9. Dataset loading (African-Celtic) ---
-# The dataset has a single "default" config. All languages (igbo, yoruba, hausa, english, …)
-# are mixed in the same split. Items are grouped by language in the stream — English items
-# may appear first or in large consecutive blocks. Alignment between an African item and its
-# English translation is done via shared text_id (not row order).
-
-def prepare_bidirectional_pairs(language_key, split=SPLIT_FOR_EXPERIMENT, max_samples=50, max_scan_rows=5000):
-    """Align African + English items by text_id and return translation pair dicts."""
-    cfg = LANGUAGE_LOOKUP.get(language_key)
-    if cfg is None:
-        return []
-    lang_val = cfg["language_value"]
-
-    # Stream with audio decoded so we get the array for translation later.
-    stream = load_dataset(DATASET_ID, "default", split=split, streaming=True)
-
-    id_to_items: dict = {}  # text_id -> {language_value: item}
-    scanned = 0
-    for item in stream:
-        if scanned >= max_scan_rows:
-            break
-        lang = item.get("language", "")
-        tid  = item.get("text_id",  "")
-        if lang in (lang_val, ENGLISH_LANGUAGE_VALUE) and tid:
-            if tid not in id_to_items:
-                id_to_items[tid] = {}
-            if lang not in id_to_items[tid]:
-                id_to_items[tid][lang] = item
-        scanned += 1
-
-    rows = []
-    pair_count = 0
-    for tid, lang_items in id_to_items.items():
-        if pair_count >= max_samples:
-            break
-        afr_item = lang_items.get(lang_val)
-        eng_item = lang_items.get(ENGLISH_LANGUAGE_VALUE)
-        if not afr_item or not eng_item:
-            continue
-        afr_text = normalize_text(get_item_text(afr_item))
-        eng_text = normalize_text(get_item_text(eng_item))
-        if not afr_text or not eng_text:
-            continue
-        afr_audio = afr_item.get("audio")
-        eng_audio = eng_item.get("audio")
-        if "african_to_english" in DIRECTIONS_TO_RUN:
-            rows.append({
-                "sample_index": pair_count, "language": language_key,
-                "language_display": cfg["display_name"],
-                "direction_key": "african_to_english",
-                "direction": f"{cfg['display_name']}→English",
-                "source_lang_code": cfg["source_lang_code"], "target_lang_code": "eng",
-                "source_text": afr_text, "target_text": eng_text,
-                "source_audio": afr_audio, "target_audio": eng_audio,
-            })
-        if "english_to_african" in DIRECTIONS_TO_RUN:
-            rows.append({
-                "sample_index": pair_count, "language": language_key,
-                "language_display": cfg["display_name"],
-                "direction_key": "english_to_african",
-                "direction": f"English→{cfg['display_name']}",
-                "source_lang_code": "eng", "target_lang_code": cfg["source_lang_code"],
-                "source_text": eng_text, "target_text": afr_text,
-                "source_audio": eng_audio, "target_audio": afr_audio,
-            })
-        pair_count += 1
-    return rows
-
-def save_df(df, filename, out_dir=None):
-    p = (out_dir or METRICS_DIR) / filename
-    df.to_csv(p, index=False); print("Saved:", p); return p
-
-# %% --- 10. Translation functions (SeamlessM4T-v2) ---
-
-def translate_text_direct(text, source_lang_code, target_lang_code):
+# %% --- callables ---
+def translate_text(text, src_lang, tgt_lang):
     text = str(text).strip()
     if not text: return ""
-    inputs = processor(text=text, src_lang=source_lang_code, return_tensors="pt").to(DEVICE)
+    inp = processor(text=text, src_lang=src_lang, return_tensors="pt").to(DEVICE)
     with torch.no_grad():
-        tokens = model.generate(**inputs, tgt_lang=target_lang_code, generate_speech=False)
-    return processor.decode(tokens[0].tolist()[0], skip_special_tokens=True)
+        tok = model.generate(**inp, tgt_lang=tgt_lang, generate_speech=False)
+    return processor.decode(tok[0].tolist()[0], skip_special_tokens=True)
 
-def translate_audio_direct(audio_obj, source_lang_code, target_lang_code, normalize_audio=True, improved=True):
-    audio = extract_audio_array(audio_obj)
-    if improved:        audio = trim_silence(audio)
-    if normalize_audio: audio = normalize_audio_waveform(audio)
-    audio = ensure_min_audio_length(audio)
-    inputs = processor(audio=audio, sampling_rate=TARGET_SR, src_lang=source_lang_code, return_tensors="pt").to(DEVICE)
+def translate_audio(audio_arr, src_lang, tgt_lang):
+    inp = processor(audio=audio_arr, sampling_rate=16000, src_lang=src_lang, return_tensors="pt").to(DEVICE)
     with torch.no_grad():
-        tokens = model.generate(**inputs, tgt_lang=target_lang_code, generate_speech=False)
-    return processor.decode(tokens[0].tolist()[0], skip_special_tokens=True)
+        tok = model.generate(**inp, tgt_lang=tgt_lang, generate_speech=False)
+    return processor.decode(tok[0].tolist()[0], skip_special_tokens=True), 1
 
-def prepare_audio_for_strategy(audio_obj, strategy):
-    audio = extract_audio_array(audio_obj)
-    if strategy.get("trim"):      audio = trim_silence(audio)
-    if strategy.get("normalize"): audio = normalize_audio_waveform(audio)
-    return ensure_min_audio_length(audio).astype(np.float32)
+def asr_transcribe(audio_arr, src_lang):
+    inp = processor(audio=audio_arr, sampling_rate=16000, src_lang=src_lang, return_tensors="pt").to(DEVICE)
+    with torch.no_grad():
+        tok = model.generate(**inp, tgt_lang=src_lang, generate_speech=False)
+    return processor.decode(tok[0].tolist()[0], skip_special_tokens=True)
 
-def translate_audio_with_strategy(audio_obj, source_lang_code, target_lang_code, strategy):
-    audio = prepare_audio_for_strategy(audio_obj, strategy)
-    if strategy.get("chunk"):
-        chunks = split_audio_into_chunks(audio) or [audio]
-        preds = []
-        for chunk in chunks:
-            p = translate_audio_direct(chunk, source_lang_code, target_lang_code, normalize_audio=False, improved=False)
-            if normalize_text(p): preds.append(normalize_text(p))
-        return " ".join(preds), len(chunks)
-    return translate_audio_direct(audio, source_lang_code, target_lang_code, normalize_audio=False, improved=False), 1
+# %% --- data cache ---
+exp_cfgs  = default_experiment_configs(DEBUG_MODE)
+max_pairs = max(e["max_text_dev"] for e in exp_cfgs)
+cache = DatasetCache(
+    dataset_id=DATASET_ID, adapter_type=get_adapter_type(DATASET_ID),
+    language_configs=lang_cfgs, split=SPLIT,
+    max_pairs=max_pairs, max_scan_rows=5000, force_rerun=FORCE_RERUN,
+)
+cache.build(monitor)
+print("Cache:", cache.stats())
 
-def active_audio_strategies(experiment_name):
-    return [s for s in AUDIO_OPTIMIZATION_STRATEGIES
-            if s.get("enabled")
-            and not (RUN_EXPENSIVE_AUDIO_STRATEGIES_ONLY_IN_EXP1
-                     and s.get("expensive")
-                     and experiment_name not in ["Experiment_1", "debug"])]
+# %% --- run ---
+ExperimentRunner(
+    config=RunConfig(
+        model_name=MODEL_NAME, dataset_name=DATASET_NAME,
+        experiment_family=EXPERIMENT_FAMILY, model_id=MODEL_ID, dataset_id=DATASET_ID,
+        split=SPLIT, debug_mode=DEBUG_MODE, fast_mode=FAST_MODE,
+        skip_audio_debug=SKIP_AUDIO_DEBUG, force_rerun=FORCE_RERUN,
+        in_colab=ENV["in_colab"], eda_sample_size=25 if DEBUG_MODE else 200,
+        directions=["source_to_english", "english_to_source"],
+    ),
+    capabilities=caps, data_cache=cache, language_configs=lang_cfgs,
+    dirs=dirs, monitor=monitor, experiment_configs=exp_cfgs,
+    translate_text_fn=translate_text, translate_audio_fn=translate_audio, asr_fn=asr_transcribe,
+).run()
 
-# %% --- 11. Metrics ---
-
-def compute_metrics(predictions, references):
-    preds = [str(p).strip() for p in predictions]
-    refs  = [str(r).strip() for r in references]
-    if not preds or not refs: return {"BLEU": 0.0, "ChrF": 0.0}
-    return {
-        "BLEU": float(sacrebleu.corpus_bleu(preds, [refs]).score),
-        "ChrF": float(sacrebleu.corpus_chrf(preds, [refs]).score),
-    }
-
-# %% --- 12. EDA helpers ---
-
-def compute_audio_quality_features(audio_array, sr):
-    audio = np.nan_to_num(np.asarray(audio_array, dtype=np.float32).flatten())
-    if len(audio) == 0:
-        return {k: 0.0 for k in ["duration_sec","mean_abs_energy","rms_energy","peak_amplitude",
-                                   "silence_ratio_001","clipping_ratio_099","zero_crossing_rate","dynamic_range"]}
-    return {
-        "duration_sec":       len(audio) / float(sr),
-        "mean_abs_energy":    float(np.mean(np.abs(audio))),
-        "rms_energy":         float(np.sqrt(np.mean(audio**2))),
-        "peak_amplitude":     float(np.max(np.abs(audio))),
-        "silence_ratio_001":  float(np.mean(np.abs(audio) < 0.01)),
-        "clipping_ratio_099": float(np.mean(np.abs(audio) >= 0.99)),
-        "zero_crossing_rate": float(np.mean(librosa.feature.zero_crossing_rate(audio)[0])),
-        "dynamic_range":      float(np.percentile(audio, 95) - np.percentile(audio, 5)),
-    }
-
-def save_plot(path):
-    plt.tight_layout()
-    plt.savefig(path, dpi=150, bbox_inches="tight")
-    if IN_COLAB: plt.show()
-    plt.close(); print("Saved figure:", path)
-
-def collect_eda_rows(lang_cfg, split, max_samples=200, max_scan_rows=1000):
-    rows = []
-    lang_val = lang_cfg["language_value"]
-    try:
-        # decode=False avoids torchcodec during text-only EDA scan; we decode audio on demand below
-        stream = load_dataset(DATASET_ID, "default", split=split, streaming=True)
-        stream = stream.cast_column("audio", Audio(decode=False))
-    except Exception as e:
-        print(f"  EDA load failed {split}: {e}"); return rows
-
-    id_to_items: dict = {}
-    scanned = 0
-    for item in stream:
-        if scanned >= max_scan_rows:
-            break
-        lang = item.get("language", "")
-        tid  = item.get("text_id",  "")
-        if lang in (lang_val, ENGLISH_LANGUAGE_VALUE) and tid:
-            if tid not in id_to_items:
-                id_to_items[tid] = {}
-            if lang not in id_to_items[tid]:
-                id_to_items[tid][lang] = item
-        scanned += 1
-
-    for pair_idx, (tid, lang_items) in enumerate(id_to_items.items()):
-        if len(rows) >= max_samples:
-            break
-        afr_item = lang_items.get(lang_val)
-        eng_item = lang_items.get(ENGLISH_LANGUAGE_VALUE)
-        if not afr_item or not eng_item:
-            continue
-        afr_text = normalize_text(get_item_text(afr_item))
-        eng_text = normalize_text(get_item_text(eng_item))
-        if not afr_text or not eng_text:
-            continue
-        # Audio quality — best-effort; raw bytes dict won't have array so features will be zero
-        afr_audio_obj = afr_item.get("audio") or {}
-        if isinstance(afr_audio_obj, dict) and afr_audio_obj.get("array") is not None:
-            afr_arr = resample_audio(
-                afr_audio_obj.get("array", np.array([])),
-                afr_audio_obj.get("sampling_rate", TARGET_SR),
-            )
-        else:
-            afr_arr = np.array([])
-        aq = compute_audio_quality_features(afr_arr, TARGET_SR)
-        rows.append({
-            "sample_index": pair_idx, "split": split,
-            "language": lang_cfg["display_name"], "language_key": lang_cfg["language"],
-            "african_text": afr_text, "english_text": eng_text,
-            "african_words": len(afr_text.split()), "english_words": len(eng_text.split()),
-            **{f"african_{k}": v for k, v in aq.items()},
-        })
-    return rows
-
-def plot_eda(df, out_dir, name):
-    if df.empty: return
-    for feat, label in [("duration_sec","Duration (s)"),("rms_energy","RMS Energy"),("silence_ratio_001","Silence Ratio")]:
-        col = f"african_{feat}"
-        if col not in df.columns: continue
-        plt.figure(figsize=(8, 4))
-        plt.hist(df[col].dropna(), bins=20, alpha=0.8, label=name)
-        plt.xlabel(label); plt.ylabel("Count"); plt.title(f"{name}: {label}"); plt.legend()
-        save_plot(out_dir / f"eda_{feat}.png")
-
-def run_data_exploration():
-    if not RUN_DATA_EXPLORATION:
-        print("EDA skipped."); return pd.DataFrame(), pd.DataFrame()
-    eda_root = EDA_DIR; eda_root.mkdir(exist_ok=True)
-    all_rows = []
-    for cfg in LANGUAGE_CONFIGS:
-        lang_dir = eda_root / cfg["language"]; lang_dir.mkdir(exist_ok=True)
-        print(f"\nEDA: {cfg['display_name']}")
-        lang_rows = []
-        for split in EDA_SPLITS_TO_ANALYZE:
-            try:
-                split_rows = collect_eda_rows(cfg, split, EDA_SAMPLE_SIZE_PER_LANGUAGE_SPLIT, EDA_MAX_SCAN_ROWS)
-                lang_rows.extend(split_rows)
-                print(f"  {split}: {len(split_rows)} rows")
-            except Exception as e:
-                print(f"  EDA failed {split}: {e}")
-        if lang_rows:
-            ldf = pd.DataFrame(lang_rows)
-            ldf.to_csv(lang_dir / "eda_samples.csv", index=False)
-            plot_eda(ldf, lang_dir, cfg["display_name"])
-            all_rows.extend(lang_rows)
-    all_df  = pd.DataFrame(all_rows)
-    compact = pd.DataFrame()
-    if not all_df.empty:
-        all_df.to_csv(EDA_DIR / "01a_eda_all_languages.csv", index=False)
-        compact = all_df.groupby("language").agg(
-            samples=("sample_index","count"),
-            avg_duration=("african_duration_sec","mean"),
-            avg_silence=("african_silence_ratio_001","mean"),
-            avg_rms=("african_rms_energy","mean"),
-        ).reset_index()
-        compact.to_csv(EDA_DIR / "01b_eda_compact_summary.csv", index=False)
-        print(compact.to_string(index=False))
-    return all_df, compact
-
-# %% --- 13. Run EDA ---
-eda_df, eda_compact = run_data_exploration()
-
-# %% --- 14. Text evaluation ---
-text_results, text_pred_rows = [], []
-
-if RUN_TEXT_EVALUATION:
-    for exp in EXPERIMENT_CONFIGS:
-        exp_name = exp["experiment"]
-        print(f"\nText eval: {exp_name}")
-        for cfg in LANGUAGE_CONFIGS:
-            rows = prepare_bidirectional_pairs(cfg["language"], SPLIT_FOR_EXPERIMENT,
-                                               exp["max_text_dev"], exp["max_scan_rows"])
-            dir_groups = {}
-            for r in rows: dir_groups.setdefault(r["direction"], []).append(r)
-            for direction, group in dir_groups.items():
-                preds, refs = [], []
-                t0 = time.time()
-                for r in group:
-                    try:
-                        p = translate_text_direct(r["source_text"], r["source_lang_code"], r["target_lang_code"])
-                    except Exception as e:
-                        p = ""; print(f"  Text error: {e}")
-                    preds.append(p); refs.append(r["target_text"])
-                    text_pred_rows.append({
-                        "baseline_model": BASELINE_MODEL_NAME, "dataset": BASELINE_DATASET_NAME,
-                        "experiment_family": EXPERIMENT_FAMILY, "experiment": exp_name,
-                        "sample_index": r["sample_index"], "language": r["language_display"],
-                        "direction": direction, "direction_key": r["direction_key"],
-                        "mode": "text_to_text", "method": "Transcript ↔ Text Translation",
-                        "category": "Text Translation",
-                        "source_text": r["source_text"], "reference": r["target_text"], "prediction": p,
-                    })
-                m = compute_metrics(preds, refs)
-                text_results.append({
-                    "baseline_model": BASELINE_MODEL_NAME, "dataset": BASELINE_DATASET_NAME,
-                    "experiment_family": EXPERIMENT_FAMILY, "experiment": exp_name,
-                    "mode": "text_to_text", "method": "Transcript ↔ Text Translation",
-                    "category": "Text Translation", "language": cfg["display_name"],
-                    "direction": direction, "num_samples": len(group),
-                    "BLEU": m["BLEU"], "ChrF": m["ChrF"], "runtime_seconds": time.time() - t0,
-                })
-                print(f"  {cfg['display_name']} | {direction} | BLEU={m['BLEU']:.2f} ChrF={m['ChrF']:.2f}")
-else:
-    print("Text evaluation skipped.")
-
-text_results_df = pd.DataFrame(text_results)
-text_pred_df    = pd.DataFrame(text_pred_rows)
-save_df(text_results_df, "02_text_metrics.csv")
-save_df(text_pred_df,    "03_text_predictions.csv")
-
-# %% --- 15. Audio evaluation ---
-audio_results, audio_pred_rows = [], []
-should_run_audio = RUN_AUDIO_EVALUATION and not (DEBUG_MODE and SKIP_AUDIO_DEBUG)
-
-if should_run_audio:
-    for exp in EXPERIMENT_CONFIGS:
-        exp_name   = exp["experiment"]
-        strategies = active_audio_strategies(exp_name)
-        print(f"\nAudio eval: {exp_name} | strategies: {[s['strategy_key'] for s in strategies]}")
-        for cfg in LANGUAGE_CONFIGS:
-            rows = prepare_bidirectional_pairs(cfg["language"], SPLIT_FOR_EXPERIMENT,
-                                               exp["max_audio_dev"], exp["max_scan_rows"])
-            dir_groups = {}
-            for r in rows: dir_groups.setdefault(r["direction"], []).append(r)
-            for strategy in strategies:
-                sk = strategy["strategy_key"]
-                for direction, group in dir_groups.items():
-                    preds, refs, durs, chunks_list = [], [], [], []
-                    t0 = time.time()
-                    for r in group:
-                        arr = extract_audio_array(r["source_audio"])
-                        dur = audio_duration(arr); durs.append(dur)
-                        if dur < MIN_DURATION or dur > MAX_DURATION:
-                            pred, nc, err = "", 0, f"skipped_duration_{dur:.2f}s"
-                        else:
-                            err = ""
-                            try:
-                                pred, nc = translate_audio_with_strategy(
-                                    r["source_audio"], r["source_lang_code"], r["target_lang_code"], strategy)
-                            except Exception as e:
-                                pred, nc, err = "", 0, str(e)
-                                print(f"  Audio error {exp_name}/{sk}: {e}")
-                        chunks_list.append(nc); preds.append(pred); refs.append(r["target_text"])
-                        audio_pred_rows.append({
-                            "baseline_model": BASELINE_MODEL_NAME, "dataset": BASELINE_DATASET_NAME,
-                            "experiment_family": EXPERIMENT_FAMILY, "experiment": exp_name,
-                            "sample_index": r["sample_index"], "language": r["language_display"],
-                            "direction": direction, "direction_key": r["direction_key"],
-                            "mode": sk, "method": strategy["method"], "category": strategy["category"],
-                            "source_text_transcription": r["source_text"],
-                            "reference": r["target_text"], "prediction": pred,
-                            "duration_seconds": dur, "num_chunks": nc, "error_message": err,
-                        })
-                    m = compute_metrics(preds, refs)
-                    audio_results.append({
-                        "baseline_model": BASELINE_MODEL_NAME, "dataset": BASELINE_DATASET_NAME,
-                        "experiment_family": EXPERIMENT_FAMILY, "experiment": exp_name,
-                        "mode": sk, "method": strategy["method"], "category": strategy["category"],
-                        "language": cfg["display_name"], "direction": direction,
-                        "num_samples": len(group), "BLEU": m["BLEU"], "ChrF": m["ChrF"],
-                        "avg_duration_seconds": float(np.mean(durs)) if durs else 0.0,
-                        "avg_num_chunks": float(np.mean(chunks_list)) if chunks_list else 0.0,
-                        "runtime_seconds": time.time() - t0,
-                    })
-                    print(f"  {cfg['display_name']} | {sk} | {direction} | BLEU={m['BLEU']:.2f} ChrF={m['ChrF']:.2f}")
-else:
-    print(f"Audio evaluation skipped.")
-
-audio_results_df = pd.DataFrame(audio_results)
-audio_pred_df    = pd.DataFrame(audio_pred_rows)
-save_df(audio_results_df, "04_audio_metrics.csv")
-save_df(audio_pred_df,    "05_audio_predictions.csv")
-
-# %% --- 16. Aggregate ---
-_frames = [df for df in [text_results_df, audio_results_df] if not df.empty]
-aggregate_df = pd.concat(_frames, ignore_index=True) if _frames else pd.DataFrame()
-save_df(aggregate_df, "06_aggregate_metrics.csv")
-
-if not aggregate_df.empty:
-    labels = aggregate_df["experiment"] + " | " + aggregate_df["mode"] + " | " + aggregate_df["direction"]
-    plt.figure(figsize=(max(12, len(aggregate_df)*0.4), 5))
-    plt.bar(range(len(labels)), aggregate_df["ChrF"], color="steelblue")
-    plt.xticks(range(len(labels)), labels, rotation=90, fontsize=7)
-    plt.ylabel("ChrF"); plt.title(f"ChrF Overview — {EXPERIMENT_FAMILY}")
-    save_plot(FIGURES_DIR / "01_chrf_overview.png")
-
-    plt.figure(figsize=(max(12, len(aggregate_df)*0.4), 5))
-    plt.bar(range(len(labels)), aggregate_df["BLEU"], color="darkorange")
-    plt.xticks(range(len(labels)), labels, rotation=90, fontsize=7)
-    plt.ylabel("BLEU"); plt.title(f"BLEU Overview — {EXPERIMENT_FAMILY}")
-    save_plot(FIGURES_DIR / "02_bleu_overview.png")
-
-    _text_agg = aggregate_df[aggregate_df["mode"] == "text_to_text"]
-    if not _text_agg.empty:
-        _latest = _text_agg[_text_agg["experiment"] == _text_agg["experiment"].max()]
-        _pivot_bleu = _latest.pivot_table(index="language", columns="direction", values="BLEU", aggfunc="mean")
-        _pivot_chrf = _latest.pivot_table(index="language", columns="direction", values="ChrF", aggfunc="mean")
-        fig, axes = plt.subplots(1, 2, figsize=(14, 5))
-        _pivot_bleu.plot(kind="bar", ax=axes[0], colormap="tab10", rot=30)
-        axes[0].set_title("BLEU by Language × Direction"); axes[0].set_ylabel("BLEU"); axes[0].set_xlabel("")
-        _pivot_chrf.plot(kind="bar", ax=axes[1], colormap="tab10", rot=30)
-        axes[1].set_title("ChrF by Language × Direction"); axes[1].set_ylabel("ChrF"); axes[1].set_xlabel("")
-        plt.suptitle(f"{EXPERIMENT_FAMILY} — Text Translation", fontsize=11)
-        save_plot(FIGURES_DIR / "03_language_direction_comparison.png")
-
-    _audio_agg = aggregate_df[aggregate_df["mode"] != "text_to_text"]
-    if not _audio_agg.empty:
-        _latest_a = _audio_agg[_audio_agg["experiment"] == _audio_agg["experiment"].max()]
-        _pivot_s = _latest_a.pivot_table(index="mode", columns="language", values="ChrF", aggfunc="mean")
-        plt.figure(figsize=(10, 5))
-        _pivot_s.plot(kind="bar", colormap="Set2", rot=30, ax=plt.gca())
-        plt.title(f"Audio Strategy ChrF by Language — {EXPERIMENT_FAMILY}")
-        plt.ylabel("ChrF"); plt.xlabel("Strategy")
-        save_plot(FIGURES_DIR / "04_audio_strategy_comparison.png")
-
-    _grouped = aggregate_df.groupby("experiment")[["BLEU","ChrF"]].mean().reset_index()
-    if len(_grouped) > 1:
-        plt.figure(figsize=(8, 4))
-        plt.plot(_grouped["experiment"], _grouped["BLEU"], marker="o", label="BLEU")
-        plt.plot(_grouped["experiment"], _grouped["ChrF"], marker="s", label="ChrF")
-        plt.title(f"Score Progression — {EXPERIMENT_FAMILY}")
-        plt.ylabel("Score"); plt.xlabel("Experiment"); plt.legend()
-        save_plot(FIGURES_DIR / "05_experiment_progression.png")
-
-# %% --- 17. Qualitative outputs ---
-
-def build_qualitative_table(pred_df, mode_name, n=5):
-    if pred_df.empty: return pd.DataFrame()
-    rows = []
-    for _, grp in pred_df.groupby(["experiment","direction"] if "experiment" in pred_df.columns else ["direction"]):
-        for _, r in grp.head(n).iterrows():
-            rows.append({
-                "experiment": r.get("experiment",""), "mode": r.get("mode", mode_name),
-                "method": r.get("method",""), "category": r.get("category",""),
-                "baseline_model": BASELINE_MODEL_NAME, "dataset": BASELINE_DATASET_NAME,
-                "language": r.get("language",""), "direction": r.get("direction",""),
-                "sample_index": r.get("sample_index",""),
-                "source": r.get("source_text", r.get("source_text_transcription","")),
-                "reference": r.get("reference",""), "prediction": r.get("prediction",""),
-                "error_message": r.get("error_message",""),
-                "manual_error_category": "",
-                "manual_severity": "",
-                "manual_comment": "",
-            })
-    return pd.DataFrame(rows)
-
-qual_text  = build_qualitative_table(text_pred_df,  "text_to_text")
-qual_audio = build_qualitative_table(audio_pred_df, "speech_to_text")
-qual_all   = pd.concat([df for df in [qual_text, qual_audio] if not df.empty], ignore_index=True)
-save_df(qual_text,  "08_qualitative_text.csv",  QUAL_DIR)
-save_df(qual_audio, "09_qualitative_audio.csv", QUAL_DIR)
-save_df(qual_all,   "10_qualitative_all.csv",   QUAL_DIR)
-
-# %% --- 18. Metadata snapshot ---
-import json as _json
-_metadata = {
-    "experiment_family": EXPERIMENT_FAMILY,
-    "model": MODEL_ID,
-    "dataset": DATASET_ID,
-    "pipeline": BASELINE_PIPELINE_TYPE,
-    "device": DEVICE,
-    "debug_mode": DEBUG_MODE,
-    "split_used": SPLIT_FOR_EXPERIMENT,
-    "active_languages": [c["display_name"] for c in LANGUAGE_CONFIGS],
-    "skipped_languages": [(c["display_name"], c["skip_reason"]) for c in SKIPPED_LANGUAGE_CONFIGS],
-    "experiments": [e["experiment"] for e in EXPERIMENT_CONFIGS],
-    "directions": DIRECTIONS_TO_RUN,
-    "audio_strategies": [s["strategy_key"] for s in AUDIO_OPTIMIZATION_STRATEGIES if s["enabled"]],
-    "run_timestamp": datetime.now().isoformat(),
-    "output_structure": {
-        "metrics/": "02_text_metrics, 03_text_predictions, 04_audio_metrics, 05_audio_predictions, 06_aggregate_metrics",
-        "figures/": "01_chrf_overview, 02_bleu_overview, 03_language_direction_comparison, 04_audio_strategy_comparison, 05_experiment_progression",
-        "eda/":     "01a_eda_all_languages, 01b_eda_compact_summary; per-language histograms",
-        "qualitative/": "08_qualitative_text, 09_qualitative_audio, 10_qualitative_all",
-    },
-}
-with open(BASE_OUTPUT_DIR / "metadata.json", "w") as _f:
-    _json.dump(_metadata, _f, indent=2)
-print("Saved: metadata.json")
-
-# %% --- 19. Google Drive backup (Colab only) ---
-if GOOGLE_DRIVE_AVAILABLE:
-    ts      = datetime.now().strftime("%Y%m%d_%H%M%S")
-    dr_root = Path("/content/drive/MyDrive") / _FOLDER_NAME
-    dr_root.mkdir(parents=True, exist_ok=True)
-    dr_dest = dr_root / f"run_{ts}"
-    if dr_dest.exists(): shutil.rmtree(dr_dest)
-    shutil.copytree(BASE_OUTPUT_DIR, dr_dest)
-    zip_path = shutil.make_archive(str(dr_dest), "zip", root_dir=BASE_OUTPUT_DIR)
-    print(f"Drive backup: {dr_dest}\nZIP: {zip_path}")
-else:
-    print(f"Local results saved to: {BASE_OUTPUT_DIR}")
-
-print("\n=== Experiment complete ===")
-print(f"Pair    : {EXPERIMENT_FAMILY}")
-print(f"metrics/: {sorted(METRICS_DIR.glob('*.csv'))}")
-print(f"figures/: {sorted(FIGURES_DIR.glob('*.png'))}")
-print(f"eda/    : {sorted(EDA_DIR.glob('*.csv'))}")
-print(f"qual/   : {sorted(QUAL_DIR.glob('*.csv'))}")
+# %% --- archive ---
+save_config(dirs, {
+    "model_id": MODEL_ID, "dataset_id": DATASET_ID,
+    "experiment_family": EXPERIMENT_FAMILY, "debug_mode": DEBUG_MODE,
+    "device": DEVICE, "split": SPLIT,
+    "languages": [c["language_key"] for c in lang_cfgs],
+    "capabilities": caps.enabled_strategies,
+})
+zip_run_outputs(dirs)
+drive_backup(dirs, drive_available)
