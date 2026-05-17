@@ -322,6 +322,8 @@ class ExperimentRunner:
                 if not model_code:
                     continue
                 pairs = self.cache.get_pairs(lk, exp["max_audio_dev"])
+                if not pairs:
+                    continue
                 preds, refs = [], []
                 t0 = time.time()
                 for p in pairs:
@@ -354,7 +356,8 @@ class ExperimentRunner:
         audio_pd = pd.DataFrame(self._audio_preds)
         asr_df   = pd.DataFrame(self._asr_results)
         asr_pd   = pd.DataFrame(self._asr_preds)
-        aggregate = pd.concat([df for df in [text_df, audio_df] if not df.empty], ignore_index=True)
+        _non_empty = [df for df in [text_df, audio_df] if not df.empty]
+        aggregate  = pd.concat(_non_empty, ignore_index=True) if _non_empty else pd.DataFrame()
 
         # Save raw data
         for df, name in [(text_df, "text_metrics.csv"), (text_pd, "text_predictions.csv"),
@@ -377,7 +380,8 @@ class ExperimentRunner:
             self.cfg.eda_sample_size,
             compute_translation_metrics,
         )
-        T7 = build_qualitative_table(pd.concat([p for p in [text_pd, audio_pd] if not p.empty], ignore_index=True))
+        _non_empty_pd = [p for p in [text_pd, audio_pd] if not p.empty]
+        T7 = build_qualitative_table(pd.concat(_non_empty_pd, ignore_index=True) if _non_empty_pd else pd.DataFrame())
         T8 = build_cross_language_comparisons(text_df, audio_df)
         T9 = build_cross_model_comparisons(self.dirs.base.parent)
 
