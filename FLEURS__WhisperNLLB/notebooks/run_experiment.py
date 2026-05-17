@@ -22,15 +22,28 @@
 # Run on Colab: set DEBUG_MODE below, then Run All
 
 # %% --- bootstrap ---
-import sys
+import sys, subprocess
 from pathlib import Path
 _REPO = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(_REPO))
 
+try:
+    import google.colab  # noqa
+    _IN_COLAB = True
+except ImportError:
+    _IN_COLAB = False
+
+if _IN_COLAB:
+    subprocess.run([sys.executable, "-m", "pip", "-q", "install", "-U",
+        "transformers>=4.40", "datasets", "sacrebleu", "librosa", "soundfile",
+        "sentencepiece", "accelerate", "jiwer", "pandas==2.2.2", "pyarrow>=15.0.0",
+        "protobuf",
+    ], check=True)
+    subprocess.run([sys.executable, "-m", "pip", "-q", "install", "torchcodec",
+        "--extra-index-url", "https://download.pytorch.org/whl/cu121"], check=False)
+
 from framework import detect_environment, install_colab_dependencies
 ENV = detect_environment()
-if ENV["in_colab"]:
-    install_colab_dependencies()
 
 # %% --- imports ---
 import random, warnings
