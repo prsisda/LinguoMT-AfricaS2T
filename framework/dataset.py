@@ -116,30 +116,43 @@ class DatasetCache:
     def _build_african_celtic(self, monitor) -> None:
         if monitor:
             monitor.step("Single-pass African-Celtic scan", self.split)
-        all_lang_values = {cfg.get("african_celtic_value") for cfg in self.language_configs
-                          if cfg.get("african_celtic_value")}
-        relevant = all_lang_values | {"english"}
+        # Build a lowercase → original mapping so matching is case-insensitive
+        av_lower: dict[str, str] = {}
+        for cfg in self.language_configs:
+            av = cfg.get("african_celtic_value")
+            if av:
+                av_lower[av.lower()] = av
+        av_lower["english"] = "english"
+        relevant_lower = set(av_lower.keys())
 
         id_to_items: dict[str, dict[str, Any]] = {}
+        all_langs:   set[str] = set()   # every language value seen in the dataset
+        found_langs: set[str] = set()   # values that matched our targets
         scanned = 0
         try:
             stream = _load_no_torchcodec(self.dataset_id, "default", self.split)
             for item in stream:
                 if scanned >= self.max_scan_rows:
                     break
-                lang = item.get("language", "")
-                tid  = item.get("text_id", "")
-                if lang in relevant and tid:
+                lang_raw  = item.get("language", "")
+                lang_norm = lang_raw.lower()
+                tid       = item.get("text_id", "")
+                all_langs.add(lang_raw)
+                if lang_norm in relevant_lower and tid:
+                    canonical = av_lower[lang_norm]
                     id_to_items.setdefault(tid, {})
-                    if lang not in id_to_items[tid]:
-                        id_to_items[tid][lang] = item
+                    if canonical not in id_to_items[tid]:
+                        id_to_items[tid][canonical] = item
+                    found_langs.add(lang_raw)
                 scanned += 1
         except Exception as e:
             if monitor:
                 monitor.step("  Scan error", str(e)[:120])
 
         if monitor:
-            monitor.step(f"  Scanned {scanned} rows", f"{len(id_to_items)} text_ids found")
+            monitor.step(f"  Scanned {scanned} rows",
+                         f"{len(id_to_items)} text_ids | all langs in dataset: {sorted(all_langs)}")
+            monitor.step(f"  Matched target langs", f"{sorted(found_langs) or 'NONE — check african_celtic_value in languages.py'}")
 
         for cfg in self.language_configs:
             lk = cfg["language_key"]
@@ -151,7 +164,7 @@ class DatasetCache:
             for tid, lang_items in id_to_items.items():
                 if len(pairs) >= self.max_pairs:
                     break
-                src_item = lang_items.get(av)
+                src_item = lang_items.get(av) or lang_items.get(av.lower()) or lang_items.get(av.capitalize())
                 eng_item = lang_items.get("english")
                 if not src_item or not eng_item:
                     continue

@@ -149,7 +149,7 @@ max_pairs = max(e["max_text_dev"] for e in exp_cfgs)
 cache = DatasetCache(
     dataset_id=DATASET_ID, adapter_type=get_adapter_type(DATASET_ID),
     language_configs=lang_cfgs, split=SPLIT,
-    max_pairs=max_pairs, max_scan_rows=5000, force_rerun=FORCE_RERUN,
+    max_pairs=max_pairs, max_scan_rows=6000, force_rerun=FORCE_RERUN,
 )
 cache.build(monitor)
 print("Cache:", cache.stats())
