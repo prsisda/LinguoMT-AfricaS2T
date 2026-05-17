@@ -49,6 +49,7 @@ class RunConfig:
     model_id:          str
     dataset_id:        str
     split:             str  = "dev"
+    train_split:       str  = "train"
     debug_mode:        bool = True
     fast_mode:         bool = False
     skip_audio_debug:  bool = True
@@ -56,6 +57,7 @@ class RunConfig:
     run_full_grid:     bool = True
     in_colab:          bool = False
     eda_sample_size:   int  = 25
+    enable_finetuning: bool = False   # disabled until baseline is stable
     directions:        list[str] = field(default_factory=lambda: ["source_to_english", "english_to_source"])
     extra:             dict = field(default_factory=dict)
 
@@ -66,11 +68,11 @@ class RunConfig:
 
 def default_experiment_configs(debug_mode: bool) -> list[dict]:
     if debug_mode:
-        return [{"experiment": "debug", "max_text_dev": 8, "max_audio_dev": 3}]
+        return [{"experiment": "debug", "max_text_train": 0, "max_text_dev": 8, "max_audio_dev": 3}]
     return [
-        {"experiment": "Experiment_1", "max_text_dev": 100, "max_audio_dev": 30},
-        {"experiment": "Experiment_2", "max_text_dev": 200, "max_audio_dev": 75},
-        {"experiment": "Experiment_3", "max_text_dev": 300, "max_audio_dev": 100},
+        {"experiment": "Experiment_1", "max_text_train": 500, "max_text_dev": 100, "max_audio_dev": 30},
+        {"experiment": "Experiment_2", "max_text_train": 600, "max_text_dev": 200, "max_audio_dev": 75},
+        {"experiment": "Experiment_3", "max_text_train": 700, "max_text_dev": 300, "max_audio_dev": 100},
     ]
 
 
@@ -96,10 +98,13 @@ class ExperimentRunner:
         translate_text_fn:  Callable | None = None,
         translate_audio_fn: Callable | None = None,
         asr_fn:             Callable | None = None,
+        train_cache:        DatasetCache | None = None,
+        finetune_fn:        Callable | None = None,
     ) -> None:
         self.cfg          = config
         self.caps         = capabilities
         self.cache        = data_cache
+        self.train_cache  = train_cache
         self.lang_cfgs    = language_configs
         self.dirs         = dirs
         self.monitor      = monitor
@@ -107,6 +112,7 @@ class ExperimentRunner:
         self._t_text      = translate_text_fn
         self._t_audio     = translate_audio_fn
         self._asr         = asr_fn
+        self._finetune    = finetune_fn
 
         # Accumulate results across strategies
         self._text_results:   list[dict] = []
@@ -125,6 +131,7 @@ class ExperimentRunner:
         if not self.cfg.run_full_grid and len(self.exp_cfgs) > 1:
             self.exp_cfgs = self.exp_cfgs[:1]
         self.monitor.step("Run started", self.cfg.experiment_family)
+        self._run_finetuning()
         self._run_eda()
         self._strategy_rationale = select_strategies_from_eda(self._eda_compact)
         if self.caps.t2tt and self._t_text is not None:
@@ -136,6 +143,34 @@ class ExperimentRunner:
         self._build_all_outputs()
         self.monitor.step("Run complete")
         print(f"\nOutputs → {self.dirs.base}")
+
+    # ── fine-tuning (placeholder) ─────────────────────────────────────────────
+
+    def _run_finetuning(self) -> None:
+        if not self.cfg.enable_finetuning:
+            self.monitor.step("Fine-tuning", "disabled — using pretrained model")
+            return
+        if self._finetune is None or self.train_cache is None:
+            self.monitor.step("Fine-tuning skipped", "finetune_fn or train_cache not provided")
+            return
+        self.monitor.step("Fine-tuning started")
+        for exp in self.exp_cfgs:
+            n = exp.get("max_text_train", 0)
+            if n == 0:
+                self.monitor.step(f"  [{exp['experiment']}] fine-tuning skipped", "max_text_train=0")
+                continue
+            for cfg in self.lang_cfgs:
+                lk    = cfg["language_key"]
+                pairs = self.train_cache.get_pairs(lk, n)
+                if not pairs:
+                    self.monitor.step(f"  [{cfg['display']}] no train pairs", "skipping")
+                    continue
+                try:
+                    self._finetune(pairs, cfg, exp)
+                    self.monitor.step(f"  [{cfg['display']}] fine-tuned", f"{len(pairs)} pairs")
+                except Exception as e:
+                    self.monitor.step(f"  [{cfg['display']}] fine-tune error", str(e)[:120])
+        self.monitor.step("Fine-tuning complete")
 
     # ── EDA ───────────────────────────────────────────────────────────────────
 
