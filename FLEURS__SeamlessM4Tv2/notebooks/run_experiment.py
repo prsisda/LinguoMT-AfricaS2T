@@ -98,6 +98,10 @@ SPLIT             = "validation"
 TRAIN_SPLIT       = "train"
 MANUAL_LANGUAGES  = None   # None = auto | e.g. ["igbo", "yoruba", "swahili"]
 SEED              = 42
+# ── Publication settings ──────────────────────────────────────────────────────
+PAPER_MODE        = "benchmark"   # benchmark | adaptation | audio | cascade | transfer
+SOTA_FILE         = ""            # e.g. "sota/paper1_benchmark/sota_results.csv"
+# ─────────────────────────────────────────────────────────────────────────────
 
 if FAST_MODE: DEBUG_MODE = True
 random.seed(SEED); np.random.seed(SEED); torch.manual_seed(SEED)
@@ -211,6 +215,8 @@ ExperimentRunner(
         run_full_grid=RUN_FULL_GRID, enable_finetuning=ENABLE_FINETUNING,
         in_colab=ENV["in_colab"], eda_sample_size=25 if DEBUG_MODE else 200,
         directions=["source_to_english", "english_to_source"],
+        paper_mode=PAPER_MODE,
+        sota_path=SOTA_FILE,
     ),
     capabilities=caps, data_cache=dev_cache, train_cache=train_cache,
     language_configs=lang_cfgs, dirs=dirs, monitor=monitor, experiment_configs=exp_cfgs,
