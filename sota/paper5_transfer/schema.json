@@ -1,0 +1,26 @@
+{
+  "paper": "paper5_transfer",
+  "title": "LinguoMT-Transfer: Cross-Lingual Adaptation in African Speech Translation",
+  "paper_mode": "transfer",
+  "paper_specific_required": ["transfer_type"],
+  "paper_specific_optional": ["source_lang_family", "target_lang_family", "num_ft_samples", "pretrain_langs", "lang_similarity_score"],
+  "field_definitions": {
+    "paper_title":           { "required": true,  "type": "str",   "description": "Full paper title" },
+    "authors":               { "required": true,  "type": "str",   "description": "First author + et al." },
+    "year":                  { "required": true,  "type": "int",   "description": "4-digit publication year" },
+    "model":                 { "required": true,  "type": "str",   "description": "Model name" },
+    "dataset":               { "required": true,  "type": "str",   "description": "Evaluation dataset name" },
+    "language":              { "required": true,  "type": "str",   "description": "Target language display name (the language being evaluated)" },
+    "direction":             { "required": true,  "type": "str",   "description": "'Source → English' or 'English → Source'" },
+    "metric":                { "required": true,  "type": "str",   "description": "One of: BLEU, ChrF, WER, CER" },
+    "score":                 { "required": true,  "type": "float", "description": "Numeric score — must be a number" },
+    "citation_key":          { "required": true,  "type": "str",   "description": "BibTeX citation key" },
+    "transfer_type":         { "required": true,  "type": "str",   "description": "Transfer setting: 'zero-shot', 'few-shot', 'cross-lingual', or 'multilingual'" },
+    "notes":                 { "required": false, "type": "str",   "description": "Transfer conditions, data sources, training details" },
+    "source_lang_family":    { "required": false, "type": "str",   "description": "Language family of the training/source language (e.g. 'Niger-Congo', 'Afro-Asiatic', 'mixed')" },
+    "target_lang_family":    { "required": false, "type": "str",   "description": "Language family of the evaluation language" },
+    "num_ft_samples":        { "required": false, "type": "int",   "description": "Training samples for adaptation (0 = zero-shot)" },
+    "pretrain_langs":        { "required": false, "type": "str",   "description": "Languages seen during pretraining, e.g. '100 languages incl. Yoruba'" },
+    "lang_similarity_score": { "required": false, "type": "float", "description": "Typological similarity score between source and target language (e.g. URIEL cosine distance)" }
+  }
+}

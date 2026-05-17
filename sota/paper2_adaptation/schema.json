@@ -1,0 +1,25 @@
+{
+  "paper": "paper2_adaptation",
+  "title": "LinguoMT-Adapt: Parameter-Efficient Fine-Tuning for African Speech Translation",
+  "paper_mode": "adaptation",
+  "paper_specific_required": ["ft_method"],
+  "paper_specific_optional": ["pretrained_score", "num_ft_samples", "trainable_params_pct", "training_hours"],
+  "field_definitions": {
+    "paper_title":          { "required": true,  "type": "str",   "description": "Full paper title" },
+    "authors":              { "required": true,  "type": "str",   "description": "First author + et al." },
+    "year":                 { "required": true,  "type": "int",   "description": "4-digit publication year" },
+    "model":                { "required": true,  "type": "str",   "description": "Base model + adaptation method, e.g. 'Whisper-large-v3 + LoRA'" },
+    "dataset":              { "required": true,  "type": "str",   "description": "Evaluation dataset name" },
+    "language":             { "required": true,  "type": "str",   "description": "Display language name matching our system output" },
+    "direction":            { "required": true,  "type": "str",   "description": "'Source → English' or 'English → Source'" },
+    "metric":               { "required": true,  "type": "str",   "description": "One of: BLEU, ChrF, WER, CER" },
+    "score":                { "required": true,  "type": "float", "description": "Score AFTER adaptation — must be a number" },
+    "citation_key":         { "required": true,  "type": "str",   "description": "BibTeX citation key" },
+    "ft_method":            { "required": true,  "type": "str",   "description": "Adaptation method: 'LoRA', 'adapter', 'full', 'prefix', 'prompt'" },
+    "notes":                { "required": false, "type": "str",   "description": "Training conditions, data details" },
+    "pretrained_score":     { "required": false, "type": "float", "description": "Score BEFORE adaptation (same model, same eval) — enables before/after comparison" },
+    "num_ft_samples":       { "required": false, "type": "int",   "description": "Number of training samples used for adaptation" },
+    "trainable_params_pct": { "required": false, "type": "float", "description": "Percentage of total parameters that were trained (e.g. 0.5 for 0.5%)" },
+    "training_hours":       { "required": false, "type": "float", "description": "GPU hours required for fine-tuning" }
+  }
+}

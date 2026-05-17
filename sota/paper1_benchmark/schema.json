@@ -1,0 +1,20 @@
+{
+  "paper": "paper1_benchmark",
+  "title": "LinguoMT: Benchmarking Multilingual Speech Translation for Low-Resource African Languages",
+  "paper_mode": "benchmark",
+  "paper_specific_required": [],
+  "paper_specific_optional": [],
+  "field_definitions": {
+    "paper_title":   { "required": true,  "type": "str",   "description": "Full paper title as it appears in the publication" },
+    "authors":       { "required": true,  "type": "str",   "description": "First author + et al., e.g. 'Barrault et al.'" },
+    "year":          { "required": true,  "type": "int",   "description": "4-digit publication year" },
+    "model":         { "required": true,  "type": "str",   "description": "Exact model name and size used for evaluation" },
+    "dataset":       { "required": true,  "type": "str",   "description": "Dataset name: 'FLEURS' or 'African-Celtic'" },
+    "language":      { "required": true,  "type": "str",   "description": "Display language name matching our system output (e.g. 'Yoruba')" },
+    "direction":     { "required": true,  "type": "str",   "description": "'Source → English' or 'English → Source'" },
+    "metric":        { "required": true,  "type": "str",   "description": "One of: BLEU, ChrF, WER, CER" },
+    "score":         { "required": true,  "type": "float", "description": "Numeric score — must be a number, not empty" },
+    "citation_key":  { "required": true,  "type": "str",   "description": "BibTeX citation key, also listed in sota/paper_references.csv" },
+    "notes":         { "required": false, "type": "str",   "description": "Evaluation split, conditions, or caveats (e.g. 'Official FLEURS test set')" }
+  }
+}

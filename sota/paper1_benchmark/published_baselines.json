@@ -1,0 +1,31 @@
+{
+  "_comment": "Published baselines for Paper 1 — LinguoMT Benchmark. Fill in 'score' fields from the papers listed in README.md.",
+  "baselines": [
+    {
+      "paper_title": "SeamlessM4T: Massively Multilingual & Multimodal Machine Translation",
+      "authors": "Barrault et al.",
+      "year": 2023,
+      "model": "SeamlessM4T-v2-large",
+      "dataset": "FLEURS",
+      "language": "Yoruba",
+      "direction": "Source → English",
+      "metric": "BLEU",
+      "score": null,
+      "citation_key": "barrault2023seamless",
+      "notes": "Fill in from official model card or paper appendix"
+    },
+    {
+      "paper_title": "Robust Speech Recognition via Large-Scale Weak Supervision",
+      "authors": "Radford et al.",
+      "year": 2023,
+      "model": "Whisper-large-v3",
+      "dataset": "FLEURS",
+      "language": "Yoruba",
+      "direction": "Source → English",
+      "metric": "WER",
+      "score": null,
+      "citation_key": "radford2023whisper",
+      "notes": "Fill in from Whisper paper or HuggingFace model card"
+    }
+  ]
+}

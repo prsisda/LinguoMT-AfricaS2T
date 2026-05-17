@@ -1,0 +1,25 @@
+{
+  "paper": "paper4_cascade",
+  "title": "LinguoMT-Cascade: Cascade vs End-to-End Architectures for African Speech Translation",
+  "paper_mode": "cascade",
+  "paper_specific_required": ["architecture"],
+  "paper_specific_optional": ["asr_model", "mt_model", "asr_wer", "latency_ms"],
+  "field_definitions": {
+    "paper_title":  { "required": true,  "type": "str",   "description": "Full paper title" },
+    "authors":      { "required": true,  "type": "str",   "description": "First author + et al." },
+    "year":         { "required": true,  "type": "int",   "description": "4-digit publication year" },
+    "model":        { "required": true,  "type": "str",   "description": "Full pipeline description, e.g. 'Whisper-large-v3 + NLLB-200'" },
+    "dataset":      { "required": true,  "type": "str",   "description": "Evaluation dataset name" },
+    "language":     { "required": true,  "type": "str",   "description": "Display language name matching our system output" },
+    "direction":    { "required": true,  "type": "str",   "description": "'Source → English' or 'English → Source'" },
+    "metric":       { "required": true,  "type": "str",   "description": "One of: BLEU, ChrF, WER, CER" },
+    "score":        { "required": true,  "type": "float", "description": "Numeric score — must be a number" },
+    "citation_key": { "required": true,  "type": "str",   "description": "BibTeX citation key" },
+    "architecture": { "required": true,  "type": "str",   "description": "Architecture type: 'cascade', 'end-to-end', or 'direct'" },
+    "notes":        { "required": false, "type": "str",   "description": "Architecture details, beam size, rescoring" },
+    "asr_model":    { "required": false, "type": "str",   "description": "ASR component used in cascade pipeline" },
+    "mt_model":     { "required": false, "type": "str",   "description": "MT component used in cascade pipeline" },
+    "asr_wer":      { "required": false, "type": "float", "description": "Intermediate ASR WER before translation (cascade only)" },
+    "latency_ms":   { "required": false, "type": "float", "description": "End-to-end inference latency in milliseconds, if reported" }
+  }
+}

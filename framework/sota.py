@@ -1,46 +1,155 @@
 """
 SOTA comparison module for the LinguoMT publication series.
 
-Load published baselines from sota_results.csv or published_baselines.json
-and generate comparison tables against our system's results.
+Each paper folder under sota/ contains a schema.json that declares which fields
+are required and which are optional. load_sota() validates the loaded data against
+that schema and prints warnings for missing required values.
 
-Schema (per row / entry):
-    paper_title    str  — e.g. "SeamlessM4T: Massively Multilingual & Multimodal Machine Translation"
-    authors        str  — e.g. "Barrault et al."
-    year           int  — e.g. 2023
-    model          str  — e.g. "SeamlessM4T-v2-large"
-    dataset        str  — e.g. "FLEURS" | "African-Celtic" | "CommonVoice"
-    language       str  — display name, e.g. "Yoruba"
-    direction      str  — e.g. "Source → English" | "English → Source"
-    metric         str  — "BLEU" | "ChrF" | "WER" | "CER"
-    score          float
-    citation_key   str  — BibTeX key, e.g. "barrault2023seamless"
-    notes          str  — optional free text
+Base required fields (all papers):
+    paper_title, authors, year, model, dataset, language, direction,
+    metric, score, citation_key
+
+Base optional fields (all papers):
+    notes
+
+Paper-specific fields are declared in each folder's schema.json.
 """
 from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Optional
 
 import pandas as pd
 
 
-SOTA_COLUMNS = [
+# ── Base schema (shared across all papers) ────────────────────────────────────
+
+BASE_REQUIRED_FIELDS = [
     "paper_title", "authors", "year", "model", "dataset",
-    "language", "direction", "metric", "score", "citation_key", "notes",
+    "language", "direction", "metric", "score", "citation_key",
 ]
+BASE_OPTIONAL_FIELDS = ["notes"]
+SOTA_COLUMNS = BASE_REQUIRED_FIELDS + BASE_OPTIONAL_FIELDS
+
+VALID_METRICS    = {"BLEU", "ChrF", "WER", "CER", "CHRF", "CHRF++"}
+VALID_DIRECTIONS = {"Source → English", "English → Source"}
+
+
+# ── Schema loader ─────────────────────────────────────────────────────────────
+
+def load_schema(folder: str | Path) -> dict:
+    """
+    Load schema.json from a paper folder.
+    Returns the base schema if no schema.json exists.
+    """
+    schema_path = Path(folder) / "schema.json"
+    if not schema_path.exists():
+        return {
+            "required_fields": BASE_REQUIRED_FIELDS,
+            "optional_fields": BASE_OPTIONAL_FIELDS,
+        }
+    with schema_path.open() as f:
+        raw = json.load(f)
+    required = BASE_REQUIRED_FIELDS + raw.get("paper_specific_required", [])
+    optional = BASE_OPTIONAL_FIELDS + raw.get("paper_specific_optional", [])
+    return {**raw, "required_fields": required, "optional_fields": optional}
+
+
+# ── Validator ─────────────────────────────────────────────────────────────────
+
+def validate_sota(df: pd.DataFrame, schema: dict) -> list[str]:
+    """
+    Validate a loaded SOTA DataFrame against a schema.
+    Returns a list of warning strings (empty = all good).
+    Rows with missing required fields are dropped from the returned DataFrame
+    via filter_valid_sota().
+    """
+    warnings: list[str] = []
+    required = schema.get("required_fields", BASE_REQUIRED_FIELDS)
+
+    # Missing columns entirely
+    missing_cols = [c for c in required if c not in df.columns]
+    if missing_cols:
+        warnings.append(f"[SOTA] Missing required columns: {missing_cols}")
+
+    # Rows with empty required fields
+    for col in required:
+        if col not in df.columns:
+            continue
+        empty_mask = df[col].isnull() | (df[col].astype(str).str.strip() == "") | (df[col].astype(str) == "None")
+        n_empty = empty_mask.sum()
+        if n_empty > 0:
+            warnings.append(
+                f"[SOTA] Column '{col}' is required but empty in {n_empty} row(s). "
+                f"These rows will be skipped."
+            )
+
+    # Score column must be numeric
+    if "score" in df.columns:
+        non_numeric = pd.to_numeric(df["score"], errors="coerce").isnull().sum()
+        if non_numeric > 0:
+            warnings.append(
+                f"[SOTA] 'score' is non-numeric in {non_numeric} row(s). Those rows will be skipped."
+            )
+
+    # Metric values should be known
+    if "metric" in df.columns:
+        unknown = df["metric"].dropna()
+        unknown = unknown[~unknown.str.upper().isin({m.upper() for m in VALID_METRICS})]
+        if not unknown.empty:
+            warnings.append(
+                f"[SOTA] Unrecognised metric value(s): {unknown.unique().tolist()}. "
+                f"Expected one of {sorted(VALID_METRICS)}."
+            )
+
+    return warnings
+
+
+def filter_valid_sota(df: pd.DataFrame, schema: dict) -> pd.DataFrame:
+    """Drop rows that are missing any required field or have a non-numeric score."""
+    required = schema.get("required_fields", BASE_REQUIRED_FIELDS)
+    mask = pd.Series([True] * len(df), index=df.index)
+    for col in required:
+        if col not in df.columns:
+            return pd.DataFrame(columns=df.columns)
+        empty = df[col].isnull() | (df[col].astype(str).str.strip() == "") | (df[col].astype(str) == "None")
+        mask &= ~empty
+    if "score" in df.columns:
+        mask &= pd.to_numeric(df["score"], errors="coerce").notnull()
+    return df[mask].reset_index(drop=True)
 
 
 # ── Loaders ───────────────────────────────────────────────────────────────────
 
-def load_sota(path: str | Path) -> pd.DataFrame:
-    """Load SOTA baselines from a CSV or JSON file. Returns empty DataFrame if file missing."""
+def load_sota(path: str | Path, schema: Optional[dict] = None) -> pd.DataFrame:
+    """
+    Load SOTA baselines from a CSV or JSON file.
+    Validates against schema (auto-loaded from the file's parent folder if not provided).
+    Prints warnings for missing required fields; drops invalid rows.
+    Returns empty DataFrame if file is missing.
+    """
     p = Path(path)
     if not p.exists():
+        print(f"[SOTA] File not found: {p}  — skipping SOTA comparison.")
         return pd.DataFrame(columns=SOTA_COLUMNS)
-    if p.suffix.lower() == ".json":
-        return _load_json(p)
-    return _load_csv(p)
+
+    df = _load_json(p) if p.suffix.lower() == ".json" else _load_csv(p)
+
+    if schema is None:
+        schema = load_schema(p.parent)
+
+    warnings = validate_sota(df, schema)
+    for w in warnings:
+        print(w)
+
+    df = filter_valid_sota(df, schema)
+    if df.empty:
+        print("[SOTA] No valid rows found after validation. Check required fields.")
+    else:
+        print(f"[SOTA] Loaded {len(df)} valid baseline row(s) from {p.name}")
+
+    return df
 
 
 def _load_csv(p: Path) -> pd.DataFrame:

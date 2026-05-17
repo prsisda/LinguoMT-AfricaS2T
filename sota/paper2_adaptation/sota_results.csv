@@ -1,0 +1,2 @@
+paper_title,authors,year,model,dataset,language,direction,metric,score,citation_key,notes,ft_method,pretrained_score,num_ft_samples,trainable_params_pct,training_hours
+AfriSpeech-200: A Pan-African Accented Speech Dataset for Clinical and General Domain ASR,Olatunji et al.,2023,Whisper-large-v2 (fine-tuned),AfriSpeech,Yoruba,Source → English,WER,,olatunji2023afrispeech,Fill in WER after fine-tuning,full,,,,
