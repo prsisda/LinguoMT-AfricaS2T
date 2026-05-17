@@ -116,6 +116,7 @@ class DatasetCache:
     def _build_african_celtic(self, monitor) -> None:
         if monitor:
             monitor.step("Single-pass African-Celtic scan", self.split)
+
         # Build a lowercase → original mapping so matching is case-insensitive
         av_lower: dict[str, str] = {}
         for cfg in self.language_configs:
@@ -125,9 +126,13 @@ class DatasetCache:
         av_lower["english"] = "english"
         relevant_lower = set(av_lower.keys())
 
+        print(f"\n[Dataset] Starting African-Celtic scan: split={self.split!r}, "
+              f"max_scan_rows={self.max_scan_rows}, max_pairs={self.max_pairs}")
+        print(f"[Dataset] Searching for languages: {sorted(relevant_lower)}")
+
         id_to_items: dict[str, dict[str, Any]] = {}
-        all_langs:   set[str] = set()   # every language value seen in the dataset
-        found_langs: set[str] = set()   # values that matched our targets
+        all_langs:   set[str] = set()
+        found_langs: set[str] = set()
         scanned = 0
         try:
             stream = _load_no_torchcodec(self.dataset_id, "default", self.split)
@@ -145,21 +150,40 @@ class DatasetCache:
                         id_to_items[tid][canonical] = item
                     found_langs.add(lang_raw)
                 scanned += 1
+                if scanned % 500 == 0:
+                    print(f"[Dataset]   ... scanned {scanned} rows, "
+                          f"{len(id_to_items)} text_ids collected, "
+                          f"matched langs so far: {sorted(found_langs) or 'none yet'}")
         except Exception as e:
+            print(f"[Dataset] ERROR during scan: {e}")
             if monitor:
                 monitor.step("  Scan error", str(e)[:120])
 
+        print(f"[Dataset] Scan complete: {scanned} rows scanned, {len(id_to_items)} text_ids")
+        print(f"[Dataset] All langs in dataset:  {sorted(all_langs)}")
+        print(f"[Dataset] Matched target langs:  {sorted(found_langs) or 'NONE — check african_celtic_value in languages.py'}")
+
         if monitor:
             monitor.step(f"  Scanned {scanned} rows",
-                         f"{len(id_to_items)} text_ids | all langs in dataset: {sorted(all_langs)}")
-            monitor.step(f"  Matched target langs", f"{sorted(found_langs) or 'NONE — check african_celtic_value in languages.py'}")
+                         f"{len(id_to_items)} text_ids | all langs: {sorted(all_langs)}")
+            monitor.step("  Matched target langs",
+                         f"{sorted(found_langs) or 'NONE — check african_celtic_value in languages.py'}")
 
-        # Diagnostics: sample item keys to verify field names
-        if monitor and id_to_items:
-            sample_tid = next(iter(id_to_items))
+        # Print sample item to verify field names
+        if id_to_items:
+            sample_tid   = next(iter(id_to_items))
             sample_langs = list(id_to_items[sample_tid].keys())
             sample_item  = id_to_items[sample_tid][sample_langs[0]]
-            monitor.step("  Sample text_id keys", f"langs={sample_langs} | fields={sorted(sample_item.keys())}")
+            print(f"[Dataset] Sample text_id={sample_tid!r}: langs_present={sample_langs}")
+            print(f"[Dataset] Sample item fields: {sorted(sample_item.keys())}")
+            # Show actual text values for each field so we can see which one has content
+            for field in ["transcription", "raw_transcription", "text", "sentence"]:
+                val = sample_item.get(field)
+                print(f"[Dataset]   field={field!r}: {str(val)[:80] if val is not None else '<missing>'}")
+            if monitor:
+                monitor.step("  Sample item fields", f"tid={sample_tid} | fields={sorted(sample_item.keys())}")
+        else:
+            print("[Dataset] WARNING: id_to_items is empty — no rows matched any target language")
 
         for cfg in self.language_configs:
             lk = cfg["language_key"]
@@ -167,25 +191,31 @@ class DatasetCache:
             if not av:
                 self._cache[lk] = []
                 continue
-            has_src   = sum(1 for li in id_to_items.values() if av in li)
-            has_eng   = sum(1 for li in id_to_items.values() if "english" in li)
-            has_both  = sum(1 for li in id_to_items.values() if av in li and "english" in li)
+
+            has_src  = sum(1 for li in id_to_items.values() if av in li)
+            has_eng  = sum(1 for li in id_to_items.values() if "english" in li)
+            has_both = sum(1 for li in id_to_items.values() if av in li and "english" in li)
+            print(f"[Dataset] [{cfg['display']}] text_id overlap: "
+                  f"has_src={has_src}  has_eng={has_eng}  has_both={has_both}")
             if monitor:
                 monitor.step(f"  [{cfg['display']}] text_id overlap",
                              f"has_src={has_src} has_eng={has_eng} has_both={has_both}")
+
             pairs: list[dict] = []
-            empty_text = 0
+            skipped_no_pair = 0
+            skipped_empty   = 0
             for tid, lang_items in id_to_items.items():
                 if len(pairs) >= self.max_pairs:
                     break
                 src_item = lang_items.get(av) or lang_items.get(av.lower()) or lang_items.get(av.capitalize())
                 eng_item = lang_items.get("english")
                 if not src_item or not eng_item:
+                    skipped_no_pair += 1
                     continue
                 src_text = _norm(_get_text(src_item))
                 eng_text = _norm(_get_text(eng_item))
                 if not src_text or not eng_text:
-                    empty_text += 1
+                    skipped_empty += 1
                     continue
                 pairs.append({
                     "pair_idx":  len(pairs),
@@ -194,9 +224,16 @@ class DatasetCache:
                     "src_audio": src_item.get("audio"),
                     "eng_audio": eng_item.get("audio"),
                 })
+
+            print(f"[Dataset] [{cfg['display']}] pairs built: {len(pairs)}  "
+                  f"(skipped_no_pair={skipped_no_pair}, skipped_empty_text={skipped_empty})")
+            if pairs:
+                print(f"[Dataset]   First pair src: {pairs[0]['src_text'][:80]!r}")
+                print(f"[Dataset]   First pair eng: {pairs[0]['eng_text'][:80]!r}")
             self._cache[lk] = pairs
             if monitor:
-                monitor.step(f"  {cfg['display']}", f"{len(pairs)} pairs (skipped_empty_text={empty_text})")
+                monitor.step(f"  {cfg['display']}",
+                             f"{len(pairs)} pairs (skipped_no_pair={skipped_no_pair}, skipped_empty={skipped_empty})")
 
 
 # ── helpers ───────────────────────────────────────────────────────────────────
