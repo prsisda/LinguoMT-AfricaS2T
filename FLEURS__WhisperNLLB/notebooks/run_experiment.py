@@ -43,7 +43,7 @@ from transformers import (
 from framework import (
     detect_model_capabilities, select_supported_languages, get_adapter_type,
     DatasetCache, StepMonitor, create_run_dirs, save_config,
-    zip_run_outputs, drive_backup, mount_google_drive,
+    zip_run_outputs, drive_backup, colab_download, mount_google_drive,
     ExperimentRunner, RunConfig, default_experiment_configs,
 )
 warnings.filterwarnings("ignore")
@@ -53,6 +53,7 @@ DEBUG_MODE       = True
 FAST_MODE        = False
 SKIP_AUDIO_DEBUG = True
 FORCE_RERUN      = False
+RUN_FULL_GRID    = True   # False → only Experiment_1 in full mode
 WHISPER_ID       = "openai/whisper-large-v3"
 NLLB_ID          = "facebook/nllb-200-600M"
 MODEL_ID         = "whisper_nllb"   # virtual id for capability lookup
@@ -165,6 +166,7 @@ ExperimentRunner(
         experiment_family=EXPERIMENT_FAMILY, model_id=MODEL_ID, dataset_id=DATASET_ID,
         split=SPLIT, debug_mode=DEBUG_MODE, fast_mode=FAST_MODE,
         skip_audio_debug=SKIP_AUDIO_DEBUG, force_rerun=FORCE_RERUN,
+        run_full_grid=RUN_FULL_GRID,
         in_colab=ENV["in_colab"], eda_sample_size=25 if DEBUG_MODE else 200,
         directions=["source_to_english", "english_to_source"],
     ),
@@ -183,3 +185,5 @@ save_config(dirs, {
 })
 zip_run_outputs(dirs)
 drive_backup(dirs, drive_available)
+if ENV["in_colab"]:
+    colab_download(dirs)

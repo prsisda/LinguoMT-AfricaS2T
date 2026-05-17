@@ -17,10 +17,31 @@ AUDIO_STRATEGIES: list[dict] = [
 ]
 
 
+def _decode_raw_audio(audio_dict: dict, target_sr: int = TARGET_SR) -> tuple[np.ndarray, int]:
+    """Decode a raw {bytes, path} audio dict using soundfile (no torchcodec needed)."""
+    import io
+    import soundfile as sf
+    raw_bytes = audio_dict.get("bytes")
+    path      = audio_dict.get("path")
+    if raw_bytes:
+        audio, sr = sf.read(io.BytesIO(raw_bytes), dtype="float32", always_2d=False)
+    elif path:
+        audio, sr = sf.read(path, dtype="float32", always_2d=False)
+    else:
+        return np.zeros(int(MIN_DURATION_SEC * target_sr), dtype=np.float32), target_sr
+    return audio.astype(np.float32), int(sr)
+
+
 def extract_audio_array(audio_obj: Any, target_sr: int = TARGET_SR) -> np.ndarray:
     if isinstance(audio_obj, dict):
-        sr    = audio_obj.get("sampling_rate", target_sr)
-        audio = audio_obj.get("array")
+        if "array" in audio_obj and audio_obj["array"] is not None:
+            sr    = audio_obj.get("sampling_rate", target_sr)
+            audio = audio_obj["array"]
+        elif "bytes" in audio_obj or "path" in audio_obj:
+            # Raw (undecoded) audio dict — decode with soundfile
+            audio, sr = _decode_raw_audio(audio_obj, target_sr)
+        else:
+            return np.zeros(int(MIN_DURATION_SEC * target_sr), dtype=np.float32)
     else:
         sr, audio = target_sr, audio_obj
     if audio is None:

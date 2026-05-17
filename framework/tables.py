@@ -1,4 +1,5 @@
 from __future__ import annotations
+from pathlib import Path
 import numpy as np
 import pandas as pd
 
@@ -127,6 +128,70 @@ def build_summary_table(
                 "Trimmed audio → English":     _bleu(audio_results, experiment=exp_name, strategy_key="trimmed_audio",     direction_label=a2e, language=lang),
             })
     return pd.DataFrame(rows)
+
+
+def build_cross_language_comparisons(
+    text_results: pd.DataFrame,
+    audio_results: pd.DataFrame,
+) -> pd.DataFrame:
+    """T8 — BLEU pivoted by language × direction and mode (within one run)."""
+    frames = []
+    if not text_results.empty and "BLEU" in text_results.columns:
+        frames.append(text_results.assign(mode="text"))
+    if not audio_results.empty and "BLEU" in audio_results.columns:
+        if "strategy_key" in audio_results.columns:
+            base = audio_results[audio_results["strategy_key"] == "baseline_direct"]
+        else:
+            base = audio_results
+        if not base.empty:
+            frames.append(base.assign(mode="audio_baseline"))
+    if not frames:
+        return pd.DataFrame()
+    combined = pd.concat(frames, ignore_index=True)
+    try:
+        return combined.pivot_table(
+            index=["mode", "direction_label"],
+            columns="language",
+            values="BLEU",
+            aggfunc="mean",
+        ).reset_index()
+    except Exception:
+        return pd.DataFrame()
+
+
+def build_cross_model_comparisons(outputs_root: Path) -> pd.DataFrame:
+    """T9 — BLEU aggregated across all run dirs found under outputs_root."""
+    rows = []
+    root = Path(outputs_root)
+    for metric_file in root.glob("*/metrics/text_metrics.csv"):
+        try:
+            df = pd.read_csv(metric_file)
+            if "model_name" in df.columns:
+                rows.append(df)
+        except Exception:
+            pass
+    for metric_file in root.glob("*/metrics/audio_metrics.csv"):
+        try:
+            df = pd.read_csv(metric_file)
+            if "model_name" not in df.columns:
+                continue
+            if "strategy_key" in df.columns:
+                df = df[df["strategy_key"] == "baseline_direct"]
+            rows.append(df)
+        except Exception:
+            pass
+    if not rows:
+        return pd.DataFrame()
+    combined = pd.concat(rows, ignore_index=True)
+    try:
+        return combined.pivot_table(
+            index=["language", "direction_label"],
+            columns="model_name",
+            values="BLEU",
+            aggfunc="mean",
+        ).reset_index()
+    except Exception:
+        return pd.DataFrame()
 
 
 def build_qualitative_table(pred_df: pd.DataFrame, n: int = 5) -> pd.DataFrame:

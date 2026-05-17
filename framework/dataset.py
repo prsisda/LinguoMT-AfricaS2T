@@ -5,7 +5,17 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
-from datasets import load_dataset
+from datasets import load_dataset, Audio as HFAudio
+
+
+def _load_no_torchcodec(dataset_id: str, config: str, split: str):
+    """Load a streaming dataset with audio decoding disabled (avoids torchcodec/FFmpeg)."""
+    ds = load_dataset(dataset_id, config, split=split, streaming=True, trust_remote_code=False)
+    try:
+        ds = ds.cast_column("audio", HFAudio(decode=False))
+    except Exception:
+        pass
+    return ds
 
 
 def _norm(text: str) -> str:
@@ -78,8 +88,8 @@ class DatasetCache:
                 monitor.step(f"Loading FLEURS [{fc}]", self.split)
             pairs: list[dict] = []
             try:
-                en_stream  = load_dataset(self.dataset_id, "en_us", split=self.split, streaming=True)
-                src_stream = load_dataset(self.dataset_id, fc,      split=self.split, streaming=True)
+                en_stream  = _load_no_torchcodec(self.dataset_id, "en_us", self.split)
+                src_stream = _load_no_torchcodec(self.dataset_id, fc,      self.split)
                 for i, (en_item, src_item) in enumerate(zip(en_stream, src_stream)):
                     if i >= self.max_scan_rows or len(pairs) >= self.max_pairs:
                         break
@@ -113,7 +123,7 @@ class DatasetCache:
         id_to_items: dict[str, dict[str, Any]] = {}
         scanned = 0
         try:
-            stream = load_dataset(self.dataset_id, "default", split=self.split, streaming=True)
+            stream = _load_no_torchcodec(self.dataset_id, "default", self.split)
             for item in stream:
                 if scanned >= self.max_scan_rows:
                     break

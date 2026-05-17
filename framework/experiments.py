@@ -35,6 +35,7 @@ from .plots import (
 from .tables import (
     build_text_table, build_audio_table, build_strategy_pivot,
     build_direction_pivot, build_asr_table, build_summary_table, build_qualitative_table,
+    build_cross_language_comparisons, build_cross_model_comparisons,
 )
 
 warnings.filterwarnings("ignore")
@@ -52,6 +53,7 @@ class RunConfig:
     fast_mode:         bool = False
     skip_audio_debug:  bool = True
     force_rerun:       bool = False
+    run_full_grid:     bool = True
     in_colab:          bool = False
     eda_sample_size:   int  = 25
     directions:        list[str] = field(default_factory=lambda: ["source_to_english", "english_to_source"])
@@ -120,6 +122,8 @@ class ExperimentRunner:
     # ── public entry point ────────────────────────────────────────────────────
 
     def run(self) -> None:
+        if not self.cfg.run_full_grid and len(self.exp_cfgs) > 1:
+            self.exp_cfgs = self.exp_cfgs[:1]
         self.monitor.step("Run started", self.cfg.experiment_family)
         self._run_eda()
         self._strategy_rationale = select_strategies_from_eda(self._eda_compact)
@@ -180,6 +184,13 @@ class ExperimentRunner:
     # ── text evaluation ───────────────────────────────────────────────────────
 
     def _run_text_experiments(self) -> None:
+        pred_path   = self.dirs.predictions / "text_predictions.csv"
+        metric_path = self.dirs.metrics     / "text_metrics.csv"
+        if not self.cfg.force_rerun and pred_path.exists() and metric_path.exists():
+            self.monitor.step("Text eval — resuming from cache", pred_path.name)
+            self._text_preds   = pd.read_csv(pred_path).fillna("").to_dict("records")
+            self._text_results = pd.read_csv(metric_path).to_dict("records")
+            return
         self.monitor.step("Text evaluation started")
         for exp in self.exp_cfgs:
             exp_name = exp["experiment"]
@@ -218,6 +229,13 @@ class ExperimentRunner:
     # ── audio evaluation ──────────────────────────────────────────────────────
 
     def _run_audio_experiments(self) -> None:
+        pred_path   = self.dirs.predictions / "audio_predictions.csv"
+        metric_path = self.dirs.metrics     / "audio_metrics.csv"
+        if not self.cfg.force_rerun and pred_path.exists() and metric_path.exists():
+            self.monitor.step("Audio eval — resuming from cache", pred_path.name)
+            self._audio_preds   = pd.read_csv(pred_path).fillna("").to_dict("records")
+            self._audio_results = pd.read_csv(metric_path).to_dict("records")
+            return
         self.monitor.step("Audio evaluation started")
         for exp in self.exp_cfgs:
             exp_name   = exp["experiment"]
@@ -288,6 +306,13 @@ class ExperimentRunner:
     def _run_asr_experiments(self) -> None:
         if self._asr is None:
             return
+        pred_path   = self.dirs.predictions / "asr_predictions.csv"
+        metric_path = self.dirs.metrics     / "asr_metrics.csv"
+        if not self.cfg.force_rerun and pred_path.exists() and metric_path.exists():
+            self.monitor.step("ASR eval — resuming from cache", pred_path.name)
+            self._asr_preds   = pd.read_csv(pred_path).fillna("").to_dict("records")
+            self._asr_results = pd.read_csv(metric_path).to_dict("records")
+            return
         self.monitor.step("ASR evaluation started")
         for exp in self.exp_cfgs:
             exp_name = exp["experiment"]
@@ -353,11 +378,14 @@ class ExperimentRunner:
             compute_translation_metrics,
         )
         T7 = build_qualitative_table(pd.concat([p for p in [text_pd, audio_pd] if not p.empty], ignore_index=True))
+        T8 = build_cross_language_comparisons(text_df, audio_df)
+        T9 = build_cross_model_comparisons(self.dirs.base.parent)
 
-        for df, name in [(T1, "T1_text_evaluation.csv"), (T2, "T2_audio_evaluation.csv"),
-                         (T3, "T3_strategy_pivot.csv"),  (T4, "T4_direction_pivot.csv"),
-                         (T5, "T5_asr_evaluation.csv"),  (T6, "T6_summary_table.csv"),
-                         (T7, "T7_qualitative.csv")]:
+        for df, name in [(T1, "T1_text_evaluation.csv"),    (T2, "T2_audio_evaluation.csv"),
+                         (T3, "T3_strategy_pivot.csv"),     (T4, "T4_direction_pivot.csv"),
+                         (T5, "T5_asr_evaluation.csv"),     (T6, "T6_summary_table.csv"),
+                         (T7, "T7_qualitative.csv"),        (T8, "T8_cross_language.csv"),
+                         (T9, "T9_cross_model.csv")]:
             if not df.empty:
                 save_df(df, name, self.dirs.tables)
         save_df(T6, "summary_table.csv", self.dirs.metrics)
