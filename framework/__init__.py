@@ -5,6 +5,14 @@ from .monitoring import StepMonitor
 from .output import create_run_dirs, save_config, zip_run_outputs, drive_backup, colab_download
 from .dataset import DatasetCache
 from .experiments import ExperimentRunner, RunConfig, default_experiment_configs
+from .finetuning import (
+    FinetuneConfig,
+    NLLBTextFineTuner,
+    WhisperASRFineTuner,
+    SeamlessM4TFineTuner,
+    WhisperNLLBCascadeFineTuner,
+    build_finetune_comparison_table,
+)
 
 __all__ = [
     "detect_environment", "install_colab_dependencies", "mount_google_drive",
@@ -14,4 +22,8 @@ __all__ = [
     "create_run_dirs", "save_config", "zip_run_outputs", "drive_backup", "colab_download",
     "DatasetCache",
     "ExperimentRunner", "RunConfig", "default_experiment_configs",
+    "FinetuneConfig",
+    "NLLBTextFineTuner", "WhisperASRFineTuner",
+    "SeamlessM4TFineTuner", "WhisperNLLBCascadeFineTuner",
+    "build_finetune_comparison_table",
 ]

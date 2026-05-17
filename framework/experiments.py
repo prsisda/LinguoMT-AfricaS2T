@@ -37,6 +37,7 @@ from .tables import (
     build_direction_pivot, build_asr_table, build_summary_table, build_qualitative_table,
     build_cross_language_comparisons, build_cross_model_comparisons,
 )
+from .finetuning import build_finetune_comparison_table
 
 warnings.filterwarnings("ignore")
 
@@ -124,6 +125,9 @@ class ExperimentRunner:
         self._eda_rows:       list[dict] = []
         self._eda_compact:    pd.DataFrame = pd.DataFrame()
         self._strategy_rationale: dict = {}
+        # Before/after fine-tuning snapshots
+        self._pretrain_text_results: list[dict] = []
+        self._pretrain_asr_results:  list[dict] = []
 
     # ── public entry point ────────────────────────────────────────────────────
 
@@ -131,6 +135,21 @@ class ExperimentRunner:
         if not self.cfg.run_full_grid and len(self.exp_cfgs) > 1:
             self.exp_cfgs = self.exp_cfgs[:1]
         self.monitor.step("Run started", self.cfg.experiment_family)
+
+        # Baseline evaluation before fine-tuning (for before/after comparison)
+        if self.cfg.enable_finetuning and self._finetune is not None and self.train_cache is not None:
+            self.monitor.step("Baseline eval (pre-FT)")
+            if self.caps.t2tt and self._t_text is not None:
+                self._run_text_experiments()
+                self._pretrain_text_results = list(self._text_results)
+                self._text_results.clear(); self._text_preds.clear()
+            if self.caps.asr and self._asr is not None:
+                self._run_asr_experiments()
+                self._pretrain_asr_results = list(self._asr_results)
+                self._asr_results.clear(); self._asr_preds.clear()
+            # Reset resume cache so post-FT eval runs fresh
+            _clear_eval_cache(self.dirs)
+
         self._run_finetuning()
         self._run_eda()
         self._strategy_rationale = select_strategies_from_eda(self._eda_compact)
@@ -144,7 +163,7 @@ class ExperimentRunner:
         self.monitor.step("Run complete")
         print(f"\nOutputs → {self.dirs.base}")
 
-    # ── fine-tuning (placeholder) ─────────────────────────────────────────────
+    # ── fine-tuning ────────────────────────────────────────────────────────────
 
     def _run_finetuning(self) -> None:
         if not self.cfg.enable_finetuning:
@@ -159,17 +178,18 @@ class ExperimentRunner:
             if n == 0:
                 self.monitor.step(f"  [{exp['experiment']}] fine-tuning skipped", "max_text_train=0")
                 continue
-            for cfg in self.lang_cfgs:
-                lk    = cfg["language_key"]
+            for lang_cfg in self.lang_cfgs:
+                lk    = lang_cfg["language_key"]
                 pairs = self.train_cache.get_pairs(lk, n)
                 if not pairs:
-                    self.monitor.step(f"  [{cfg['display']}] no train pairs", "skipping")
+                    self.monitor.step(f"  [{lang_cfg['display']}] no train pairs", "skipping")
                     continue
                 try:
-                    self._finetune(pairs, cfg, exp)
-                    self.monitor.step(f"  [{cfg['display']}] fine-tuned", f"{len(pairs)} pairs")
+                    # _finetune may be a FineTuner.finetune method or a plain callable
+                    self._finetune(pairs, lang_cfg, exp)
+                    self.monitor.step(f"  [{lang_cfg['display']}] fine-tuned", f"{len(pairs)} pairs")
                 except Exception as e:
-                    self.monitor.step(f"  [{cfg['display']}] fine-tune error", str(e)[:120])
+                    self.monitor.step(f"  [{lang_cfg['display']}] fine-tune error", str(e)[:120])
         self.monitor.step("Fine-tuning complete")
 
     # ── EDA ───────────────────────────────────────────────────────────────────
@@ -429,6 +449,20 @@ class ExperimentRunner:
                 save_df(df, name, self.dirs.tables)
         save_df(T6, "summary_table.csv", self.dirs.metrics)
 
+        # Fine-tuning before/after comparison tables
+        if self.cfg.enable_finetuning:
+            T_FT1 = build_finetune_comparison_table(
+                self._pretrain_text_results, self._text_results, task="text"
+            )
+            T_FT2 = build_finetune_comparison_table(
+                self._pretrain_asr_results, self._asr_results, task="asr"
+            )
+            for df, name in [(T_FT1, "T_FT1_text_finetune_comparison.csv"),
+                             (T_FT2, "T_FT2_asr_finetune_comparison.csv")]:
+                if not df.empty:
+                    save_df(df, name, self.dirs.tables)
+                    print(df.to_string(index=False))
+
         # Plots
         plot_bleu_by_language_direction(text_df, self.dirs.plots, in_colab=self.cfg.in_colab)
         plot_strategy_comparison(audio_df, self.dirs.plots, in_colab=self.cfg.in_colab)
@@ -466,6 +500,17 @@ class ExperimentRunner:
 
     def _audio_strategy_enabled(self, strategy: dict, exp_name: str) -> bool:
         return strategy.get("key") in self.caps.enabled_strategies
+
+
+def _clear_eval_cache(dirs: "OutputDirs") -> None:
+    """Remove cached metric/prediction CSVs so post-FT eval runs from scratch."""
+    for name in ["text_metrics.csv", "text_predictions.csv",
+                 "asr_metrics.csv", "asr_predictions.csv",
+                 "audio_metrics.csv", "audio_predictions.csv"]:
+        for parent in [dirs.metrics, dirs.predictions]:
+            p = parent / name
+            if p.exists():
+                p.unlink()
 
 
 # ── module-level helpers ──────────────────────────────────────────────────────

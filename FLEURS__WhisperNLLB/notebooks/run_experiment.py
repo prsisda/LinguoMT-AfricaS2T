@@ -58,6 +58,7 @@ from framework import (
     DatasetCache, StepMonitor, create_run_dirs, save_config,
     zip_run_outputs, drive_backup, colab_download, mount_google_drive,
     ExperimentRunner, RunConfig, default_experiment_configs,
+    FinetuneConfig, WhisperNLLBCascadeFineTuner,
 )
 warnings.filterwarnings("ignore")
 
@@ -68,6 +69,30 @@ SKIP_AUDIO_DEBUG  = True
 FORCE_RERUN       = False
 RUN_FULL_GRID     = True    # False → only Experiment_1 in full mode
 ENABLE_FINETUNING = False   # set True once baseline is stable
+# ── Fine-tuning configuration (only used when ENABLE_FINETUNING = True) ──────
+FINETUNING_METHOD              = "lora"
+FINETUNE_TEXT_TRANSLATION      = True
+FINETUNE_REVERSE_TRANSLATION   = True
+FINETUNE_ASR                   = True
+FINETUNE_DIRECT_SPEECH_TRANSLATION = False
+TEXT_FINETUNE_SAMPLES          = 1000
+ASR_FINETUNE_SAMPLES           = 500
+ST_FINETUNE_SAMPLES            = 200
+TEXT_EPOCHS                    = 3
+TEXT_BATCH_SIZE                = 8
+TEXT_LR                        = 5e-5
+ASR_EPOCHS                     = 3
+ASR_BATCH_SIZE                 = 4
+ASR_LR                         = 1e-5
+ST_EPOCHS                      = 3
+ST_BATCH_SIZE                  = 4
+ST_LR                          = 1e-5
+GRADIENT_ACCUMULATION_STEPS    = 4
+FP16                           = True
+EARLY_STOPPING_PATIENCE        = 2
+SAVE_CHECKPOINTS               = True
+EVAL_BEFORE_AFTER              = True
+# ─────────────────────────────────────────────────────────────────────────────
 WHISPER_ID        = "openai/whisper-large-v3"
 NLLB_ID           = "facebook/nllb-200-600M"
 MODEL_ID          = "whisper_nllb"   # virtual id for capability lookup
@@ -159,6 +184,34 @@ def asr_transcribe(audio_arr, src_lang):
     return _whisper_asr(audio_arr, src_lang)
 
 
+# %% --- fine-tuner setup ---
+ft_cfg = FinetuneConfig(
+    finetune_text_translation=FINETUNE_TEXT_TRANSLATION,
+    finetune_reverse_translation=FINETUNE_REVERSE_TRANSLATION,
+    finetune_asr=FINETUNE_ASR,
+    finetune_direct_speech_translation=False,
+    finetuning_method=FINETUNING_METHOD,
+    text_finetune_samples=TEXT_FINETUNE_SAMPLES,
+    asr_finetune_samples=ASR_FINETUNE_SAMPLES,
+    st_finetune_samples=ST_FINETUNE_SAMPLES,
+    text_epochs=TEXT_EPOCHS, text_batch_size=TEXT_BATCH_SIZE, text_lr=TEXT_LR,
+    asr_epochs=ASR_EPOCHS,   asr_batch_size=ASR_BATCH_SIZE,   asr_lr=ASR_LR,
+    st_epochs=ST_EPOCHS,     st_batch_size=ST_BATCH_SIZE,     st_lr=ST_LR,
+    gradient_accumulation_steps=GRADIENT_ACCUMULATION_STEPS,
+    fp16=FP16, early_stopping_patience=EARLY_STOPPING_PATIENCE,
+    save_checkpoints=SAVE_CHECKPOINTS, eval_before_after=EVAL_BEFORE_AFTER,
+) if ENABLE_FINETUNING else None
+
+tuner = None
+if ENABLE_FINETUNING:
+    import torch
+    _device = torch.device(DEVICE)
+    tuner   = WhisperNLLBCascadeFineTuner(
+        whisper_model, whisper_proc,
+        nllb_model, nllb_tok,
+        ft_cfg, _device,
+    )
+
 # %% --- data cache ---
 exp_cfgs      = default_experiment_configs(DEBUG_MODE)
 max_dev_pairs = max(e["max_text_dev"]   for e in exp_cfgs)
@@ -191,6 +244,9 @@ if ENABLE_FINETUNING and max_trn_pairs > 0:
 # translate_audio needs whisper_code for ASR — the nllb→whisper map inside translate_audio handles this.
 
 # %% --- run ---
+if tuner and ft_cfg:
+    ft_cfg.checkpoint_dir = str(dirs.base / "checkpoints")
+
 ExperimentRunner(
     config=RunConfig(
         model_name=MODEL_NAME, dataset_name=DATASET_NAME,
@@ -205,6 +261,7 @@ ExperimentRunner(
     capabilities=caps, data_cache=dev_cache, train_cache=train_cache,
     language_configs=lang_cfgs, dirs=dirs, monitor=monitor, experiment_configs=exp_cfgs,
     translate_text_fn=translate_text, translate_audio_fn=translate_audio, asr_fn=asr_transcribe,
+    finetune_fn=tuner.finetune if tuner else None,
 ).run()
 
 # %% --- archive ---
