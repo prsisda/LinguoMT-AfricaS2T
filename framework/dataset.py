@@ -154,13 +154,27 @@ class DatasetCache:
                          f"{len(id_to_items)} text_ids | all langs in dataset: {sorted(all_langs)}")
             monitor.step(f"  Matched target langs", f"{sorted(found_langs) or 'NONE — check african_celtic_value in languages.py'}")
 
+        # Diagnostics: sample item keys to verify field names
+        if monitor and id_to_items:
+            sample_tid = next(iter(id_to_items))
+            sample_langs = list(id_to_items[sample_tid].keys())
+            sample_item  = id_to_items[sample_tid][sample_langs[0]]
+            monitor.step("  Sample text_id keys", f"langs={sample_langs} | fields={sorted(sample_item.keys())}")
+
         for cfg in self.language_configs:
             lk = cfg["language_key"]
             av = cfg.get("african_celtic_value")
             if not av:
                 self._cache[lk] = []
                 continue
+            has_src   = sum(1 for li in id_to_items.values() if av in li)
+            has_eng   = sum(1 for li in id_to_items.values() if "english" in li)
+            has_both  = sum(1 for li in id_to_items.values() if av in li and "english" in li)
+            if monitor:
+                monitor.step(f"  [{cfg['display']}] text_id overlap",
+                             f"has_src={has_src} has_eng={has_eng} has_both={has_both}")
             pairs: list[dict] = []
+            empty_text = 0
             for tid, lang_items in id_to_items.items():
                 if len(pairs) >= self.max_pairs:
                     break
@@ -171,6 +185,7 @@ class DatasetCache:
                 src_text = _norm(_get_text(src_item))
                 eng_text = _norm(_get_text(eng_item))
                 if not src_text or not eng_text:
+                    empty_text += 1
                     continue
                 pairs.append({
                     "pair_idx":  len(pairs),
@@ -181,7 +196,7 @@ class DatasetCache:
                 })
             self._cache[lk] = pairs
             if monitor:
-                monitor.step(f"  {cfg['display']}", f"{len(pairs)} pairs")
+                monitor.step(f"  {cfg['display']}", f"{len(pairs)} pairs (skipped_empty_text={empty_text})")
 
 
 # ── helpers ───────────────────────────────────────────────────────────────────
