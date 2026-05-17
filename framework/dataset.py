@@ -18,6 +18,19 @@ def _load_no_torchcodec(dataset_id: str, config: str, split: str):
     return ds
 
 
+def _align_key(text_id: str) -> str:
+    """Strip the language-initial prefix from African-Celtic text_ids.
+
+    Each language uses a single-character prefix (E=English, H=Hausa,
+    I=Igbo, Y=Yoruba) followed by a shared suffix, e.g. 'ETE_0001' and
+    'ITE_0001' both align to 'TE_0001'.
+    """
+    tid = str(text_id).strip().upper()
+    if len(tid) >= 2 and tid[0] in {"E", "H", "I", "Y"}:
+        return tid[1:]
+    return tid
+
+
 def _norm(text: str) -> str:
     text = unicodedata.normalize("NFKC", str(text))
     return re.sub(r"\s+", " ", text).strip()
@@ -142,12 +155,13 @@ class DatasetCache:
                 lang_raw  = item.get("language", "")
                 lang_norm = lang_raw.lower()
                 tid       = item.get("text_id", "")
+                akey      = _align_key(tid)
                 all_langs.add(lang_raw)
-                if lang_norm in relevant_lower and tid:
+                if lang_norm in relevant_lower and akey:
                     canonical = av_lower[lang_norm]
-                    id_to_items.setdefault(tid, {})
-                    if canonical not in id_to_items[tid]:
-                        id_to_items[tid][canonical] = item
+                    id_to_items.setdefault(akey, {})
+                    if canonical not in id_to_items[akey]:
+                        id_to_items[akey][canonical] = item
                     found_langs.add(lang_raw)
                 scanned += 1
                 if scanned % 500 == 0:
@@ -174,7 +188,8 @@ class DatasetCache:
             sample_tid   = next(iter(id_to_items))
             sample_langs = list(id_to_items[sample_tid].keys())
             sample_item  = id_to_items[sample_tid][sample_langs[0]]
-            print(f"[Dataset] Sample text_id={sample_tid!r}: langs_present={sample_langs}")
+            raw_tid      = sample_item.get("text_id", "?")
+            print(f"[Dataset] Sample align_key={sample_tid!r} (raw text_id={raw_tid!r}): langs_present={sample_langs}")
             print(f"[Dataset] Sample item fields: {sorted(sample_item.keys())}")
             # Show actual text values for each field so we can see which one has content
             for field in ["transcription", "raw_transcription", "text", "sentence"]:
