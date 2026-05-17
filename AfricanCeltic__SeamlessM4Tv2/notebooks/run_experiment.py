@@ -90,6 +90,17 @@ EARLY_STOPPING_PATIENCE        = 2
 SAVE_CHECKPOINTS               = True
 EVAL_BEFORE_AFTER              = True
 # ─────────────────────────────────────────────────────────────────────────────
+# ── Publication settings ──────────────────────────────────────────────────────
+# PAPER_MODE selects the output emphasis for the LinguoMT journal series:
+#   "benchmark"  → LinguoMT (pretrained baseline evaluation + SOTA comparison)
+#   "adaptation" → LinguoMT-Adapt (fine-tuning before/after)
+#   "audio"      → LinguoMT-Audio (audio strategy analysis)
+#   "cascade"    → LinguoMT-Cascade (cascade vs end-to-end)
+#   "transfer"   → LinguoMT-Transfer (cross-lingual analysis)
+PAPER_MODE        = "benchmark"
+# Path to sota_results.csv or published_baselines.json (leave "" to skip SOTA tables)
+SOTA_FILE         = ""    # e.g. "sota/sota_results.csv"
+# ─────────────────────────────────────────────────────────────────────────────
 MODEL_ID          = "facebook/seamless-m4t-v2-large"
 DATASET_ID        = "McGill-NLP/african_celtic_dataset"
 MODEL_NAME        = "SeamlessM4T-v2 Large"
@@ -212,6 +223,8 @@ ExperimentRunner(
         run_full_grid=RUN_FULL_GRID, enable_finetuning=ENABLE_FINETUNING,
         in_colab=ENV["in_colab"], eda_sample_size=25 if DEBUG_MODE else 200,
         directions=["source_to_english", "english_to_source"],
+        paper_mode=PAPER_MODE,
+        sota_path=SOTA_FILE,
     ),
     capabilities=caps, data_cache=dev_cache, train_cache=train_cache,
     language_configs=lang_cfgs, dirs=dirs, monitor=monitor, experiment_configs=exp_cfgs,

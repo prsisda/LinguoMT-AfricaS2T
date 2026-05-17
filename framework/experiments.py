@@ -38,6 +38,12 @@ from .tables import (
     build_cross_language_comparisons, build_cross_model_comparisons,
 )
 from .finetuning import build_finetune_comparison_table
+from .sota import (
+    load_sota, build_sota_comparison_table, build_gap_table,
+    build_system_ranking_table, build_improvement_table,
+    generate_sota_interpretation,
+)
+from .paper_modes import get_paper_mode_config
 
 warnings.filterwarnings("ignore")
 
@@ -59,6 +65,8 @@ class RunConfig:
     in_colab:          bool = False
     eda_sample_size:   int  = 25
     enable_finetuning: bool = False   # disabled until baseline is stable
+    paper_mode:        str  = "benchmark"  # benchmark | adaptation | audio | cascade | transfer
+    sota_path:         str  = ""           # path to sota_results.csv or published_baselines.json
     directions:        list[str] = field(default_factory=lambda: ["source_to_english", "english_to_source"])
     extra:             dict = field(default_factory=dict)
 
@@ -134,7 +142,9 @@ class ExperimentRunner:
     def run(self) -> None:
         if not self.cfg.run_full_grid and len(self.exp_cfgs) > 1:
             self.exp_cfgs = self.exp_cfgs[:1]
-        self.monitor.step("Run started", self.cfg.experiment_family)
+        mode_info = get_paper_mode_config(self.cfg.paper_mode)
+        self.monitor.step("Run started", f"{self.cfg.experiment_family} | mode={self.cfg.paper_mode}")
+        print(f"[LinguoMT] Paper mode: {self.cfg.paper_mode!r} — {mode_info.title}")
 
         # Baseline evaluation before fine-tuning (for before/after comparison)
         if self.cfg.enable_finetuning and self._finetune is not None and self.train_cache is not None:
@@ -462,6 +472,57 @@ class ExperimentRunner:
                 if not df.empty:
                     save_df(df, name, self.dirs.tables)
                     print(df.to_string(index=False))
+
+        # SOTA comparison tables (paper-mode-driven)
+        mode_cfg  = get_paper_mode_config(self.cfg.paper_mode)
+        sota_df   = load_sota(self.cfg.sota_path) if self.cfg.sota_path else pd.DataFrame()
+        _sota_available = not sota_df.empty
+
+        if _sota_available and mode_cfg.include_sota_comparison:
+            T_SOTA1 = build_sota_comparison_table(
+                text_df, sota_df, metric=mode_cfg.primary_metric,
+                dataset_filter=self.cfg.dataset_name,
+            )
+            if not T_SOTA1.empty:
+                save_df(T_SOTA1, "T_SOTA1_vs_published.csv", self.dirs.tables)
+
+        if _sota_available and mode_cfg.include_gap_table:
+            T_SOTA2 = build_gap_table(text_df, sota_df, metric=mode_cfg.primary_metric)
+            if not T_SOTA2.empty:
+                save_df(T_SOTA2, "T_SOTA2_language_gap.csv", self.dirs.tables)
+
+        if _sota_available and mode_cfg.include_system_ranking:
+            T_SOTA3 = build_system_ranking_table(
+                self.cfg.model_name, text_df, sota_df, metric=mode_cfg.primary_metric
+            )
+            if not T_SOTA3.empty:
+                save_df(T_SOTA3, "T_SOTA3_system_ranking.csv", self.dirs.tables)
+
+        if mode_cfg.include_improvement_table and self._pretrain_text_results:
+            T_SOTA4 = build_improvement_table(
+                pd.DataFrame(self._pretrain_text_results), text_df,
+                metric=mode_cfg.primary_metric,
+            )
+            if not T_SOTA4.empty:
+                save_df(T_SOTA4, "T_SOTA4_improvement.csv", self.dirs.tables)
+
+        if _sota_available and mode_cfg.include_sota_comparison:
+            _sota_cmp   = T_SOTA1 if "T_SOTA1" in dir() else pd.DataFrame()
+            _gap_table  = T_SOTA2 if "T_SOTA2" in dir() else pd.DataFrame()
+            sota_interp = generate_sota_interpretation(
+                _sota_cmp, _gap_table, self.cfg.model_name, mode_cfg.primary_metric
+            )
+            (self.dirs.interpretations / "I_SOTA.md").write_text(sota_interp, encoding="utf-8")
+
+        # Write paper-mode header to summary directory
+        _mode_header = (
+            f"# {mode_cfg.title}\n\n"
+            f"**Paper mode:** {mode_cfg.mode}  |  "
+            f"**Model:** {self.cfg.model_name}  |  "
+            f"**Dataset:** {self.cfg.dataset_name}\n\n"
+            f"{mode_cfg.description}\n"
+        )
+        (self.dirs.summaries / "paper_mode.md").write_text(_mode_header, encoding="utf-8")
 
         # Plots
         plot_bleu_by_language_direction(text_df, self.dirs.plots, in_colab=self.cfg.in_colab)

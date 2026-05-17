@@ -1,0 +1,30 @@
+{
+  "baselines": [
+    {
+      "paper_title": "SeamlessM4T: Massively Multilingual & Multimodal Machine Translation",
+      "authors": "Barrault et al.",
+      "year": 2023,
+      "model": "SeamlessM4T-v2-large",
+      "dataset": "FLEURS",
+      "language": "Yoruba",
+      "direction": "Source → English",
+      "metric": "BLEU",
+      "score": 12.4,
+      "citation_key": "barrault2023seamless",
+      "notes": "Official FLEURS test set evaluation"
+    },
+    {
+      "paper_title": "SeamlessM4T: Massively Multilingual & Multimodal Machine Translation",
+      "authors": "Barrault et al.",
+      "year": 2023,
+      "model": "SeamlessM4T-v2-large",
+      "dataset": "FLEURS",
+      "language": "Hausa",
+      "direction": "Source → English",
+      "metric": "BLEU",
+      "score": 18.7,
+      "citation_key": "barrault2023seamless",
+      "notes": "Official FLEURS test set evaluation"
+    }
+  ]
+}

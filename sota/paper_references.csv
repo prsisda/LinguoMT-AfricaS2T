@@ -1,0 +1,4 @@
+citation_key,paper_title,authors,year,venue,url,notes
+barrault2023seamless,SeamlessM4T: Massively Multilingual & Multimodal Machine Translation,Barrault et al.,2023,arXiv:2308.11596,,
+radford2023whisper,Robust Speech Recognition via Large-Scale Weak Supervision,Radford et al.,2023,ICML 2023,,
+costa2022no,No Language Left Behind: Scaling Human-Centered Machine Translation,Costa-jussa et al.,2022,arXiv:2207.04672,,NLLB-200 paper

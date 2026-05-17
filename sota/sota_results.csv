@@ -1,0 +1,6 @@
+paper_title,authors,year,model,dataset,language,direction,metric,score,citation_key,notes
+SeamlessM4T: Massively Multilingual & Multimodal Machine Translation,Barrault et al.,2023,SeamlessM4T-v2-large,FLEURS,Yoruba,Source → English,BLEU,12.4,barrault2023seamless,Official FLEURS test set evaluation
+SeamlessM4T: Massively Multilingual & Multimodal Machine Translation,Barrault et al.,2023,SeamlessM4T-v2-large,FLEURS,Hausa,Source → English,BLEU,18.7,barrault2023seamless,Official FLEURS test set evaluation
+SeamlessM4T: Massively Multilingual & Multimodal Machine Translation,Barrault et al.,2023,SeamlessM4T-v2-large,FLEURS,Igbo,Source → English,BLEU,9.1,barrault2023seamless,Official FLEURS test set evaluation
+Whisper: Robust Speech Recognition via Large-Scale Weak Supervision,Radford et al.,2023,Whisper-large-v3,FLEURS,Yoruba,Source → English,WER,0.42,radford2023whisper,
+Whisper: Robust Speech Recognition via Large-Scale Weak Supervision,Radford et al.,2023,Whisper-large-v3,FLEURS,Hausa,Source → English,WER,0.31,radford2023whisper,
