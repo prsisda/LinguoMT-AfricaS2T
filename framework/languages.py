@@ -7,9 +7,9 @@ if TYPE_CHECKING:
 # Comprehensive African language registry.
 # Each entry maps a canonical key to dataset/model-specific codes.
 AFRICAN_LANGUAGES: dict[str, dict] = {
-    "igbo":     {"display": "Igbo",     "iso3": "ibo", "seamless_code": "ibo",  "whisper_code": None,  "nllb_code": "ibo_Latn", "fleurs_config": "ig_ng", "african_celtic_value": "ibo"},
-    "yoruba":   {"display": "Yoruba",   "iso3": "yor", "seamless_code": "yor",  "whisper_code": "yo",  "nllb_code": "yor_Latn", "fleurs_config": "yo_ng", "african_celtic_value": "yor"},
-    "hausa":    {"display": "Hausa",    "iso3": "hau", "seamless_code": "hau",  "whisper_code": "ha",  "nllb_code": "hau_Latn", "fleurs_config": "ha_ng", "african_celtic_value": "hau"},
+    "igbo":     {"display": "Igbo",     "iso3": "ibo", "seamless_code": "ibo",  "whisper_code": None,  "nllb_code": "ibo_Latn", "fleurs_config": "ig_ng", "african_celtic_value": "igbo"},
+    "yoruba":   {"display": "Yoruba",   "iso3": "yor", "seamless_code": "yor",  "whisper_code": "yo",  "nllb_code": "yor_Latn", "fleurs_config": "yo_ng", "african_celtic_value": "yoruba"},
+    "hausa":    {"display": "Hausa",    "iso3": "hau", "seamless_code": "hau",  "whisper_code": "ha",  "nllb_code": "hau_Latn", "fleurs_config": "ha_ng", "african_celtic_value": "hausa"},
     "swahili":  {"display": "Swahili",  "iso3": "swh", "seamless_code": "swh",  "whisper_code": "sw",  "nllb_code": "swh_Latn", "fleurs_config": "sw_ke", "african_celtic_value": None},
     "amharic":  {"display": "Amharic",  "iso3": "amh", "seamless_code": "amh",  "whisper_code": None,  "nllb_code": "amh_Ethi", "fleurs_config": "am_et", "african_celtic_value": None},
     "wolof":    {"display": "Wolof",    "iso3": "wol", "seamless_code": "wol",  "whisper_code": None,  "nllb_code": "wol_Latn", "fleurs_config": "wo_sn", "african_celtic_value": None},
