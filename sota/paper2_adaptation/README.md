@@ -1,73 +1,136 @@
 # Paper 2 — LinguoMT-Adapt: Parameter-Efficient Fine-Tuning for African Speech Translation
 
 **Paper mode:** `adaptation`  
-**Schema file:** `schema.json` — read by the framework to validate your data before generating comparison tables.
+**Schema file:** `schema.json` — read by the framework to validate data before generating comparison tables.
 
 ---
 
-## How to add results
+## Data sources in this folder
 
-1. Open `sota_results.csv` in this folder.
-2. Add one row per system × language × direction × metric.
-3. Fill in every **★ Required** field. Leave **○ Optional** fields blank if unknown.
-4. Add the citation key to `sota/paper_references.csv`.
-5. Set `SOTA_FILE = "sota/paper2_adaptation/sota_results.csv"` in your run script.
-
-The framework validates against `schema.json` at load time. Rows with missing required fields
-are skipped with a printed warning.
+| File | Format | Purpose |
+|------|--------|---------|
+| `references.yaml` | YAML list | Bibliography + comparison metadata (preferred) |
+| `sota_results.csv` | CSV | Tabular baselines — one row per result |
 
 ---
 
-## Field reference
+## Working with `references.yaml` (recommended)
 
-### Base fields (all papers)
+Each entry is a bibliographic reference enriched with comparison fields.
+Use one entry per paper × language combination.
+
+**To activate a baseline in comparison tables: fill in `score`.**
+
+### Entry format
+
+```yaml
+- citation_key: dossou2022masakhaspeech_hausa
+  type: inproceedings
+  author: "Dossou, Bonaventure F. P. and Emezue, Chris Chinenye and others"
+  title: "MasakhaSpeech: End-to-End Speech Recognition for 5 African Languages"
+  year: 2022
+  booktitle: "Proceedings of Interspeech 2022"
+  url: "https://arxiv.org/abs/2206.00253"
+
+  # --- comparison fields ---
+  model: "Wav2Vec2-XLSR (fine-tuned)"
+  datasets: [MasakhaSpeech]                      # list — all datasets evaluated on
+  language: Hausa
+  directions: [ASR]                              # list — all task directions reported
+  metrics: [WER]                                 # list — score corresponds to metrics[0]
+  score: null                                    # fill in WER from Table 2
+  ft_method: full_finetune                       # paper-specific required field
+  summary: >
+    Fine-tunes Wav2Vec2-XLSR on 5 African languages (~10h each). Direct adaptation baseline
+    for Hausa ASR fine-tuning. Shows what full fine-tuning achieves with limited data.
+  notes: "Fill in Hausa WER from Table 2 of arXiv:2206.00253"
+```
+
+### Reference fields
+
+#### Standard bibliographic
+
+| Field | Status | Type | Description |
+|-------|--------|------|-------------|
+| `citation_key` | ★ Required | str | Unique identifier, one per paper × language |
+| `type` | ★ Required | str | `article`, `inproceedings`, `misc` |
+| `author` | ★ Required | str | Full author list as a single string |
+| `title` | ★ Required | str | Full paper title |
+| `year` | ★ Required | int | 4-digit publication year |
+| `journal` | ○ Optional | str | Journal name |
+| `booktitle` | ○ Optional | str | Conference name |
+| `url` | ○ Optional | str | Link to the paper |
+
+#### Comparison
+
+| Field | Status | Type | Description |
+|-------|--------|------|-------------|
+| `model` | ★ Required | str | Base model + adaptation method, e.g. `Whisper-large-v3 + LoRA` |
+| `datasets` | ★ Required | list | All datasets the paper evaluates on |
+| `language` | ★ Required | str | Target language — `Yoruba`, `Hausa`, `Igbo` |
+| `directions` | ★ Required | list | All task directions, e.g. `[ASR]` or `["Source → English"]` |
+| `metrics` | ★ Required | list | All metrics reported; `score` corresponds to `metrics[0]` |
+| `score` | ★ Required | float\|null | Numeric score for `metrics[0]`; `null` = not yet filled |
+| `summary` | ★ Required | str | 2–5 sentences on what the paper does and why it is relevant |
+| `ft_method` | ★ Required | str | Adaptation method: `lora`, `adapter`, `full_finetune`, `prefix`, `none` |
+| `notes` | ○ Optional | str | Where to find the score, training conditions |
+| `pretrained_score` | ○ Optional | float | Score **before** adaptation — enables before/after comparison |
+| `num_ft_samples` | ○ Optional | int | Number of training samples used for adaptation |
+| `trainable_params_pct` | ○ Optional | float | % of parameters trained, e.g. `0.5` for 0.5% |
+
+> **Tip:** If you have both pre- and post-adaptation scores from the same paper, fill in
+> `pretrained_score` alongside `score`. The framework builds a before/after table automatically.
+
+> **Zero-shot baselines** (no fine-tuning, e.g. SeamlessM4T pre-trained only): set `ft_method: none`.
+
+---
+
+## Working with `sota_results.csv`
+
+One row per system × language × metric. Flat fields — no lists.
 
 | Field | Status | Type | Description |
 |-------|--------|------|-------------|
 | `paper_title` | ★ Required | str | Full paper title |
 | `authors` | ★ Required | str | First author + et al. |
-| `year` | ★ Required | int | 4-digit publication year |
-| `model` | ★ Required | str | Base model + method, e.g. `Whisper-large-v3 + LoRA` |
-| `dataset` | ★ Required | str | Evaluation dataset name |
-| `language` | ★ Required | str | Display name matching our system — `Yoruba`, `Hausa`, `Igbo` |
+| `year` | ★ Required | int | 4-digit year |
+| `model` | ★ Required | str | Base model + adaptation method |
+| `dataset` | ★ Required | str | Dataset name |
+| `language` | ★ Required | str | Display language name |
 | `direction` | ★ Required | str | `Source → English` or `English → Source` |
-| `metric` | ★ Required | str | `BLEU`, `ChrF`, `WER`, or `CER` |
-| `score` | ★ Required | float | Score **after** adaptation — must not be empty |
-| `citation_key` | ★ Required | str | BibTeX key also listed in `sota/paper_references.csv` |
-| `notes` | ○ Optional | str | Training conditions, data size, epochs |
-
-### Paper-specific fields
-
-| Field | Status | Type | Description |
-|-------|--------|------|-------------|
-| `ft_method` | ★ Required | str | Adaptation method: `LoRA`, `adapter`, `full`, `prefix`, `prompt` |
-| `pretrained_score` | ○ Optional | float | Score **before** adaptation — enables before/after comparison in `T_SOTA4` |
-| `num_ft_samples` | ○ Optional | int | Number of training samples used |
-| `trainable_params_pct` | ○ Optional | float | % of parameters trained, e.g. `0.5` for 0.5% |
-| `training_hours` | ○ Optional | float | GPU hours required for fine-tuning |
-
-> **Tip:** If you have both pre- and post-adaptation scores from the same paper, fill in
-> `pretrained_score` alongside `score`. The framework will build a before/after table automatically.
+| `metric` | ★ Required | str | `BLEU`, `spBLEU`, `ChrF`, `WER`, or `CER` |
+| `score` | ★ Required | float | Score after adaptation |
+| `citation_key` | ★ Required | str | Key matching an entry in `references.yaml` |
+| `ft_method` | ★ Required | str | Adaptation method |
+| `pretrained_score` | ○ Optional | float | Score before adaptation |
+| `num_ft_samples` | ○ Optional | int | Training samples used |
+| `trainable_params_pct` | ○ Optional | float | % of parameters trained |
+| `training_hours` | ○ Optional | float | GPU hours |
+| `notes` | ○ Optional | str | Training conditions |
 
 ---
 
-## What papers to look for
+## Published baselines to fill in
 
-### PEFT for speech and translation
+### Zero-shot baselines (no fine-tuning)
 
-| Model/Method | Authors | Year | arXiv / Venue |
-|--------------|---------|------|---------------|
-| LoRA for Whisper (low-resource ASR) | Various | 2023–2024 | Search "LoRA Whisper low-resource" |
-| Efficient Fine-Tuning of Whisper | Gandhe et al. | 2023 | INTERSPEECH 2023 |
-| Adapter-based multilingual ASR | Thomas et al. | 2022 | INTERSPEECH 2022 |
-| PEFT for SeamlessM4T | Various | 2024 | ArXiv search |
+| Model | Dataset | Languages | Metric | Where to find scores |
+|-------|---------|-----------|--------|----------------------|
+| SeamlessM4T-v2-large | FLEURS | Yoruba, Hausa | BLEU | Table B.1 of `arXiv:2312.05187` |
 
-### African language-specific adaptation
+### ASR fine-tuning baselines
 
-| System | Authors | Year | arXiv / Venue |
-|--------|---------|------|---------------|
-| AfriSpeech-200 | Olatunji et al. | 2023 | `arXiv:2209.00670` — WER before/after FT |
-| MasakhaSpeech | Ogunremi et al. | 2023 | `arXiv:2311.06023` |
+| Model/Method | Dataset | Languages | Metric | Where to find scores |
+|--------------|---------|-----------|--------|----------------------|
+| Wav2Vec2-XLSR (full FT) | MasakhaSpeech | Hausa, Yoruba | WER | Table 2 of `arXiv:2206.00253` |
+| Whisper-large-v2 (full FT) | AfriSpeech-200 | African-accented English | WER | Table 4 of `arXiv:2104.02010` |
+
+### Methodology references (cite, not compare)
+
+| Paper | Purpose |
+|-------|---------|
+| LoRA — Hu et al. 2022 (`arXiv:2106.09685`) | LoRA adaptation method |
+| Adapter — Bapna & Firat 2019 (`arXiv:1909.08478`) | Adapter method baseline |
 
 ---
 
@@ -76,5 +139,5 @@ are skipped with a printed warning.
 ```python
 PAPER_MODE        = "adaptation"
 ENABLE_FINETUNING = True
-SOTA_FILE         = "sota/paper2_adaptation/sota_results.csv"
+SOTA_FILE         = "sota/paper2_adaptation/references.yaml"
 ```
