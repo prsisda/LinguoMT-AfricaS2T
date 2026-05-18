@@ -33,13 +33,13 @@
     },
     "required_comparison": {
       "model":           { "type": "str",           "description": "Model name, e.g. 'Whisper-large-v3'" },
-      "dataset":         { "type": "str",           "description": "Evaluation dataset" },
-      "language":        { "type": "str",           "description": "Target language. One entry per language." },
-      "direction":       { "type": "str",           "description": "Task: 'ASR', 'Source → English'" },
-      "metric":          { "type": "str",           "description": "Metric: 'BLEU', 'WER', 'ChrF', 'CER'" },
-      "score":           { "type": "float_or_null", "description": "Numeric score. null = not yet filled; excluded from comparison tables." },
-      "summary":         { "type": "str",           "description": "2–5 sentences: what the paper does, what audio conditions are evaluated, why it is relevant as a robustness comparator." },
-      "audio_condition": { "type": "str",           "description": "Audio condition label: 'clean', 'noisy', 'augmented', 'vad_filtered', 'normalized'" }
+      "datasets":        { "type": "list[str]",    "description": "List of dataset names, e.g. [FLEURS] or [LibriSpeech, CHiME-6]" },
+      "language":        { "type": "str",          "description": "Target language. One entry per language." },
+      "directions":      { "type": "list[str]",    "description": "List of task directions, e.g. [ASR] or ['Source → English']" },
+      "metrics":         { "type": "list[str]",    "description": "List of reported metrics, e.g. [WER]. 'score' corresponds to metrics[0]." },
+      "score":           { "type": "float_or_null","description": "Numeric score for metrics[0]. null = not yet filled; excluded from comparison tables." },
+      "summary":         { "type": "str",          "description": "2–5 sentences: what the paper does, what audio conditions are evaluated, why it is relevant as a robustness comparator." },
+      "audio_condition": { "type": "str",          "description": "Audio condition label: 'clean', 'noisy', 'augmented', 'vad_filtered', 'normalized'" }
     },
     "optional_standard": {
       "journal":   { "type": "str", "description": "Journal or preprint identifier" },

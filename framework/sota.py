@@ -19,11 +19,11 @@ Validation is always advisory — warnings are printed but never raised as error
 
 YAML reference fields (no prefix — all are plain field names):
   model      — model name used for evaluation
-  dataset    — dataset name
+  datasets   — list of dataset names, e.g. [FLEURS, AfriSpeech-200]
   language   — display language name (e.g. Yoruba)
-  direction  — Source → English  |  English → Source  |  ASR  |  Text MT
-  metric     — BLEU | spBLEU | ChrF | WER | CER
-  score      — numeric score (null if unknown — excluded from comparison tables)
+  directions — list of task directions, e.g. [Source → English, ASR]
+  metrics    — list of reported metrics, e.g. [BLEU, WER]; score matches metrics[0]
+  score      — numeric score for metrics[0] (null if unknown — excluded from comparison tables)
   summary    — 2–5 sentences: what the paper does, why it is relevant
   notes      — evaluation conditions, split, caveats (optional)
   + paper-specific fields declared in schema.json reference_fields section
@@ -192,24 +192,29 @@ def _load_json(p: Path) -> pd.DataFrame:
 
 # ── YAML reference parser ─────────────────────────────────────────────────────
 
-# Mapping from YAML entry fields → DataFrame column names
-_YAML_FIELD_MAP = {
-    "author":    "authors",
-    "title":     "paper_title",
-    "year":      "year",
-    "model":     "model",
-    "dataset":   "dataset",
-    "language":  "language",
-    "direction": "direction",
-    "metric":    "metric",
-    "score":     "score",
-    "notes":     "notes",
+# Scalar YAML fields → DataFrame column names
+_YAML_SCALAR_MAP = {
+    "author":   "authors",
+    "title":    "paper_title",
+    "year":     "year",
+    "model":    "model",
+    "language": "language",
+    "score":    "score",
+    "notes":    "notes",
+}
+
+# List YAML fields → DataFrame column names
+# Each list is joined as ", " for display; first element is used for metric filtering.
+_YAML_LIST_MAP = {
+    "datasets":   "dataset",
+    "directions": "direction",
+    "metrics":    "metric",
 }
 
 # Required standard fields for every reference entry
 _YAML_STD_REQUIRED = {"citation_key", "type", "author", "title", "year"}
 # Required comparison fields for entries to appear in comparison tables
-_YAML_COMPARISON_REQUIRED = {"model", "dataset", "language", "direction", "metric", "summary"}
+_YAML_COMPARISON_REQUIRED = {"model", "datasets", "language", "directions", "metrics", "summary"}
 
 
 def _load_yaml_entries(yaml_path: Path) -> list[dict]:
@@ -250,32 +255,43 @@ def validate_references(entries: list[dict], schema: dict) -> list[str]:
 
     Checks per entry:
       - Required standard fields (citation_key, type, author, title, year)
-      - Required comparison fields (model, dataset, language, direction, metric, summary)
+      - Required comparison fields (model, datasets, language, directions, metrics, summary)
+        where datasets/directions/metrics must be non-empty lists
       - score is numeric or null
+      - Each value in metrics[] is a known metric name
       - Paper-specific required fields from schema reference_fields section
     """
-    ref_cfg     = schema.get("reference_fields", {})
-    extra_req   = set(ref_cfg.get("paper_specific_required", []))
+    ref_cfg        = schema.get("reference_fields", {})
+    extra_req      = set(ref_cfg.get("paper_specific_required", []))
     comparison_req = _YAML_COMPARISON_REQUIRED | extra_req
     warnings: list[str] = []
 
     for e in entries:
         key = e.get("citation_key", "?")
 
-        # Standard fields
+        # Standard scalar fields
         for f in _YAML_STD_REQUIRED:
             val = e.get(f)
             if val is None or str(val).strip() == "":
                 warnings.append(f"[REF] Entry '{key}': missing standard field '{f}'")
 
-        # Comparison fields
+        # Comparison fields — list fields must be non-empty lists
         for f in comparison_req:
             val = e.get(f)
-            if val is None or str(val).strip() == "":
-                warnings.append(
-                    f"[REF] Entry '{key}': missing comparison field '{f}' "
-                    f"— entry will be excluded from comparison tables"
-                )
+            if f in _YAML_LIST_MAP:
+                if not isinstance(val, list) or len(val) == 0:
+                    warnings.append(
+                        f"[REF] Entry '{key}': '{f}' must be a non-empty list "
+                        f"(e.g. {f}: [BLEU]) — entry will be excluded from comparison tables"
+                    )
+            elif f == "summary":
+                continue  # summary is informational, doesn't block row
+            else:
+                if val is None or str(val).strip() == "":
+                    warnings.append(
+                        f"[REF] Entry '{key}': missing comparison field '{f}' "
+                        f"— entry will be excluded from comparison tables"
+                    )
 
         # Score must be numeric if not null
         score_raw = e.get("score")
@@ -288,14 +304,16 @@ def validate_references(entries: list[dict], schema: dict) -> list[str]:
                     f"Set to null if unknown."
                 )
 
-        # Metric should be a known value (skip check if null — methodology refs may omit it)
-        metric_raw = e.get("metric")
-        metric_val = str(metric_raw).strip() if metric_raw is not None else ""
-        if metric_val and metric_val.upper() not in {m.upper() for m in VALID_METRICS}:
-            warnings.append(
-                f"[REF] Entry '{key}': unrecognised metric '{metric_val}'. "
-                f"Expected one of {sorted(VALID_METRICS)}."
-            )
+        # Each metric in metrics[] should be a known value
+        metrics_raw = e.get("metrics")
+        if isinstance(metrics_raw, list):
+            for m in metrics_raw:
+                m_str = str(m).strip()
+                if m_str and m_str.upper() not in {mv.upper() for mv in VALID_METRICS}:
+                    warnings.append(
+                        f"[REF] Entry '{key}': unrecognised metric '{m_str}' in metrics[]. "
+                        f"Expected one of {sorted(VALID_METRICS)}."
+                    )
 
     return warnings
 
@@ -303,11 +321,25 @@ def validate_references(entries: list[dict], schema: dict) -> list[str]:
 def _yaml_entry_to_row(entry: dict, paper_specific_req: set[str]) -> dict | None:
     """
     Convert a YAML reference entry to a DataFrame row.
+    List fields (datasets, directions, metrics) are joined as ", " strings;
+    the first element of metrics[] is used as the primary metric (must match score).
     Returns None if any required comparison field is missing or score is non-numeric/null.
     """
     row: dict = {"citation_key": entry.get("citation_key", "")}
-    for yaml_field, col_name in _YAML_FIELD_MAP.items():
+
+    # Scalar fields
+    for yaml_field, col_name in _YAML_SCALAR_MAP.items():
         row[col_name] = entry.get(yaml_field, "")
+
+    # List fields: join for display, first element for primary filtering
+    for yaml_field, col_name in _YAML_LIST_MAP.items():
+        val = entry.get(yaml_field)
+        if isinstance(val, list) and val:
+            row[col_name] = ", ".join(str(v) for v in val)
+        elif val is not None:
+            row[col_name] = str(val)
+        else:
+            row[col_name] = ""
 
     # Score: null → skip from comparison table
     score_raw = entry.get("score")
@@ -318,20 +350,25 @@ def _yaml_entry_to_row(entry: dict, paper_specific_req: set[str]) -> dict | None
     except (ValueError, TypeError):
         return None
 
-    # Required comparison fields must be present
+    # Required comparison fields must be present (list fields need non-empty lists)
     all_required = _YAML_COMPARISON_REQUIRED | paper_specific_req
     for f in all_required:
         if f == "summary":
-            continue  # summary goes to notes column if present, but doesn't block row
-        col = _YAML_FIELD_MAP.get(f, f)
-        if not str(row.get(col, "")).strip():
-            return None
+            continue
+        if f in _YAML_LIST_MAP:
+            val = entry.get(f)
+            if not isinstance(val, list) or len(val) == 0:
+                return None
+        else:
+            col = _YAML_SCALAR_MAP.get(f, f)
+            if not str(row.get(col, "")).strip():
+                return None
 
-    # Copy summary into a notes prefix if no separate notes
+    # Copy summary into notes if no explicit notes provided
     summary = str(entry.get("summary", "")).strip()
     notes   = str(row.get("notes", "")).strip()
     if summary and not notes:
-        row["notes"] = summary[:200]  # truncate for table display
+        row["notes"] = summary[:200]
 
     return row
 

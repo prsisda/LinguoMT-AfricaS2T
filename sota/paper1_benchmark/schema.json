@@ -27,13 +27,13 @@
       "year":         { "type": "int",   "description": "4-digit publication year" }
     },
     "required_comparison": {
-      "model":     { "type": "str",           "description": "Exact model name and variant used for evaluation, e.g. 'SeamlessM4T-v2-large'" },
-      "dataset":   { "type": "str",           "description": "Evaluation dataset name, e.g. 'FLEURS', 'CoVoST-2', 'Flores-200'" },
-      "language":  { "type": "str",           "description": "Target language name, e.g. 'Yoruba'. One entry per language." },
-      "direction": { "type": "str",           "description": "Task direction: 'Source → English', 'ASR', 'Text MT (Source → English)', etc." },
-      "metric":    { "type": "str",           "description": "Evaluation metric: 'BLEU', 'spBLEU', 'WER', 'ChrF', 'CER'" },
-      "score":     { "type": "float_or_null", "description": "Numeric score. Set to null if not yet filled in — null entries are excluded from comparison tables." },
-      "summary":   { "type": "str",           "description": "2–5 sentence description of: (1) what the paper does, (2) what it evaluates and on which languages, (3) why it is relevant as a comparator for this paper." }
+      "model":      { "type": "str",           "description": "Exact model name and variant, e.g. 'SeamlessM4T-v2-large'" },
+      "datasets":   { "type": "list[str]",    "description": "List of dataset names the paper evaluates on, e.g. [FLEURS, Flores-200]" },
+      "language":   { "type": "str",          "description": "Target language name, e.g. 'Yoruba'. One entry per language." },
+      "directions": { "type": "list[str]",    "description": "List of task directions the paper reports, e.g. ['Source → English', 'ASR']" },
+      "metrics":    { "type": "list[str]",    "description": "List of reported metrics, e.g. [BLEU, WER]. 'score' corresponds to metrics[0]." },
+      "score":      { "type": "float_or_null","description": "Numeric score for metrics[0]. Set to null if not yet filled — excluded from comparison tables." },
+      "summary":    { "type": "str",          "description": "2–5 sentences: (1) what the paper does, (2) which languages/datasets/metrics it covers, (3) why it is relevant as a comparator." }
     },
     "optional_standard": {
       "journal":    { "type": "str", "description": "Journal name (for type: article)" },

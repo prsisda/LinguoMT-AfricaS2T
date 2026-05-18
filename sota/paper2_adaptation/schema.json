@@ -32,14 +32,14 @@
       "year":         { "type": "int", "description": "4-digit publication year" }
     },
     "required_comparison": {
-      "model":     { "type": "str",           "description": "Model name + adaptation method, e.g. 'Whisper-large-v2 (fine-tuned)'" },
-      "dataset":   { "type": "str",           "description": "Evaluation dataset name" },
-      "language":  { "type": "str",           "description": "Target language. One entry per language." },
-      "direction": { "type": "str",           "description": "Task: 'ASR', 'Source → English', 'Text MT (Source → English)'" },
-      "metric":    { "type": "str",           "description": "Metric: 'BLEU', 'spBLEU', 'WER', 'ChrF', 'CER'" },
-      "score":     { "type": "float_or_null", "description": "Numeric score. null = not yet filled; excluded from comparison tables." },
-      "summary":   { "type": "str",           "description": "2–5 sentences: what the paper does, what it evaluates, why it is relevant as an adaptation comparator." },
-      "ft_method": { "type": "str",           "description": "Adaptation method used: 'lora', 'adapter', 'full_finetune', 'prefix', 'none' (for zero-shot baselines)" }
+      "model":      { "type": "str",           "description": "Model name + adaptation method, e.g. 'Whisper-large-v2 (fine-tuned)'" },
+      "datasets":   { "type": "list[str]",    "description": "List of dataset names the paper evaluates on, e.g. [FLEURS, AfriSpeech-200]" },
+      "language":   { "type": "str",          "description": "Target language. One entry per language." },
+      "directions": { "type": "list[str]",    "description": "List of task directions reported, e.g. [ASR] or ['Source → English']" },
+      "metrics":    { "type": "list[str]",    "description": "List of reported metrics, e.g. [WER] or [BLEU]. 'score' corresponds to metrics[0]." },
+      "score":      { "type": "float_or_null","description": "Numeric score for metrics[0]. null = not yet filled; excluded from comparison tables." },
+      "summary":    { "type": "str",          "description": "2–5 sentences: what the paper does, what it evaluates, why it is relevant as an adaptation comparator." },
+      "ft_method":  { "type": "str",          "description": "Adaptation method used: 'lora', 'adapter', 'full_finetune', 'prefix', 'none' (for zero-shot baselines)" }
     },
     "optional_standard": {
       "journal":   { "type": "str", "description": "Journal or preprint identifier" },

@@ -34,13 +34,13 @@
     },
     "required_comparison": {
       "model":         { "type": "str",           "description": "Model name and variant" },
-      "dataset":       { "type": "str",           "description": "Evaluation dataset" },
-      "language":      { "type": "str",           "description": "Target language. One entry per language." },
-      "direction":     { "type": "str",           "description": "Task: 'ASR', 'Source → English', 'Text MT (Source → English)'" },
-      "metric":        { "type": "str",           "description": "Metric: 'BLEU', 'spBLEU', 'WER', 'ChrF'" },
-      "score":         { "type": "float_or_null", "description": "Numeric score. null = not yet filled; excluded from comparison tables." },
-      "summary":       { "type": "str",           "description": "2–5 sentences: what the paper does, what transfer learning approach it uses, why it is relevant as a cross-lingual transfer comparator." },
-      "transfer_type": { "type": "str",           "description": "Transfer setting: 'zero_shot', 'few_shot', 'cross_lingual_finetune', 'multilingual'" }
+      "datasets":      { "type": "list[str]",    "description": "List of datasets, e.g. [FLEURS] or [FLEURS, MasakhaSpeech]" },
+      "language":      { "type": "str",          "description": "Target language. One entry per language." },
+      "directions":    { "type": "list[str]",    "description": "List of task directions, e.g. [ASR] or ['Source → English']" },
+      "metrics":       { "type": "list[str]",    "description": "List of reported metrics, e.g. [WER] or [BLEU]. 'score' corresponds to metrics[0]." },
+      "score":         { "type": "float_or_null","description": "Numeric score for metrics[0]. null = not yet filled; excluded from comparison tables." },
+      "summary":       { "type": "str",          "description": "2–5 sentences: what the paper does, what transfer approach it uses, why it is relevant as a cross-lingual transfer comparator." },
+      "transfer_type": { "type": "str",          "description": "Transfer setting: 'zero_shot', 'few_shot', 'cross_lingual_finetune', 'multilingual'" }
     },
     "optional_standard": {
       "journal":   { "type": "str", "description": "Journal or preprint identifier" },

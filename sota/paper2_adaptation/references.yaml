@@ -3,8 +3,8 @@
 # Fill in 'score' for each entry to enable automatic comparison tables.
 # See README.md and schema.json for field descriptions.
 #
-# Required comparison fields: model, dataset, language, direction, metric, score, ft_method
-# Optional: notes, url, year, summary
+# Required list fields: datasets, directions, metrics  (must be YAML lists)
+# Paper-specific required: ft_method
 
 - citation_key: hu2022lora
   type: article
@@ -13,19 +13,19 @@
   year: 2022
   journal: "International Conference on Learning Representations (ICLR 2022)"
   url: "https://arxiv.org/abs/2106.09685"
-  model: LoRA (general)
-  dataset: "Various NLP benchmarks"
+  model: "LoRA (general)"
+  datasets: ["Various NLP benchmarks"]
   language: "English (methodology paper)"
-  direction: "N/A (text classification and generation)"
-  metric: null
+  directions: ["Text classification and generation"]
+  metrics: null
   score: null
   ft_method: lora
   summary: >
     Foundational paper introducing LoRA (Low-Rank Adaptation) for parameter-efficient
-    fine-tuning of large language models. Introduces the concept of freezing pretrained weights
-    and injecting trainable low-rank decomposition matrices. Not evaluated on speech or African
-    languages directly — relevant as the methodology reference for the LoRA approach used in
-    LinguoMT-Adapt. Use for citing the adaptation method, not as a direct performance comparator.
+    fine-tuning of large language models. Freezes pretrained weights and injects trainable
+    low-rank decomposition matrices. Not evaluated on speech or African languages — relevant
+    as the methodology reference for the LoRA approach used in LinguoMT-Adapt.
+    Not a direct performance comparator; cite for method attribution only.
   notes: "Methodology reference — not a direct performance baseline"
 
 - citation_key: olatunji2023afrispeech_hausa
@@ -35,20 +35,20 @@
   year: 2023
   booktitle: "Findings of the Association for Computational Linguistics: ACL 2023"
   url: "https://arxiv.org/abs/2104.02010"
-  model: Whisper-large-v2 (fine-tuned)
-  dataset: AfriSpeech-200
+  model: "Whisper-large-v2 (fine-tuned)"
+  datasets: [AfriSpeech-200]
   language: Hausa
-  direction: "ASR"
-  metric: WER
+  directions: [ASR]
+  metrics: [WER]
   score: null
   ft_method: full_finetune
   summary: >
-    Introduces AfriSpeech-200, a pan-African accented English speech dataset covering
-    clinical and general domains across multiple African countries. Fine-tunes Whisper on
-    accented African English (not African-language ASR). Relevant for adaptation: shows
-    that Whisper WER on African speech improves substantially with domain-specific fine-tuning.
-    Evaluate whether Hausa-accented English is separately reported in Table 4.
-  notes: "Dataset covers African-accented English, not African-language ASR. Check Table 4 for WER"
+    Introduces AfriSpeech-200, a pan-African accented English speech dataset for clinical
+    and general-domain ASR. Fine-tunes Whisper on African-accented English (not African-language
+    ASR). Demonstrates that Whisper WER on African accented speech improves substantially with
+    domain-specific fine-tuning. Relevant to show adaptation gains on African speech; note the
+    target language is accented English, not Hausa itself.
+  notes: "Covers African-accented English, not African-language ASR. Check Table 4 for WER"
 
 - citation_key: dossou2022masakhaspeech_hausa
   type: inproceedings
@@ -57,18 +57,18 @@
   year: 2022
   booktitle: "Proceedings of Interspeech 2022"
   url: "https://arxiv.org/abs/2206.00253"
-  model: Wav2Vec2-XLSR (fine-tuned)
-  dataset: MasakhaSpeech
+  model: "Wav2Vec2-XLSR (fine-tuned)"
+  datasets: [MasakhaSpeech]
   language: Hausa
-  direction: "ASR"
-  metric: WER
+  directions: [ASR]
+  metrics: [WER]
   score: null
   ft_method: full_finetune
   summary: >
     Introduces MasakhaSpeech corpus and fine-tunes Wav2Vec2-XLSR on 5 African languages:
     Hausa, Igbo, Yoruba, Swahili, and Wolof. Reports WER per language after full fine-tuning
-    on limited training data (~10h per language). Directly comparable adaptation baseline for
-    Hausa and Yoruba ASR fine-tuning. Scores in Table 2 per language.
+    on limited training data (~10h per language). Direct adaptation baseline for Hausa ASR
+    fine-tuning — shows what full fine-tuning achieves with ~10h of data. Scores in Table 2.
   notes: "Fill in Hausa WER from Table 2 of arXiv:2206.00253"
 
 - citation_key: dossou2022masakhaspeech_yoruba
@@ -78,17 +78,16 @@
   year: 2022
   booktitle: "Proceedings of Interspeech 2022"
   url: "https://arxiv.org/abs/2206.00253"
-  model: Wav2Vec2-XLSR (fine-tuned)
-  dataset: MasakhaSpeech
+  model: "Wav2Vec2-XLSR (fine-tuned)"
+  datasets: [MasakhaSpeech]
   language: Yoruba
-  direction: "ASR"
-  metric: WER
+  directions: [ASR]
+  metrics: [WER]
   score: null
   ft_method: full_finetune
   summary: >
-    Introduces MasakhaSpeech corpus and fine-tunes Wav2Vec2-XLSR on 5 African languages
-    including Yoruba. Reports WER per language after full fine-tuning on ~10h per language.
-    Directly comparable adaptation baseline for Yoruba ASR fine-tuning. Scores in Table 2.
+    Fine-tunes Wav2Vec2-XLSR on Yoruba using the MasakhaSpeech corpus (~10h).
+    Direct adaptation baseline for Yoruba ASR fine-tuning. Scores in Table 2.
   notes: "Fill in Yoruba WER from Table 2 of arXiv:2206.00253"
 
 - citation_key: bapna2019simple_adapters
@@ -98,20 +97,20 @@
   year: 2019
   journal: "Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing"
   url: "https://arxiv.org/abs/1909.08478"
-  model: Transformer + Adapters
-  dataset: WMT
+  model: "Transformer + Adapters"
+  datasets: [WMT]
   language: "Multiple (English-centric)"
-  direction: "Text MT (Source → English)"
-  metric: BLEU
+  directions: ["Text MT (Source → English)"]
+  metrics: [BLEU]
   score: null
   ft_method: adapter
   summary: >
     Introduces lightweight adapter modules inserted into pretrained Transformer layers
-    for domain/language adaptation in NMT. Only ~1–3% of parameters trained per task.
-    Not evaluated on African languages — relevant as the adapter methodology reference.
-    Predates LoRA; LoRA (Hu et al. 2022) is the PEFT method we use in practice.
-    Cite alongside LoRA to position the adaptation methodology landscape.
-  notes: "Methodology reference — English-centric WMT, not directly comparable"
+    for domain/language adaptation in NMT. Trains only ~1–3% of parameters per task.
+    Evaluated on English-centric WMT pairs — not on African languages.
+    Relevant as the adapter methodology reference; positions our LoRA approach in the
+    PEFT landscape. Not a direct performance comparator.
+  notes: "Methodology reference — English-centric WMT pairs only"
 
 - citation_key: seamlesscommunication2023seamless_yoruba
   type: article
@@ -120,20 +119,19 @@
   year: 2023
   journal: "arXiv preprint arXiv:2312.05187"
   url: "https://arxiv.org/abs/2312.05187"
-  model: SeamlessM4T-v2-large (pre-trained, no fine-tuning)
-  dataset: FLEURS
+  model: "SeamlessM4T-v2-large (pre-trained, no fine-tuning)"
+  datasets: [FLEURS]
   language: Yoruba
-  direction: "Source → English"
-  metric: BLEU
+  directions: ["Source → English"]
+  metrics: [BLEU]
   score: null
   ft_method: none
   summary: >
-    Describes SeamlessM4T-v2, the updated version with improved multilingual coverage.
-    Reports S2TT BLEU on FLEURS for African languages in Table B.1. Used as the
-    zero-shot (no fine-tuning) baseline for LinguoMT-Adapt: our fine-tuning results
-    should be compared against this pre-trained performance. Fine-tuning gains are
-    measured as delta BLEU relative to this baseline.
-  notes: "Zero-shot baseline for adaptation paper. Fill in BLEU from Table B.1 of arXiv:2312.05187"
+    Describes SeamlessM4T-v2 with improved multilingual coverage. Reports S2TT BLEU on FLEURS
+    for African languages in Table B.1. Used as the zero-shot (pre-training only) baseline for
+    LinguoMT-Adapt — our fine-tuning results should be compared against this to quantify the
+    adaptation gain. Fine-tuning delta BLEU = our score − this baseline.
+  notes: "Zero-shot baseline (no fine-tuning). Fill in BLEU from Table B.1 of arXiv:2312.05187"
 
 - citation_key: seamlesscommunication2023seamless_hausa
   type: article
@@ -142,16 +140,14 @@
   year: 2023
   journal: "arXiv preprint arXiv:2312.05187"
   url: "https://arxiv.org/abs/2312.05187"
-  model: SeamlessM4T-v2-large (pre-trained, no fine-tuning)
-  dataset: FLEURS
+  model: "SeamlessM4T-v2-large (pre-trained, no fine-tuning)"
+  datasets: [FLEURS]
   language: Hausa
-  direction: "Source → English"
-  metric: BLEU
+  directions: ["Source → English"]
+  metrics: [BLEU]
   score: null
   ft_method: none
   summary: >
-    Describes SeamlessM4T-v2, the updated version with improved multilingual coverage.
-    Reports S2TT BLEU on FLEURS for African languages in Table B.1. Used as the
-    zero-shot (no fine-tuning) baseline for LinguoMT-Adapt: our fine-tuning results
-    should be compared against this pre-trained performance.
-  notes: "Zero-shot baseline for adaptation paper. Fill in BLEU from Table B.1 of arXiv:2312.05187"
+    SeamlessM4T-v2 zero-shot S2TT BLEU on FLEURS Hausa. Zero-shot baseline for LinguoMT-Adapt.
+    Scores in Table B.1 of arXiv:2312.05187.
+  notes: "Zero-shot baseline (no fine-tuning). Fill in BLEU from Table B.1 of arXiv:2312.05187"

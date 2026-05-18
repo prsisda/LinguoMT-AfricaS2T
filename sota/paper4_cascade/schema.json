@@ -33,13 +33,13 @@
     },
     "required_comparison": {
       "model":        { "type": "str",           "description": "Full pipeline, e.g. 'Whisper-large-v3 + NLLB-200-600M' or 'SeamlessM4T-v2-large'" },
-      "dataset":      { "type": "str",           "description": "Evaluation dataset" },
-      "language":     { "type": "str",           "description": "Target language. One entry per language." },
-      "direction":    { "type": "str",           "description": "Task direction, e.g. 'Source → English', 'Text MT (Source → English)'" },
-      "metric":       { "type": "str",           "description": "Metric: 'BLEU', 'spBLEU', 'WER', 'ChrF'" },
-      "score":        { "type": "float_or_null", "description": "Numeric score. null = not yet filled; excluded from comparison tables." },
-      "summary":      { "type": "str",           "description": "2–5 sentences: what the paper does, which architecture it evaluates, why it is relevant as an architectural comparator." },
-      "architecture": { "type": "str",           "description": "Architecture: 'cascade', 'end_to_end', 'direct'. Use 'cascade' for ASR+MT pipelines." }
+      "datasets":     { "type": "list[str]",    "description": "List of datasets the paper evaluates on, e.g. [FLEURS] or [MuST-C, CoVoST-2]" },
+      "language":     { "type": "str",          "description": "Target language. One entry per language." },
+      "directions":   { "type": "list[str]",    "description": "List of task directions, e.g. ['Source → English'] or ['Source → German', 'Source → French']" },
+      "metrics":      { "type": "list[str]",    "description": "List of reported metrics, e.g. [BLEU] or [BLEU, WER]. 'score' corresponds to metrics[0]." },
+      "score":        { "type": "float_or_null","description": "Numeric score for metrics[0]. null = not yet filled; excluded from comparison tables." },
+      "summary":      { "type": "str",          "description": "2–5 sentences: what the paper does, which architecture it evaluates, why it is relevant as an architectural comparator." },
+      "architecture": { "type": "str",          "description": "Architecture: 'cascade', 'end_to_end', 'direct'. Use 'cascade' for ASR+MT pipelines." }
     },
     "optional_standard": {
       "journal":   { "type": "str", "description": "Journal or preprint identifier" },
