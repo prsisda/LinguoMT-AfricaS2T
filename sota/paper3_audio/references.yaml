@@ -1,0 +1,153 @@
+# references.yaml — Paper 3: LinguoMT-Audio
+# Audio robustness baselines for African language speech translation.
+# Fill in 'score' for each entry to enable automatic comparison tables.
+# See README.md and schema.json for field descriptions.
+#
+# Required comparison fields: model, dataset, language, direction, metric, score, audio_condition
+# Optional: notes, url, year, summary
+
+- citation_key: park2019specaugment
+  type: inproceedings
+  author: "Park, Daniel S. and Chan, William and Zhang, Yu and Chiu, Chung-Cheng and Zoph, Barret and Cubuk, Ekin D. and Le, Quoc V."
+  title: "SpecAugment: A Simple Data Augmentation Method for Automatic Speech Recognition"
+  year: 2019
+  booktitle: "Proceedings of Interspeech 2019"
+  url: "https://arxiv.org/abs/1904.08779"
+  model: Listen Attend and Spell + SpecAugment
+  dataset: LibriSpeech
+  language: English
+  direction: "ASR"
+  metric: WER
+  score: null
+  audio_condition: augmented
+  summary: >
+    Introduces SpecAugment, a data augmentation technique for ASR that masks frequency
+    and time bands in log-mel spectrograms. Evaluated on LibriSpeech (English only);
+    not evaluated on African languages. Relevant as the foundational audio augmentation
+    methodology. In LinguoMT-Audio, we apply similar augmentation to assess robustness
+    on African speech — this paper provides the methodological grounding.
+  notes: "Methodology reference — English LibriSpeech only, not directly comparable"
+
+- citation_key: radford2023whisper_robustness_yoruba
+  type: inproceedings
+  author: "Radford, Alec and Kim, Jong Wook and Xu, Tao and Brockman, Greg and McLeavey, Christine and Sutskever, Ilya"
+  title: "Robust Speech Recognition via Large-Scale Weak Supervision"
+  year: 2023
+  booktitle: "Proceedings of the 40th International Conference on Machine Learning (ICML 2023)"
+  url: "https://arxiv.org/abs/2212.04356"
+  model: Whisper-large-v3
+  dataset: FLEURS
+  language: Yoruba
+  direction: "ASR"
+  metric: WER
+  score: null
+  audio_condition: clean
+  summary: >
+    Whisper is trained on 680k hours of weakly supervised audio across 100+ languages.
+    Reports ASR WER on FLEURS (clean, studio-recorded) for many languages including Yoruba
+    and Hausa. Key claim is robustness to accents, noise, and channel variation due to
+    diverse training data. Relevant as the clean-audio ASR baseline: LinguoMT-Audio
+    measures WER degradation under noise/augmentation relative to this clean baseline.
+  notes: "Clean-audio baseline. Fill in WER from HuggingFace model card FLEURS eval"
+
+- citation_key: radford2023whisper_robustness_hausa
+  type: inproceedings
+  author: "Radford, Alec and Kim, Jong Wook and Xu, Tao and Brockman, Greg and McLeavey, Christine and Sutskever, Ilya"
+  title: "Robust Speech Recognition via Large-Scale Weak Supervision"
+  year: 2023
+  booktitle: "Proceedings of the 40th International Conference on Machine Learning (ICML 2023)"
+  url: "https://arxiv.org/abs/2212.04356"
+  model: Whisper-large-v3
+  dataset: FLEURS
+  language: Hausa
+  direction: "ASR"
+  metric: WER
+  score: null
+  audio_condition: clean
+  summary: >
+    Whisper ASR WER on FLEURS clean audio for Hausa. Used as the clean-audio baseline
+    for LinguoMT-Audio robustness evaluation. Whisper is trained on diverse audio conditions
+    which gives it inherent robustness but specific African language performance varies.
+  notes: "Clean-audio baseline. Fill in WER from HuggingFace model card FLEURS eval"
+
+- citation_key: barrault2023seamlessm4t_audio_yoruba
+  type: article
+  author: "Barrault, Loïc and Chung, Yu-An and Meglioli, Mariano Coria and Dale, David and Dong, Ning and others"
+  title: "SeamlessM4T: Massively Multilingual & Multimodal Machine Translation"
+  year: 2023
+  journal: "arXiv preprint arXiv:2308.11596"
+  url: "https://arxiv.org/abs/2308.11596"
+  model: SeamlessM4T-v2-large
+  dataset: FLEURS
+  language: Yoruba
+  direction: "Source → English"
+  metric: BLEU
+  score: null
+  audio_condition: clean
+  summary: >
+    SeamlessM4T-v2 S2TT BLEU on FLEURS clean audio for Yoruba. Used as the clean-audio
+    E2E translation baseline for LinguoMT-Audio. Relevant to measure translation quality
+    degradation under noisy/augmented audio conditions vs this clean reference.
+  notes: "Clean-audio S2TT baseline. Fill in BLEU from Table B.1 of arXiv:2312.05187"
+
+- citation_key: barrault2023seamlessm4t_audio_hausa
+  type: article
+  author: "Barrault, Loïc and Chung, Yu-An and Meglioli, Mariano Coria and Dale, David and Dong, Ning and others"
+  title: "SeamlessM4T: Massively Multilingual & Multimodal Machine Translation"
+  year: 2023
+  journal: "arXiv preprint arXiv:2308.11596"
+  url: "https://arxiv.org/abs/2308.11596"
+  model: SeamlessM4T-v2-large
+  dataset: FLEURS
+  language: Hausa
+  direction: "Source → English"
+  metric: BLEU
+  score: null
+  audio_condition: clean
+  summary: >
+    SeamlessM4T-v2 S2TT BLEU on FLEURS clean audio for Hausa. Used as the clean-audio
+    E2E translation baseline for LinguoMT-Audio robustness evaluation.
+  notes: "Clean-audio S2TT baseline. Fill in BLEU from Table B.1 of arXiv:2312.05187"
+
+- citation_key: guo2021conformer_hausa
+  type: inproceedings
+  author: "Guo, Pengcheng and Boyer, Florian and Chang, Xuankai and Hayashi, Tomoki and Higuchi, Yosuke and Inaguma, Hirofumi and Kamo, Naoyuki and Li, Chenda and Garcia-Romero, Daniel and Shi, Jiatong and others"
+  title: "Recent Developments on ESPnet Toolkit Boosted by Conformer"
+  year: 2021
+  booktitle: "Proceedings of ICASSP 2021"
+  url: "https://arxiv.org/abs/2010.13956"
+  model: ESPnet Conformer
+  dataset: FLEURS
+  language: Hausa
+  direction: "ASR"
+  metric: WER
+  score: null
+  audio_condition: clean
+  summary: >
+    Describes the ESPnet toolkit with Conformer encoder improvements for ASR.
+    The main evaluation is on English benchmarks (LibriSpeech, WSJ, CHiME-6).
+    FLEURS African language results for ESPnet Conformer are not systematically reported
+    in this paper — this entry is a placeholder. If separate ESPnet FLEURS evaluations
+    exist for Hausa, fill in the score; otherwise remove this entry.
+  notes: "CHECK: ESPnet Conformer FLEURS Hausa results may not be in this paper — verify before using"
+
+- citation_key: watanabe2017hybrid_ctc_hausa
+  type: article
+  author: "Watanabe, Shinji and Hori, Takaaki and Kim, Suyoun and Hershey, John R. and Hayashi, Tomoki"
+  title: "Hybrid CTC/Attention Architecture for End-to-End Speech Recognition"
+  year: 2017
+  journal: "IEEE Journal of Selected Topics in Signal Processing"
+  url: "https://arxiv.org/abs/1609.01596"
+  model: Hybrid CTC/Attention
+  dataset: "CSJ, WSJ, TED-LIUM2"
+  language: "Japanese/English (methodology paper)"
+  direction: "ASR"
+  metric: WER
+  score: null
+  audio_condition: clean
+  summary: >
+    Introduces the Hybrid CTC/Attention architecture for end-to-end ASR, combining
+    CTC's alignment benefits with attention's flexibility. Evaluated on Japanese and English
+    only — not on African languages. Relevant as an ASR architecture reference to contextualise
+    encoder choices in cascade pipelines. Not a direct performance comparator.
+  notes: "Architecture reference only — not evaluated on African languages"

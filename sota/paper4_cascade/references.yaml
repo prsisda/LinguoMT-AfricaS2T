@@ -1,0 +1,156 @@
+# references.yaml — Paper 4: LinguoMT-Cascade
+# Cascade vs. end-to-end speech translation architecture comparison baselines.
+# Fill in 'score' for each entry to enable automatic comparison tables.
+# See README.md and schema.json for field descriptions.
+#
+# Required comparison fields: model, dataset, language, direction, metric, score, architecture
+# Optional: notes, url, year, summary
+
+- citation_key: bentivogli2021cascade_vs_e2e
+  type: inproceedings
+  author: "Bentivogli, Luisa and Bertoldi, Nicola and Cettolo, Mauro and Conforti, Camille and Federico, Marcello and Fuegen, Christian and Negri, Matteo and Niehues, Jan and Pino, Juan and Salesky, Elizabeth and others"
+  title: "Cascade versus Direct Speech Translation: Do the Differences Still Make a Difference?"
+  year: 2021
+  booktitle: "Proceedings of the 59th Annual Meeting of the Association for Computational Linguistics"
+  url: "https://arxiv.org/abs/2106.01045"
+  model: "Cascade (ASR + NMT)"
+  dataset: MuST-C
+  language: English
+  direction: "English → German/Italian/Dutch (European pairs)"
+  metric: BLEU
+  score: null
+  architecture: cascade
+  summary: >
+    Comprehensive analysis of cascade (ASR+MT) vs. direct (E2E) speech translation at
+    IWSLT 2021. Shows cascade systems still outperform E2E on high-resource European pairs
+    (en→de, en→it, en→nl) despite E2E gap closing. Evaluated on MuST-C, not FLEURS or
+    African languages. Relevant as the key architectural comparison reference: we extend
+    this question to low-resource African languages where data conditions are very different.
+  notes: "European language pairs only (MuST-C). Not directly comparable — use as architectural framing reference"
+
+- citation_key: inaguma2020espnetst_yoruba
+  type: inproceedings
+  author: "Inaguma, Hirofumi and Kiyono, Shun and Duh, Kevin and Karita, Shigeki and Yalta, Nelson and Hayashi, Tomoki and Watanabe, Shinji"
+  title: "ESPnet-ST: All-in-One Speech Translation Toolkit"
+  year: 2020
+  booktitle: "Proceedings of the 58th Annual Meeting of the Association for Computational Linguistics: System Demonstrations"
+  url: "https://arxiv.org/abs/2004.10234"
+  model: "ESPnet-ST (cascade)"
+  dataset: MuST-C
+  language: English
+  direction: "English → German/French/Spanish"
+  metric: BLEU
+  score: null
+  architecture: cascade
+  summary: >
+    Describes ESPnet-ST toolkit implementing both cascade (ASR+MT) and E2E speech translation.
+    Evaluated on MuST-C en→de, en→fr, en→es. Does not cover African languages or FLEURS.
+    Relevant as a toolkit reference for cascade pipeline implementation — ESPnet-ST's
+    cascade design mirrors our Whisper+NLLB pipeline. Use for citing cascade implementation
+    methodology, not as an African language performance comparator.
+  notes: "European language pairs (MuST-C). Architecture reference only"
+
+- citation_key: wang2020covost2_yoruba
+  type: inproceedings
+  author: "Wang, Changhan and Wu, Anne and Pino, Juan"
+  title: "CoVoST 2 and Massively Multilingual Speech Translation"
+  year: 2021
+  booktitle: "Proceedings of Interspeech 2021"
+  url: "https://arxiv.org/abs/2007.10310"
+  model: "XLS-R + mBART (cascade)"
+  dataset: CoVoST-2
+  language: Yoruba
+  direction: "Source → English"
+  metric: BLEU
+  score: null
+  architecture: cascade
+  summary: >
+    Introduces CoVoST-2, a massively multilingual ST dataset covering 21 languages to English.
+    Yoruba is NOT included in CoVoST-2 — the language set is primarily European and a few
+    Asian/Middle Eastern languages. The cascade model (XLS-R + mBART) achieves varying BLEU
+    across languages. Relevant for African-language cascade comparison only if Hausa/Swahili
+    scores exist — check paper Table 2 carefully. This entry should be removed or corrected
+    if Yoruba is confirmed absent.
+  notes: "CHECK: Yoruba may not be in CoVoST-2. Verify Table 2 before using this entry"
+
+- citation_key: wang2020covost2_hausa
+  type: inproceedings
+  author: "Wang, Changhan and Wu, Anne and Pino, Juan"
+  title: "CoVoST 2 and Massively Multilingual Speech Translation"
+  year: 2021
+  booktitle: "Proceedings of Interspeech 2021"
+  url: "https://arxiv.org/abs/2007.10310"
+  model: "XLS-R + mBART (cascade)"
+  dataset: CoVoST-2
+  language: Hausa
+  direction: "Source → English"
+  metric: BLEU
+  score: null
+  architecture: cascade
+  summary: >
+    Introduces CoVoST-2. Hausa coverage in CoVoST-2 is uncertain — the dataset covers
+    21 languages predominantly from European and some Asian families. Check Table 2 of the
+    paper to confirm Hausa inclusion before using this entry as a comparator.
+  notes: "CHECK: Hausa may not be in CoVoST-2. Verify Table 2 before using this entry"
+
+- citation_key: barrault2023seamlessm4t_e2e_yoruba
+  type: article
+  author: "Barrault, Loïc and Chung, Yu-An and Meglioli, Mariano Coria and Dale, David and Dong, Ning and others"
+  title: "SeamlessM4T: Massively Multilingual & Multimodal Machine Translation"
+  year: 2023
+  journal: "arXiv preprint arXiv:2308.11596"
+  url: "https://arxiv.org/abs/2308.11596"
+  model: SeamlessM4T-v2-large
+  dataset: FLEURS
+  language: Yoruba
+  direction: "Source → English"
+  metric: BLEU
+  score: null
+  architecture: end_to_end
+  summary: >
+    SeamlessM4T-v2 E2E S2TT BLEU on FLEURS Yoruba. Used as the E2E upper bound baseline
+    for cascade architecture comparison. The key research question in LinguoMT-Cascade is
+    whether our Whisper+NLLB cascade can match or exceed the E2E SeamlessM4T performance
+    for African languages. Reports BLEU in Table B.1 of arXiv:2312.05187.
+  notes: "E2E upper bound for cascade comparison. Fill in BLEU from Table B.1 of arXiv:2312.05187"
+
+- citation_key: barrault2023seamlessm4t_e2e_hausa
+  type: article
+  author: "Barrault, Loïc and Chung, Yu-An and Meglioli, Mariano Coria and Dale, David and Dong, Ning and others"
+  title: "SeamlessM4T: Massively Multilingual & Multimodal Machine Translation"
+  year: 2023
+  journal: "arXiv preprint arXiv:2308.11596"
+  url: "https://arxiv.org/abs/2308.11596"
+  model: SeamlessM4T-v2-large
+  dataset: FLEURS
+  language: Hausa
+  direction: "Source → English"
+  metric: BLEU
+  score: null
+  architecture: end_to_end
+  summary: >
+    SeamlessM4T-v2 E2E S2TT BLEU on FLEURS Hausa. Used as the E2E upper bound for
+    cascade comparison. Reports BLEU in Table B.1 of arXiv:2312.05187.
+  notes: "E2E upper bound for cascade comparison. Fill in BLEU from Table B.1 of arXiv:2312.05187"
+
+- citation_key: costajussa2022nllb_cascade_igbo
+  type: article
+  author: "Costa-jussà, Marta R. and Cross, James and Çelebi, Onur and Elbayad, Maha and Heafield, Kenneth and Heffernan, Kevin and others"
+  title: "No Language Left Behind: Scaling Human-Centered Machine Translation"
+  year: 2022
+  journal: "arXiv preprint arXiv:2207.04672"
+  url: "https://arxiv.org/abs/2207.04672"
+  model: "NLLB-200-600M (MT component in cascade)"
+  dataset: Flores-200
+  language: Igbo
+  direction: "Text MT (Source → English)"
+  metric: spBLEU
+  score: null
+  architecture: cascade
+  summary: >
+    NLLB-200 text MT spBLEU on Flores-200 for Igbo (ibo_Latn → eng_Latn). Used as the
+    MT component ceiling for Igbo cascade pipelines: if NLLB text MT scores X on Flores-200,
+    the cascade S2TT BLEU is bounded above by X (assuming perfect ASR). The gap between
+    cascade S2TT BLEU and this ceiling reveals ASR error propagation impact.
+    Score in Table 2 of arXiv:2207.04672.
+  notes: "Text MT ceiling (Flores-200, not FLEURS). Fill in spBLEU from Table 2 (ibo_Latn->eng_Latn)"

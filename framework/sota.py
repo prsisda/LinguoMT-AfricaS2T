@@ -1,22 +1,37 @@
 """
 SOTA comparison module for the LinguoMT publication series.
 
-Each paper folder under sota/ contains a schema.json that declares which fields
-are required and which are optional. load_sota() validates the loaded data against
-that schema and prints warnings for missing required values.
+Two complementary data sources are supported per paper folder:
 
-Base required fields (all papers):
-    paper_title, authors, year, model, dataset, language, direction,
-    metric, score, citation_key
+1. sota_results.csv / published_baselines.json
+   Flat tabular format — one row per system × language × metric result.
+   Used for bulk data entry and direct comparison table generation.
 
-Base optional fields (all papers):
-    notes
+2. references.yaml
+   YAML list format with standard bibliographic fields PLUS comparison fields
+   (model, dataset, language, direction, metric, score, summary) that store
+   comparison metadata directly on each reference entry.
+   Validated at output time; never blocks model training or fine-tuning.
 
-Paper-specific fields are declared in each folder's schema.json.
+Both are validated against schema.json (required vs optional fields, including
+a reference_fields section that declares the schema for references.yaml entries).
+Validation is always advisory — warnings are printed but never raised as errors.
+
+YAML reference fields (no prefix — all are plain field names):
+  model      — model name used for evaluation
+  dataset    — dataset name
+  language   — display language name (e.g. Yoruba)
+  direction  — Source → English  |  English → Source  |  ASR  |  Text MT
+  metric     — BLEU | spBLEU | ChrF | WER | CER
+  score      — numeric score (null if unknown — excluded from comparison tables)
+  summary    — 2–5 sentences: what the paper does, why it is relevant
+  notes      — evaluation conditions, split, caveats (optional)
+  + paper-specific fields declared in schema.json reference_fields section
 """
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from typing import Optional
 
@@ -32,8 +47,9 @@ BASE_REQUIRED_FIELDS = [
 BASE_OPTIONAL_FIELDS = ["notes"]
 SOTA_COLUMNS = BASE_REQUIRED_FIELDS + BASE_OPTIONAL_FIELDS
 
-VALID_METRICS    = {"BLEU", "ChrF", "WER", "CER", "CHRF", "CHRF++"}
-VALID_DIRECTIONS = {"Source → English", "English → Source"}
+VALID_METRICS    = {"BLEU", "spBLEU", "ChrF", "WER", "CER", "CHRF", "CHRF++"}
+VALID_DIRECTIONS = {"Source → English", "English → Source", "ASR",
+                    "Text MT (Source → English)", "Text MT (English → Source)"}
 
 
 # ── Schema loader ─────────────────────────────────────────────────────────────
@@ -56,24 +72,20 @@ def load_schema(folder: str | Path) -> dict:
     return {**raw, "required_fields": required, "optional_fields": optional}
 
 
-# ── Validator ─────────────────────────────────────────────────────────────────
+# ── Validator (SOTA CSV/JSON) ─────────────────────────────────────────────────
 
 def validate_sota(df: pd.DataFrame, schema: dict) -> list[str]:
     """
     Validate a loaded SOTA DataFrame against a schema.
     Returns a list of warning strings (empty = all good).
-    Rows with missing required fields are dropped from the returned DataFrame
-    via filter_valid_sota().
     """
     warnings: list[str] = []
     required = schema.get("required_fields", BASE_REQUIRED_FIELDS)
 
-    # Missing columns entirely
     missing_cols = [c for c in required if c not in df.columns]
     if missing_cols:
         warnings.append(f"[SOTA] Missing required columns: {missing_cols}")
 
-    # Rows with empty required fields
     for col in required:
         if col not in df.columns:
             continue
@@ -85,7 +97,6 @@ def validate_sota(df: pd.DataFrame, schema: dict) -> list[str]:
                 f"These rows will be skipped."
             )
 
-    # Score column must be numeric
     if "score" in df.columns:
         non_numeric = pd.to_numeric(df["score"], errors="coerce").isnull().sum()
         if non_numeric > 0:
@@ -93,7 +104,6 @@ def validate_sota(df: pd.DataFrame, schema: dict) -> list[str]:
                 f"[SOTA] 'score' is non-numeric in {non_numeric} row(s). Those rows will be skipped."
             )
 
-    # Metric values should be known
     if "metric" in df.columns:
         unknown = df["metric"].dropna()
         unknown = unknown[~unknown.str.upper().isin({m.upper() for m in VALID_METRICS})]
@@ -124,15 +134,19 @@ def filter_valid_sota(df: pd.DataFrame, schema: dict) -> pd.DataFrame:
 
 def load_sota(path: str | Path, schema: Optional[dict] = None) -> pd.DataFrame:
     """
-    Load SOTA baselines from a CSV or JSON file.
+    Load SOTA baselines from a CSV, JSON, or YAML (.yaml) file.
     Validates against schema (auto-loaded from the file's parent folder if not provided).
     Prints warnings for missing required fields; drops invalid rows.
     Returns empty DataFrame if file is missing.
+    Never raises; never blocks training or fine-tuning.
     """
     p = Path(path)
     if not p.exists():
         print(f"[SOTA] File not found: {p}  — skipping SOTA comparison.")
         return pd.DataFrame(columns=SOTA_COLUMNS)
+
+    if p.suffix.lower() in (".yaml", ".yml"):
+        return load_yaml_references(p.parent, schema)
 
     df = _load_json(p) if p.suffix.lower() == ".json" else _load_csv(p)
 
@@ -176,6 +190,214 @@ def _load_json(p: Path) -> pd.DataFrame:
     return df[SOTA_COLUMNS].copy()
 
 
+# ── YAML reference parser ─────────────────────────────────────────────────────
+
+# Mapping from YAML entry fields → DataFrame column names
+_YAML_FIELD_MAP = {
+    "author":    "authors",
+    "title":     "paper_title",
+    "year":      "year",
+    "model":     "model",
+    "dataset":   "dataset",
+    "language":  "language",
+    "direction": "direction",
+    "metric":    "metric",
+    "score":     "score",
+    "notes":     "notes",
+}
+
+# Required standard fields for every reference entry
+_YAML_STD_REQUIRED = {"citation_key", "type", "author", "title", "year"}
+# Required comparison fields for entries to appear in comparison tables
+_YAML_COMPARISON_REQUIRED = {"model", "dataset", "language", "direction", "metric", "summary"}
+
+
+def _load_yaml_entries(yaml_path: Path) -> list[dict]:
+    """
+    Load a list of YAML reference entries. Uses PyYAML if available,
+    otherwise prints a warning and returns an empty list.
+    """
+    try:
+        import yaml  # PyYAML
+    except ImportError:
+        print(
+            "[REF] PyYAML is not installed. Run `pip install pyyaml` to enable "
+            "references.yaml loading. SOTA comparison will be skipped."
+        )
+        return []
+
+    try:
+        with yaml_path.open(encoding="utf-8") as f:
+            data = yaml.safe_load(f)
+    except Exception as exc:
+        print(f"[REF] Could not parse {yaml_path}: {exc} — skipping.")
+        return []
+
+    if not isinstance(data, list):
+        print(
+            f"[REF] {yaml_path.name}: expected a YAML list of entries (starting with '- '), "
+            f"got {type(data).__name__}. Skipping."
+        )
+        return []
+
+    return [e for e in data if isinstance(e, dict)]
+
+
+def validate_references(entries: list[dict], schema: dict) -> list[str]:
+    """
+    Validate a list of YAML reference entries against a schema.
+    Returns warning strings. Never raises; never blocks training/fine-tuning.
+
+    Checks per entry:
+      - Required standard fields (citation_key, type, author, title, year)
+      - Required comparison fields (model, dataset, language, direction, metric, summary)
+      - score is numeric or null
+      - Paper-specific required fields from schema reference_fields section
+    """
+    ref_cfg     = schema.get("reference_fields", {})
+    extra_req   = set(ref_cfg.get("paper_specific_required", []))
+    comparison_req = _YAML_COMPARISON_REQUIRED | extra_req
+    warnings: list[str] = []
+
+    for e in entries:
+        key = e.get("citation_key", "?")
+
+        # Standard fields
+        for f in _YAML_STD_REQUIRED:
+            val = e.get(f)
+            if val is None or str(val).strip() == "":
+                warnings.append(f"[REF] Entry '{key}': missing standard field '{f}'")
+
+        # Comparison fields
+        for f in comparison_req:
+            val = e.get(f)
+            if val is None or str(val).strip() == "":
+                warnings.append(
+                    f"[REF] Entry '{key}': missing comparison field '{f}' "
+                    f"— entry will be excluded from comparison tables"
+                )
+
+        # Score must be numeric if not null
+        score_raw = e.get("score")
+        if score_raw is not None:
+            try:
+                float(score_raw)
+            except (ValueError, TypeError):
+                warnings.append(
+                    f"[REF] Entry '{key}': score='{score_raw}' is not numeric. "
+                    f"Set to null if unknown."
+                )
+
+        # Metric should be a known value (skip check if null — methodology refs may omit it)
+        metric_raw = e.get("metric")
+        metric_val = str(metric_raw).strip() if metric_raw is not None else ""
+        if metric_val and metric_val.upper() not in {m.upper() for m in VALID_METRICS}:
+            warnings.append(
+                f"[REF] Entry '{key}': unrecognised metric '{metric_val}'. "
+                f"Expected one of {sorted(VALID_METRICS)}."
+            )
+
+    return warnings
+
+
+def _yaml_entry_to_row(entry: dict, paper_specific_req: set[str]) -> dict | None:
+    """
+    Convert a YAML reference entry to a DataFrame row.
+    Returns None if any required comparison field is missing or score is non-numeric/null.
+    """
+    row: dict = {"citation_key": entry.get("citation_key", "")}
+    for yaml_field, col_name in _YAML_FIELD_MAP.items():
+        row[col_name] = entry.get(yaml_field, "")
+
+    # Score: null → skip from comparison table
+    score_raw = entry.get("score")
+    if score_raw is None:
+        return None
+    try:
+        row["score"] = float(score_raw)
+    except (ValueError, TypeError):
+        return None
+
+    # Required comparison fields must be present
+    all_required = _YAML_COMPARISON_REQUIRED | paper_specific_req
+    for f in all_required:
+        if f == "summary":
+            continue  # summary goes to notes column if present, but doesn't block row
+        col = _YAML_FIELD_MAP.get(f, f)
+        if not str(row.get(col, "")).strip():
+            return None
+
+    # Copy summary into a notes prefix if no separate notes
+    summary = str(entry.get("summary", "")).strip()
+    notes   = str(row.get("notes", "")).strip()
+    if summary and not notes:
+        row["notes"] = summary[:200]  # truncate for table display
+
+    return row
+
+
+def load_yaml_references(folder: str | Path, schema: Optional[dict] = None) -> pd.DataFrame:
+    """
+    Load references.yaml from a paper folder.
+    Validates structure (warn-only). Returns a DataFrame compatible with load_sota().
+    Entries with null score or missing required comparison fields are excluded
+    from the returned DataFrame but remain valid bibliography entries.
+    Never raises; never blocks training or fine-tuning.
+    """
+    folder = Path(folder)
+    yaml_path = folder / "references.yaml"
+    if not yaml_path.exists():
+        return pd.DataFrame(columns=SOTA_COLUMNS)
+
+    entries = _load_yaml_entries(yaml_path)
+    if not entries:
+        return pd.DataFrame(columns=SOTA_COLUMNS)
+
+    if schema is None:
+        schema = load_schema(folder)
+
+    warnings = validate_references(entries, schema)
+    for w in warnings:
+        print(w)
+
+    ref_cfg = schema.get("reference_fields", {})
+    paper_specific_req = set(ref_cfg.get("paper_specific_required", []))
+
+    rows = [
+        r for e in entries
+        if (r := _yaml_entry_to_row(e, paper_specific_req)) is not None
+    ]
+
+    if not rows:
+        n = len(entries)
+        print(
+            f"[REF] {yaml_path.name}: {n} entries parsed, "
+            f"0 usable for comparison (score is null or required fields missing). "
+            f"Fill in 'score' for each entry to enable comparison tables."
+        )
+        return pd.DataFrame(columns=SOTA_COLUMNS)
+
+    df = pd.DataFrame(rows)
+    for col in SOTA_COLUMNS:
+        if col not in df.columns:
+            df[col] = ""
+    print(f"[REF] {yaml_path.name}: {len(entries)} entries, {len(df)} usable for comparison.")
+    return df[SOTA_COLUMNS].copy()
+
+
+# ── Backwards-compatibility aliases ──────────────────────────────────────────
+
+def load_bib_references(folder: str | Path, schema: Optional[dict] = None) -> pd.DataFrame:
+    """Deprecated alias → load_yaml_references (YAML format replaced BibTeX)."""
+    print("[REF] load_bib_references is deprecated — use load_yaml_references instead.")
+    return load_yaml_references(folder, schema)
+
+
+def validate_bib(entries: list[dict], schema: dict) -> list[str]:
+    """Deprecated alias → validate_references."""
+    return validate_references(entries, schema)
+
+
 # ── Normalisation helpers ─────────────────────────────────────────────────────
 
 def _norm(s) -> str:
@@ -209,7 +431,6 @@ def build_sota_comparison_table(
     if dataset_filter:
         sota_sub = sota_sub[sota_sub["dataset"].str.lower() == dataset_filter.lower()]
 
-    # Best score per language × direction from our system (latest/max experiment)
     key_cols = [c for c in ["language", "direction_label"] if c in our_results.columns]
     if not key_cols or metric not in our_results.columns:
         return pd.DataFrame()
@@ -261,8 +482,6 @@ def build_gap_table(
 ) -> pd.DataFrame:
     """
     T_SOTA2 — language-specific SOTA gap: best published, our score, gap, rank.
-
-    Useful for LinguoMT-Benchmark and LinguoMT-Transfer.
     """
     sota_sub = sota_df[sota_df["metric"].str.upper() == metric.upper()]
     if sota_sub.empty or our_results.empty or metric not in our_results.columns:
@@ -271,8 +490,8 @@ def build_gap_table(
     rows = []
     langs = our_results["language"].dropna().unique() if "language" in our_results.columns else []
     for lang in langs:
-        our_sub  = our_results[our_results["language"] == lang]
-        our_max  = our_sub[metric].max() if not our_sub.empty else float("nan")
+        our_sub       = our_results[our_results["language"] == lang]
+        our_max       = our_sub[metric].max() if not our_sub.empty else float("nan")
         sota_sub_lang = sota_sub[sota_sub["language"].str.lower() == _norm(lang)]
         if sota_sub_lang.empty:
             rows.append({"language": lang, "our_best": our_max,
@@ -280,8 +499,8 @@ def build_gap_table(
                          "sota_model": "", "citation_key": ""})
             continue
         sota_max_idx = sota_sub_lang["score"].astype(float).idxmax()
-        sota_row = sota_sub_lang.loc[sota_max_idx]
-        sota_max = float(sota_row["score"])
+        sota_row     = sota_sub_lang.loc[sota_max_idx]
+        sota_max     = float(sota_row["score"])
         rows.append({
             "language":    lang,
             "our_best":    float(our_max),
@@ -305,14 +524,10 @@ def build_system_ranking_table(
 ) -> pd.DataFrame:
     """
     T_SOTA3 — all systems ranked by metric score across languages.
-
-    Combines our result rows with SOTA rows into a single ranked table.
-    Useful for LinguoMT-Cascade and LinguoMT-Benchmark.
     """
     rows = []
 
     if not our_results.empty and metric in our_results.columns:
-        key_cols = [c for c in ["language", "direction_label", "experiment"] if c in our_results.columns]
         for _, r in our_results.iterrows():
             rows.append({
                 "system":    our_label,
@@ -353,8 +568,6 @@ def build_improvement_table(
 ) -> pd.DataFrame:
     """
     T_SOTA4 — metric improvement: pretrained → fine-tuned (or baseline → our system).
-
-    Columns: language | direction | before | after | delta | pct_change
     """
     if before_results.empty or after_results.empty or metric not in before_results.columns:
         return pd.DataFrame()

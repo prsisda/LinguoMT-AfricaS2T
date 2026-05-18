@@ -12,9 +12,41 @@
     "dataset":       { "required": true,  "type": "str",   "description": "Dataset name: 'FLEURS' or 'African-Celtic'" },
     "language":      { "required": true,  "type": "str",   "description": "Display language name matching our system output (e.g. 'Yoruba')" },
     "direction":     { "required": true,  "type": "str",   "description": "'Source → English' or 'English → Source'" },
-    "metric":        { "required": true,  "type": "str",   "description": "One of: BLEU, ChrF, WER, CER" },
+    "metric":        { "required": true,  "type": "str",   "description": "One of: BLEU, spBLEU, ChrF, WER, CER" },
     "score":         { "required": true,  "type": "float", "description": "Numeric score — must be a number, not empty" },
-    "citation_key":  { "required": true,  "type": "str",   "description": "BibTeX citation key, also listed in sota/paper_references.csv" },
+    "citation_key":  { "required": true,  "type": "str",   "description": "Citation key matching an entry in references.yaml" },
     "notes":         { "required": false, "type": "str",   "description": "Evaluation split, conditions, or caveats (e.g. 'Official FLEURS test set')" }
+  },
+  "reference_fields": {
+    "_comment": "Schema for entries in references.yaml. The framework validates each entry against these fields and warns on violations — validation never blocks model training.",
+    "required_standard": {
+      "citation_key": { "type": "str",   "description": "Unique identifier for this reference entry, e.g. 'barrault2023seamlessm4t_yoruba'" },
+      "type":         { "type": "str",   "description": "Entry type: 'article', 'inproceedings', 'book', 'techreport', 'misc'" },
+      "author":       { "type": "str",   "description": "Full author list as a single string, e.g. 'Smith, Jane and Jones, Bob and others'" },
+      "title":        { "type": "str",   "description": "Full paper title (no abbreviations)" },
+      "year":         { "type": "int",   "description": "4-digit publication year" }
+    },
+    "required_comparison": {
+      "model":     { "type": "str",           "description": "Exact model name and variant used for evaluation, e.g. 'SeamlessM4T-v2-large'" },
+      "dataset":   { "type": "str",           "description": "Evaluation dataset name, e.g. 'FLEURS', 'CoVoST-2', 'Flores-200'" },
+      "language":  { "type": "str",           "description": "Target language name, e.g. 'Yoruba'. One entry per language." },
+      "direction": { "type": "str",           "description": "Task direction: 'Source → English', 'ASR', 'Text MT (Source → English)', etc." },
+      "metric":    { "type": "str",           "description": "Evaluation metric: 'BLEU', 'spBLEU', 'WER', 'ChrF', 'CER'" },
+      "score":     { "type": "float_or_null", "description": "Numeric score. Set to null if not yet filled in — null entries are excluded from comparison tables." },
+      "summary":   { "type": "str",           "description": "2–5 sentence description of: (1) what the paper does, (2) what it evaluates and on which languages, (3) why it is relevant as a comparator for this paper." }
+    },
+    "optional_standard": {
+      "journal":    { "type": "str", "description": "Journal name (for type: article)" },
+      "booktitle":  { "type": "str", "description": "Conference or workshop proceedings name (for type: inproceedings)" },
+      "volume":     { "type": "str", "description": "Volume number" },
+      "pages":      { "type": "str", "description": "Page range, e.g. '1234–1245'" },
+      "publisher":  { "type": "str", "description": "Publisher name" },
+      "url":        { "type": "str", "description": "URL to the paper (arXiv or official venue)" }
+    },
+    "optional_comparison": {
+      "notes": { "type": "str", "description": "Caveats, where to find the score, or dataset/split differences vs our evaluation." }
+    },
+    "paper_specific_required": [],
+    "paper_specific_optional": []
   }
 }

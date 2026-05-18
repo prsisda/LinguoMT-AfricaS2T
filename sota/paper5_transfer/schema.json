@@ -12,15 +12,50 @@
     "dataset":               { "required": true,  "type": "str",   "description": "Evaluation dataset name" },
     "language":              { "required": true,  "type": "str",   "description": "Target language display name (the language being evaluated)" },
     "direction":             { "required": true,  "type": "str",   "description": "'Source → English' or 'English → Source'" },
-    "metric":                { "required": true,  "type": "str",   "description": "One of: BLEU, ChrF, WER, CER" },
+    "metric":                { "required": true,  "type": "str",   "description": "One of: BLEU, spBLEU, ChrF, WER, CER" },
     "score":                 { "required": true,  "type": "float", "description": "Numeric score — must be a number" },
-    "citation_key":          { "required": true,  "type": "str",   "description": "BibTeX citation key" },
-    "transfer_type":         { "required": true,  "type": "str",   "description": "Transfer setting: 'zero-shot', 'few-shot', 'cross-lingual', or 'multilingual'" },
+    "citation_key":          { "required": true,  "type": "str",   "description": "Citation key matching an entry in references.yaml" },
+    "transfer_type":         { "required": true,  "type": "str",   "description": "Transfer setting: 'zero_shot', 'few_shot', 'cross_lingual_finetune', or 'multilingual'" },
     "notes":                 { "required": false, "type": "str",   "description": "Transfer conditions, data sources, training details" },
     "source_lang_family":    { "required": false, "type": "str",   "description": "Language family of the training/source language (e.g. 'Niger-Congo', 'Afro-Asiatic', 'mixed')" },
     "target_lang_family":    { "required": false, "type": "str",   "description": "Language family of the evaluation language" },
     "num_ft_samples":        { "required": false, "type": "int",   "description": "Training samples for adaptation (0 = zero-shot)" },
-    "pretrain_langs":        { "required": false, "type": "str",   "description": "Languages seen during pretraining, e.g. '100 languages incl. Yoruba'" },
+    "pretrain_langs":        { "required": false, "type": "str",   "description": "Languages seen during pretraining, e.g. '128 languages incl. Yoruba'" },
     "lang_similarity_score": { "required": false, "type": "float", "description": "Typological similarity score between source and target language (e.g. URIEL cosine distance)" }
+  },
+  "reference_fields": {
+    "_comment": "Schema for entries in references.yaml. The framework validates and warns — never blocks model training.",
+    "required_standard": {
+      "citation_key": { "type": "str", "description": "Unique identifier, e.g. 'bapna2022mslam_transfer_yoruba'" },
+      "type":         { "type": "str", "description": "Entry type: 'article', 'inproceedings', 'misc'" },
+      "author":       { "type": "str", "description": "Full author list as a single string" },
+      "title":        { "type": "str", "description": "Full paper title" },
+      "year":         { "type": "int", "description": "4-digit publication year" }
+    },
+    "required_comparison": {
+      "model":         { "type": "str",           "description": "Model name and variant" },
+      "dataset":       { "type": "str",           "description": "Evaluation dataset" },
+      "language":      { "type": "str",           "description": "Target language. One entry per language." },
+      "direction":     { "type": "str",           "description": "Task: 'ASR', 'Source → English', 'Text MT (Source → English)'" },
+      "metric":        { "type": "str",           "description": "Metric: 'BLEU', 'spBLEU', 'WER', 'ChrF'" },
+      "score":         { "type": "float_or_null", "description": "Numeric score. null = not yet filled; excluded from comparison tables." },
+      "summary":       { "type": "str",           "description": "2–5 sentences: what the paper does, what transfer learning approach it uses, why it is relevant as a cross-lingual transfer comparator." },
+      "transfer_type": { "type": "str",           "description": "Transfer setting: 'zero_shot', 'few_shot', 'cross_lingual_finetune', 'multilingual'" }
+    },
+    "optional_standard": {
+      "journal":   { "type": "str", "description": "Journal or preprint identifier" },
+      "booktitle": { "type": "str", "description": "Conference/workshop proceedings name" },
+      "url":       { "type": "str", "description": "Link to the paper" }
+    },
+    "optional_comparison": {
+      "notes":                 { "type": "str",   "description": "Where to find the score, caveats, transfer conditions." },
+      "source_lang_family":    { "type": "str",   "description": "Language family of the pretraining/source language" },
+      "target_lang_family":    { "type": "str",   "description": "Language family of the evaluation language" },
+      "num_ft_samples":        { "type": "int",   "description": "Training samples used for transfer adaptation (0 = zero-shot)" },
+      "pretrain_langs":        { "type": "str",   "description": "Languages in the pretraining set" },
+      "lang_similarity_score": { "type": "float", "description": "Typological similarity between source and target (e.g. URIEL cosine)" }
+    },
+    "paper_specific_required": ["transfer_type"],
+    "paper_specific_optional": ["source_lang_family", "target_lang_family", "num_ft_samples", "pretrain_langs", "lang_similarity_score"]
   }
 }

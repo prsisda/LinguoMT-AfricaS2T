@@ -1,0 +1,228 @@
+# references.yaml — Paper 1: LinguoMT Benchmark
+# Comparison baselines for published FLEURS speech translation results.
+# Fill in 'score' for each entry to enable automatic comparison tables.
+# See README.md and schema.json for field descriptions.
+#
+# Required comparison fields: model, dataset, language, direction, metric, score
+# Optional: notes, url, year, summary
+
+- citation_key: barrault2023seamlessm4t_yoruba
+  type: article
+  author: "Barrault, Loïc and Chung, Yu-An and Meglioli, Mariano Coria and Dale, David and Dong, Ning and others"
+  title: "SeamlessM4T: Massively Multilingual & Multimodal Machine Translation"
+  year: 2023
+  journal: "arXiv preprint arXiv:2308.11596"
+  url: "https://arxiv.org/abs/2308.11596"
+  model: SeamlessM4T-v2-large
+  dataset: FLEURS
+  language: Yoruba
+  direction: "Source → English"
+  metric: BLEU
+  score: null
+  summary: >
+    End-to-end S2TT model trained on 100+ languages via joint speech-text pretraining.
+    Reports BLEU on FLEURS test set for African languages including Yoruba, Hausa, Igbo, Swahili.
+    Relevant as the primary end-to-end S2TT baseline for the benchmark; scores in Table B.1
+    of arXiv:2312.05187 (SeamlessM4T-v2 follow-up paper).
+  notes: "Fill in BLEU from Table B.1 of arXiv:2312.05187"
+
+- citation_key: barrault2023seamlessm4t_hausa
+  type: article
+  author: "Barrault, Loïc and Chung, Yu-An and Meglioli, Mariano Coria and Dale, David and Dong, Ning and others"
+  title: "SeamlessM4T: Massively Multilingual & Multimodal Machine Translation"
+  year: 2023
+  journal: "arXiv preprint arXiv:2308.11596"
+  url: "https://arxiv.org/abs/2308.11596"
+  model: SeamlessM4T-v2-large
+  dataset: FLEURS
+  language: Hausa
+  direction: "Source → English"
+  metric: BLEU
+  score: null
+  summary: >
+    End-to-end S2TT model trained on 100+ languages via joint speech-text pretraining.
+    Reports BLEU on FLEURS test set for African languages including Yoruba, Hausa, Igbo, Swahili.
+    Relevant as the primary end-to-end S2TT baseline for the benchmark; scores in Table B.1
+    of arXiv:2312.05187 (SeamlessM4T-v2 follow-up paper).
+  notes: "Fill in BLEU from Table B.1 of arXiv:2312.05187"
+
+- citation_key: barrault2023seamlessm4t_igbo
+  type: article
+  author: "Barrault, Loïc and Chung, Yu-An and Meglioli, Mariano Coria and Dale, David and Dong, Ning and others"
+  title: "SeamlessM4T: Massively Multilingual & Multimodal Machine Translation"
+  year: 2023
+  journal: "arXiv preprint arXiv:2308.11596"
+  url: "https://arxiv.org/abs/2308.11596"
+  model: SeamlessM4T-v2-large
+  dataset: FLEURS
+  language: Igbo
+  direction: "Source → English"
+  metric: BLEU
+  score: null
+  summary: >
+    End-to-end S2TT model trained on 100+ languages via joint speech-text pretraining.
+    Reports BLEU on FLEURS test set for African languages including Yoruba, Hausa, Igbo, Swahili.
+    Relevant as the primary end-to-end S2TT baseline for the benchmark; scores in Table B.1
+    of arXiv:2312.05187 (SeamlessM4T-v2 follow-up paper).
+  notes: "Fill in BLEU from Table B.1 of arXiv:2312.05187"
+
+- citation_key: radford2023whisper_yoruba
+  type: inproceedings
+  author: "Radford, Alec and Kim, Jong Wook and Xu, Tao and Brockman, Greg and McLeavey, Christine and Sutskever, Ilya"
+  title: "Robust Speech Recognition via Large-Scale Weak Supervision"
+  year: 2023
+  booktitle: "Proceedings of the 40th International Conference on Machine Learning (ICML 2023)"
+  url: "https://arxiv.org/abs/2212.04356"
+  model: Whisper-large-v3
+  dataset: FLEURS
+  language: Yoruba
+  direction: "ASR"
+  metric: WER
+  score: null
+  summary: >
+    Large-scale multilingual ASR model trained on 680k hours of weakly supervised audio.
+    Reports WER on FLEURS for 100+ languages including Yoruba and Hausa (not Igbo natively).
+    Relevant as the ASR component baseline and upper bound for cascade pipelines.
+    Does not perform translation — WER measures transcription quality only.
+  notes: "Fill in WER from HuggingFace model card — whisper-large-v3 FLEURS ASR eval"
+
+- citation_key: radford2023whisper_hausa
+  type: inproceedings
+  author: "Radford, Alec and Kim, Jong Wook and Xu, Tao and Brockman, Greg and McLeavey, Christine and Sutskever, Ilya"
+  title: "Robust Speech Recognition via Large-Scale Weak Supervision"
+  year: 2023
+  booktitle: "Proceedings of the 40th International Conference on Machine Learning (ICML 2023)"
+  url: "https://arxiv.org/abs/2212.04356"
+  model: Whisper-large-v3
+  dataset: FLEURS
+  language: Hausa
+  direction: "ASR"
+  metric: WER
+  score: null
+  summary: >
+    Large-scale multilingual ASR model trained on 680k hours of weakly supervised audio.
+    Reports WER on FLEURS for 100+ languages including Yoruba and Hausa.
+    Relevant as the ASR component baseline and upper bound for cascade pipelines.
+    Does not perform translation — WER measures transcription quality only.
+  notes: "Fill in WER from HuggingFace model card — whisper-large-v3 FLEURS ASR eval"
+
+- citation_key: costajussa2022nllb_yoruba
+  type: article
+  author: "Costa-jussà, Marta R. and Cross, James and Çelebi, Onur and Elbayad, Maha and Heafield, Kenneth and Heffernan, Kevin and others"
+  title: "No Language Left Behind: Scaling Human-Centered Machine Translation"
+  year: 2022
+  journal: "arXiv preprint arXiv:2207.04672"
+  url: "https://arxiv.org/abs/2207.04672"
+  model: NLLB-200-600M
+  dataset: Flores-200
+  language: Yoruba
+  direction: "Text MT (Source → English)"
+  metric: spBLEU
+  score: null
+  summary: >
+    Text-only neural MT model covering 200 languages including African ones.
+    Evaluated on Flores-200 (written text), NOT on speech — cannot be directly compared
+    to S2TT results. Relevant as the MT upper bound for cascade pipelines: if NLLB MT BLEU
+    on the written source is X, the cascade S2TT BLEU will always be ≤ X.
+    Scores in Table 2 of arXiv:2207.04672 for yor_Latn → eng_Latn.
+  notes: "Dataset is Flores-200, not FLEURS. Fill in spBLEU from paper Table 2 (yor_Latn->eng_Latn)"
+
+- citation_key: costajussa2022nllb_hausa
+  type: article
+  author: "Costa-jussà, Marta R. and Cross, James and Çelebi, Onur and Elbayad, Maha and Heafield, Kenneth and Heffernan, Kevin and others"
+  title: "No Language Left Behind: Scaling Human-Centered Machine Translation"
+  year: 2022
+  journal: "arXiv preprint arXiv:2207.04672"
+  url: "https://arxiv.org/abs/2207.04672"
+  model: NLLB-200-600M
+  dataset: Flores-200
+  language: Hausa
+  direction: "Text MT (Source → English)"
+  metric: spBLEU
+  score: null
+  summary: >
+    Text-only neural MT model covering 200 languages including African ones.
+    Evaluated on Flores-200 (written text), NOT on speech — cannot be directly compared
+    to S2TT results. Relevant as the MT upper bound for cascade pipelines.
+    Scores in Table 2 of arXiv:2207.04672 for hau_Latn → eng_Latn.
+  notes: "Dataset is Flores-200, not FLEURS. Fill in spBLEU from paper Table 2 (hau_Latn->eng_Latn)"
+
+- citation_key: conneau2022fleurs_baseline
+  type: inproceedings
+  author: "Conneau, Alexis and Ma, Min and Khanuja, Simran and Zhang, Yu and Axelrod, Vera and Dalmia, Siddharth and others"
+  title: "FLEURS: Few-Shot Learning Evaluation of Universal Representations of Speech"
+  year: 2022
+  booktitle: "2022 IEEE Spoken Language Technology Workshop (SLT)"
+  url: "https://arxiv.org/abs/2205.12446"
+  model: mSLAM-CTC
+  dataset: FLEURS
+  language: Yoruba
+  direction: "Source → English"
+  metric: BLEU
+  score: null
+  summary: >
+    Introduces the FLEURS benchmark dataset for multilingual speech evaluation.
+    Contains mSLAM-CTC baseline S2TT BLEU results on FLEURS test set for ~100 languages
+    including many African languages. Relevant as the original dataset paper baseline.
+    Scores in Table 3 — FLEURS S2TT evaluation.
+  notes: "Fill in BLEU from Table 3 of arXiv:2205.12446"
+
+- citation_key: bapna2022mslam_yoruba
+  type: article
+  author: "Bapna, Ankur and Cherry, Colin and Zhang, Yu and Jia, Ye and Johnson, Melvin and Chrzanowski, Mike and others"
+  title: "mSLAM: Massively Multilingual Joint Pre-Training for Speech and Text"
+  year: 2022
+  journal: "arXiv preprint arXiv:2202.01374"
+  url: "https://arxiv.org/abs/2202.01374"
+  model: mSLAM
+  dataset: FLEURS
+  language: Yoruba
+  direction: "Source → English"
+  metric: BLEU
+  score: null
+  summary: >
+    Jointly pretrained speech-text multilingual model covering 128 languages.
+    Reports S2TT BLEU on FLEURS including African languages (Yoruba, Hausa, Swahili).
+    Relevant as a strong pretrained multilingual baseline prior to SeamlessM4T.
+    Scores in supplementary FLEURS S2TT table.
+  notes: "Fill in BLEU from supplementary FLEURS S2TT table of arXiv:2202.01374"
+
+- citation_key: pratap2023mms_yoruba
+  type: article
+  author: "Pratap, Vineel and Tjandra, Andros and Shi, Bowen and Tomasello, Paden and Babu, Arun and Xu, Sayani and others"
+  title: "Scaling Speech Technology to 1,000+ Languages"
+  year: 2023
+  journal: "arXiv preprint arXiv:2305.13516"
+  url: "https://arxiv.org/abs/2305.13516"
+  model: MMS-300M
+  dataset: FLEURS
+  language: Yoruba
+  direction: "ASR"
+  metric: WER
+  score: null
+  summary: >
+    ASR model covering 1100+ languages via multilingual fine-tuning of wav2vec 2.0.
+    Reports WER on FLEURS ASR subset for many African languages including Yoruba and Hausa.
+    Relevant as a broad-coverage ASR baseline — notably covers more languages than Whisper.
+    Does not perform translation; WER is for transcription only.
+  notes: "Fill in WER from paper appendix — FLEURS ASR results per language"
+
+- citation_key: babu2022xlsr_yoruba
+  type: inproceedings
+  author: "Babu, Arun and Wang, Changhan and Tjandra, Andros and Lakhotia, Kushal and Xu, Qiantong and Goyal, Naman and others"
+  title: "XLS-R: Self-Supervised Cross-Lingual Speech Representation Learning at Scale"
+  year: 2022
+  booktitle: "Interspeech 2022"
+  url: "https://arxiv.org/abs/2111.09296"
+  model: XLS-R-1B
+  dataset: FLEURS
+  language: Yoruba
+  direction: "ASR"
+  metric: WER
+  score: null
+  summary: >
+    Self-supervised cross-lingual speech model (1B params) pretrained on 128 languages.
+    Reports WER on FLEURS ASR for many languages including African ones after fine-tuning.
+    Relevant as the predecessor to MMS and a strong ASR baseline for low-resource languages.
+    Does not perform translation; WER is for transcription only. Scores in Table 4.
+  notes: "Fill in WER from Table 4 of arXiv:2111.09296 — FLEURS ASR results"

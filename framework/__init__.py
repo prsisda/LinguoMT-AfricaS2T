@@ -15,6 +15,10 @@ from .finetuning import (
 )
 from .sota import (
     load_sota,
+    load_yaml_references,
+    validate_references,
+    load_bib_references,   # deprecated alias
+    validate_bib,          # deprecated alias
     build_sota_comparison_table,
     build_gap_table,
     build_system_ranking_table,
@@ -40,7 +44,10 @@ __all__ = [
     "NLLBTextFineTuner", "WhisperASRFineTuner",
     "SeamlessM4TFineTuner", "WhisperNLLBCascadeFineTuner",
     "build_finetune_comparison_table",
-    "load_sota", "build_sota_comparison_table", "build_gap_table",
+    "load_sota",
+    "load_yaml_references", "validate_references",
+    "load_bib_references", "validate_bib",  # deprecated aliases
+    "build_sota_comparison_table", "build_gap_table",
     "build_system_ranking_table", "build_improvement_table", "generate_sota_interpretation",
     "PaperModeConfig", "get_paper_mode_config", "PAPER_MODES", "describe_paper_modes",
 ]
