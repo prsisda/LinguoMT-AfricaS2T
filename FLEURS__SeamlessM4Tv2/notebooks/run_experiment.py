@@ -96,7 +96,7 @@ DATASET_NAME      = "FLEURS"
 EXPERIMENT_FAMILY = "FLEURS__SeamlessM4Tv2_Large"
 SPLIT             = "validation"
 TRAIN_SPLIT       = "train"
-MANUAL_LANGUAGES  = None   # None = auto | e.g. ["igbo", "yoruba", "swahili"]
+MANUAL_LANGUAGES  = ["igbo", "yoruba", "swahili"]   # Hausa excluded: no SeamlessM4T speech support (hau not in S2TT list)
 SEED              = 42
 # ── Publication settings ──────────────────────────────────────────────────────
 PAPER_MODE        = "benchmark"   # benchmark | adaptation | audio | cascade | transfer

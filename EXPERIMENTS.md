@@ -25,7 +25,7 @@ Not every language is available in every dataset, and not every model supports e
 |---|:---:|:---:|:---:|:---:|---|
 | AfricanCeltic × SeamlessM4T-v2 | ✓ | ✓ | — | — | Hausa audio absent from African-Celtic dataset |
 | AfricanCeltic × Whisper+NLLB | — | ✓ | ✓ | — | Igbo excluded: no Whisper language token |
-| FLEURS × SeamlessM4T-v2 | ✓ | ✓ | ✓ | — | All three core languages supported |
+| FLEURS × SeamlessM4T-v2 | ✓ | ✓ | — | ✓ | Hausa excluded: `hau` not in SeamlessM4T speech list; Swahili substituted |
 | FLEURS × Whisper+NLLB | — | ✓ | ✓ | ✓ | Igbo excluded: no Whisper token; Swahili substituted for 3-language parity |
 
 ### Controlling languages via `MANUAL_LANGUAGES`
@@ -50,7 +50,7 @@ MANUAL_LANGUAGES = ["igbo", "yoruba"]
 MANUAL_LANGUAGES = ["yoruba", "hausa"]      # Igbo excluded: no Whisper token
 
 # FLEURS × SeamlessM4T-v2
-MANUAL_LANGUAGES = None                     # auto-detects igbo, yoruba, hausa
+MANUAL_LANGUAGES = ["igbo", "yoruba", "swahili"]    # Hausa excluded: not in SeamlessM4T speech list
 
 # FLEURS × Whisper+NLLB
 MANUAL_LANGUAGES = ["yoruba", "hausa", "swahili"]   # Swahili substitutes Igbo
