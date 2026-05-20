@@ -383,7 +383,7 @@ class ExperimentRunner:
             exp_name = exp["experiment"]
             for cfg in self.lang_cfgs:
                 lk         = cfg["language_key"]
-                model_code = cfg.get("whisper_code") or get_model_lang_code(cfg, self.caps)
+                model_code = get_model_lang_code(cfg, self.caps) or cfg.get("whisper_code")
                 if not model_code:
                     continue
                 pairs = self.cache.get_pairs(lk, exp["max_audio_dev"])
