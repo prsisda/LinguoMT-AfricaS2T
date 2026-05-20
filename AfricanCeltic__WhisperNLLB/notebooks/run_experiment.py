@@ -101,7 +101,7 @@ DATASET_NAME      = "African-Celtic"
 EXPERIMENT_FAMILY = "AfricanCeltic__WhisperNLLB"
 SPLIT             = "dev"
 TRAIN_SPLIT       = "train"
-MANUAL_LANGUAGES  = ["yoruba"]   # Igbo: no Whisper token; Hausa: not in African-Celtic dataset
+MANUAL_LANGUAGES  = ["yoruba", "hausa"]   # Igbo excluded: no Whisper token
 SEED              = 42
 # ── Publication settings ──────────────────────────────────────────────────────
 PAPER_MODE        = "benchmark"   # benchmark | adaptation | audio | cascade | transfer
