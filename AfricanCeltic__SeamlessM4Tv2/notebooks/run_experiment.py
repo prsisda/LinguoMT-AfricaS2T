@@ -108,7 +108,7 @@ DATASET_NAME      = "African-Celtic"
 EXPERIMENT_FAMILY = "AfricanCeltic__SeamlessM4Tv2_Large"
 SPLIT             = "dev"
 TRAIN_SPLIT       = "train"
-MANUAL_LANGUAGES  = ["igbo", "yoruba", "hausa"]   # None = auto
+MANUAL_LANGUAGES  = ["igbo", "yoruba"]   # Hausa excluded: not in African-Celtic dataset
 SEED              = 42
 
 if FAST_MODE: DEBUG_MODE = True
