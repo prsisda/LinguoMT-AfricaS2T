@@ -113,7 +113,7 @@
   year: 2022
   journal: "arXiv preprint arXiv:2207.04672"
   url: "https://arxiv.org/abs/2207.04672"
-  model: NLLB-200-600M
+  model: NLLB-200-distilled-600M
   datasets: [Flores-200]
   language: Yoruba
   directions: ["Text MT (Source → English)"]
@@ -134,7 +134,7 @@
   year: 2022
   journal: "arXiv preprint arXiv:2207.04672"
   url: "https://arxiv.org/abs/2207.04672"
-  model: NLLB-200-600M
+  model: NLLB-200-distilled-600M
   datasets: [Flores-200]
   language: Hausa
   directions: ["Text MT (Source → English)"]

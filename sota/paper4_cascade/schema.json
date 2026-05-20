@@ -32,7 +32,7 @@
       "year":         { "type": "int", "description": "4-digit publication year" }
     },
     "required_comparison": {
-      "model":        { "type": "str",           "description": "Full pipeline, e.g. 'Whisper-large-v3 + NLLB-200-600M' or 'SeamlessM4T-v2-large'" },
+      "model":        { "type": "str",           "description": "Full pipeline, e.g. 'Whisper-large-v3 + NLLB-200-distilled-600M' or 'SeamlessM4T-v2-large'" },
       "datasets":     { "type": "list[str]",    "description": "List of datasets the paper evaluates on, e.g. [FLEURS] or [MuST-C, CoVoST-2]" },
       "language":     { "type": "str",          "description": "Target language. One entry per language." },
       "directions":   { "type": "list[str]",    "description": "List of task directions, e.g. ['Source → English'] or ['Source → German', 'Source → French']" },

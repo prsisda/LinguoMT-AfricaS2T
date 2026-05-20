@@ -51,7 +51,7 @@ Open `references.yaml` and fill in the `score` field for each entry using the so
 | Whisper-large-v3 WER (Yoruba, Hausa) | HuggingFace model card — FLEURS ASR eval |
 | MMS-300M WER (Yoruba, Hausa, Igbo) | Per-language appendix of `arXiv:2305.13516` |
 | XLS-R-1B WER (Yoruba, Hausa) | Table 4 of `arXiv:2111.09296` |
-| NLLB-200-600M spBLEU (Flores-200) | Table 2 of `arXiv:2207.04672` |
+| NLLB-200-distilled-600M spBLEU (Flores-200) | Table 2 of `arXiv:2207.04672` |
 
 Validate the file:
 ```bash
@@ -125,7 +125,7 @@ ENABLE_FINETUNING = False
 Record for each language:
 - Intermediate ASR WER (Whisper transcripts before translation)
 - Cascade BLEU / spBLEU (Whisper → NLLB-200 output)
-- Text-MT ceiling BLEU: run NLLB-200-600M on the **gold reference transcripts** from FLEURS (not audio) to establish the upper bound for any cascade
+- Text-MT ceiling BLEU: run NLLB-200-distilled-600M on the **gold reference transcripts** from FLEURS (not audio) to establish the upper bound for any cascade
 
 NLLB-200 language codes: `yor_Latn` (Yoruba), `hau_Latn` (Hausa), `ibo_Latn` (Igbo)
 

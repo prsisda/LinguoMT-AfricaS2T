@@ -12,7 +12,7 @@
 # ---
 
 # %% [markdown]
-# # LinguoMT — African-Celtic + Whisper-large-v3 + NLLB-200-600M
+# # LinguoMT — African-Celtic + Whisper-large-v3 + NLLB-200-distilled-600M
 #
 # Cascade ASR+MT pipeline on the African-Celtic dataset.
 # Whisper transcribes; NLLB translates.  Languages must be supported by both.

@@ -93,14 +93,14 @@ SOTA_FILE  = "papers/paper1_benchmark/references.yaml"   # baseline references
 
 | Model | HuggingFace ID | Direction | Notes |
 |-------|---------------|-----------|-------|
-| NLLB-200-600M | `facebook/nllb-200-600M` | Any → Any | Used as MT component in cascade and text-MT ceiling |
+| NLLB-200-distilled-600M | `facebook/nllb-200-distilled-600M` | Any → Any | Used as MT component in cascade and text-MT ceiling |
 | NLLB-200-1.3B | `facebook/nllb-200-1.3B` | Any → Any | Larger variant |
 
 ### Cascade pipeline
 
 | Pipeline | Components | Notes |
 |----------|-----------|-------|
-| Whisper + NLLB-200 | `openai/whisper-large-v3` → `facebook/nllb-200-600M` | Virtual model ID: `whisper_nllb`; used for cascade vs E2E analysis |
+| Whisper + NLLB-200 | `openai/whisper-large-v3` → `facebook/nllb-200-distilled-600M` | Virtual model ID: `whisper_nllb`; used for cascade vs E2E analysis |
 
 ### NLLB language codes for target languages
 

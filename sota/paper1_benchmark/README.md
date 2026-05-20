@@ -115,7 +115,7 @@ One row per system × language × metric result. All fields are flat (no lists).
 
 | Model | Authors | Year | Where to find scores |
 |-------|---------|------|----------------------|
-| NLLB-200-600M | Costa-Jussà et al. | 2022 | Table 2 of `arXiv:2207.04672` |
+| NLLB-200-distilled-600M | Costa-Jussà et al. | 2022 | Table 2 of `arXiv:2207.04672` |
 
 **NLLB language codes:** `yor_Latn` (Yoruba) · `hau_Latn` (Hausa) · `ibo_Latn` (Igbo)  
 **Note:** NLLB scores are on Flores-200 (written text), not FLEURS (speech) — label the direction as `Text MT (Source → English)`.

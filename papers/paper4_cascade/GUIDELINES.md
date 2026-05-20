@@ -57,7 +57,7 @@ Feed the **gold FLEURS reference transcripts** directly into NLLB-200, bypassing
 
 ```python
 PAPER_MODE      = "cascade"
-MODEL_ID        = "facebook/nllb-200-600M"
+MODEL_ID        = "facebook/nllb-200-distilled-600M"
 INPUT_TYPE      = "gold_transcript"   # use reference text, not audio
 DATASET_ID      = "google/fleurs"
 ```
@@ -138,7 +138,7 @@ Swap NLLB-200 model sizes to show how the MT component quality affects cascade B
 
 | MT component | BLEU (Yoruba) | BLEU (Hausa) | BLEU (Igbo) |
 |-------------|--------------|-------------|------------|
-| NLLB-200-600M | | | |
+| NLLB-200-distilled-600M | | | |
 | NLLB-200-1.3B | | | |
 
 Keep ASR (Whisper-large-v3) fixed. This shows whether investing in a larger MT model is more efficient than investing in ASR quality.

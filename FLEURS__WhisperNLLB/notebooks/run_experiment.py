@@ -12,7 +12,7 @@
 # ---
 
 # %% [markdown]
-# # LinguoMT — FLEURS + Whisper-large-v3 + NLLB-200-600M
+# # LinguoMT — FLEURS + Whisper-large-v3 + NLLB-200-distilled-600M
 #
 # Cascade ASR+MT pipeline on FLEURS.
 # Whisper transcribes African speech; NLLB translates the transcript.

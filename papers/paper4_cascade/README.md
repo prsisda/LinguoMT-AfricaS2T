@@ -101,7 +101,7 @@ Use one entry per paper × language × architecture combination.
 
 | Field | Status | Type | Description |
 |-------|--------|------|-------------|
-| `model` | ★ Required | str | Full pipeline, e.g. `Whisper-large-v3 + NLLB-200-600M` |
+| `model` | ★ Required | str | Full pipeline, e.g. `Whisper-large-v3 + NLLB-200-distilled-600M` |
 | `datasets` | ★ Required | list | All datasets evaluated on, e.g. `[FLEURS]` or `[MuST-C]` |
 | `language` | ★ Required | str | Target language — `Yoruba`, `Hausa`, `Igbo` |
 | `directions` | ★ Required | list | All task directions, e.g. `["Source → English"]` |
@@ -111,7 +111,7 @@ Use one entry per paper × language × architecture combination.
 | `architecture` | ★ Required | str | `cascade`, `end_to_end`, or `direct` |
 | `notes` | ○ Optional | str | Where to find the score, architecture details |
 | `asr_model` | ○ Optional | str | ASR component in cascade, e.g. `Whisper-large-v3` |
-| `mt_model` | ○ Optional | str | MT component in cascade, e.g. `NLLB-200-600M` |
+| `mt_model` | ○ Optional | str | MT component in cascade, e.g. `NLLB-200-distilled-600M` |
 | `asr_wer` | ○ Optional | float | Intermediate ASR WER before translation |
 | `latency_ms` | ○ Optional | float | End-to-end inference latency in ms |
 
@@ -159,7 +159,7 @@ One row per system × language × architecture × metric. Flat fields — no lis
 
 | Model | Dataset | Languages | Metric | Where to find scores |
 |-------|---------|-----------|--------|----------------------|
-| NLLB-200-600M | Flores-200 | Igbo (`ibo_Latn`) | spBLEU | Table 2 of `arXiv:2207.04672` |
+| NLLB-200-distilled-600M | Flores-200 | Igbo (`ibo_Latn`) | spBLEU | Table 2 of `arXiv:2207.04672` |
 
 ### Architecture framing references (cite, not compare directly)
 

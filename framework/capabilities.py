@@ -59,7 +59,7 @@ _REGISTRY: dict[str, dict] = {
         bidirectional=False, is_cascade=False, english_code="en",
         s2tt_lang_attr=None, asr_lang_attr="whisper_code", t2tt_lang_attr=None,
     ),
-    "facebook/nllb-200-600M": dict(
+    "facebook/nllb-200-distilled-600M": dict(
         model_type="nllb", direct_s2tt=False, asr=False, t2tt=True,
         bidirectional=True, is_cascade=False, english_code="eng_Latn",
         s2tt_lang_attr=None, asr_lang_attr=None, t2tt_lang_attr="nllb_code",
@@ -89,7 +89,7 @@ def detect_model_capabilities(model_id: str) -> ModelCapabilities:
         elif "whisper" in mid:
             cfg = _REGISTRY["openai/whisper-large-v3"]
         elif "nllb" in mid:
-            cfg = _REGISTRY["facebook/nllb-200-600M"]
+            cfg = _REGISTRY["facebook/nllb-200-distilled-600M"]
         else:
             cfg = dict(
                 model_type="unknown", direct_s2tt=False, asr=False, t2tt=False,
