@@ -1,4 +1,6 @@
 from __future__ import annotations
+import hashlib
+import pickle
 import re
 import unicodedata
 from pathlib import Path
@@ -73,13 +75,39 @@ class DatasetCache:
 
     # ── public ───────────────────────────────────────────────────────────────
 
+    def _cache_path(self) -> Path | None:
+        if self.cache_dir is None:
+            return None
+        langs = ",".join(sorted(c["language_key"] for c in self.language_configs))
+        key   = f"{self.dataset_id}|{self.split}|{langs}|{self.max_pairs}|{self.max_scan_rows}"
+        tag   = hashlib.md5(key.encode()).hexdigest()[:10]
+        return Path(self.cache_dir) / f"pairs_{self.adapter_type}_{tag}.pkl"
+
     def build(self, monitor=None) -> None:
+        cache_path = self._cache_path()
+        if cache_path and cache_path.exists() and not self.force_rerun:
+            with open(cache_path, "rb") as fh:
+                self._cache = pickle.load(fh)
+            total = sum(len(v) for v in self._cache.values())
+            print(f"[Dataset] Loaded {total} pairs from disk cache: {cache_path.name}")
+            if monitor:
+                monitor.step("Dataset loaded from disk cache", f"{total} pairs | {cache_path.name}")
+            return
+
         if self.adapter_type == "fleurs":
             self._build_fleurs(monitor)
         elif self.adapter_type == "african_celtic":
             self._build_african_celtic(monitor)
         else:
             raise ValueError(f"Unknown adapter: {self.adapter_type}")
+
+        if cache_path:
+            cache_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(cache_path, "wb") as fh:
+                pickle.dump(self._cache, fh)
+            print(f"[Dataset] Saved to disk cache: {cache_path.name}")
+            if monitor:
+                monitor.step("Dataset cache saved", cache_path.name)
 
     def get_pairs(self, language_key: str, max_samples: int | None = None) -> list[dict]:
         pairs = self._cache.get(language_key, [])

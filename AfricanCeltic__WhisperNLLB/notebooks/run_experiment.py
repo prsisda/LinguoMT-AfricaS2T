@@ -212,6 +212,7 @@ dev_cache = DatasetCache(
     language_configs=lang_cfgs, split=SPLIT,
     max_pairs=max_dev_pairs,
     max_scan_rows=20000 if DEBUG_MODE else 50000,
+    cache_dir=Path(__file__).parent.parent / "cache",
     force_rerun=FORCE_RERUN,
 )
 dev_cache.build(monitor)
