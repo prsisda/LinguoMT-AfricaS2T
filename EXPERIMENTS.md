@@ -21,12 +21,12 @@ Each folder also contains `run_on_colab.ipynb` for one-click Colab execution.
 
 Not every language is available in every dataset, and not every model supports every language. The table below shows what is actually used in each experiment.
 
-| Experiment | Igbo | Yoruba | Hausa | Reason for exclusions |
-|---|:---:|:---:|:---:|---|
-| AfricanCeltic × SeamlessM4T-v2 | ✓ | ✓ | — | Hausa audio absent from African-Celtic dataset |
-| AfricanCeltic × Whisper+NLLB | — | ✓ | — | Igbo: Whisper has no Igbo language token; Hausa: absent from dataset |
-| FLEURS × SeamlessM4T-v2 | ✓ | ✓ | ✓ | All three supported |
-| FLEURS × Whisper+NLLB | — | ✓ | ✓ | Igbo: Whisper has no Igbo language token |
+| Experiment | Igbo | Yoruba | Hausa | Swahili | Notes |
+|---|:---:|:---:|:---:|:---:|---|
+| AfricanCeltic × SeamlessM4T-v2 | ✓ | ✓ | — | — | Hausa audio absent from African-Celtic dataset |
+| AfricanCeltic × Whisper+NLLB | — | ✓ | ✓ | — | Igbo excluded: no Whisper language token |
+| FLEURS × SeamlessM4T-v2 | ✓ | ✓ | ✓ | — | All three core languages supported |
+| FLEURS × Whisper+NLLB | — | ✓ | ✓ | ✓ | Igbo excluded: no Whisper token; Swahili substituted for 3-language parity |
 
 ### Controlling languages via `MANUAL_LANGUAGES`
 
@@ -34,26 +34,26 @@ Every script exposes a `MANUAL_LANGUAGES` list near the top of the configuration
 
 ```python
 # Use a fixed list — recommended for reproducibility
-MANUAL_LANGUAGES = ["igbo", "yoruba"]
+MANUAL_LANGUAGES = ["yoruba", "hausa"]
 
 # Set to None to auto-detect from model + dataset capabilities
 MANUAL_LANGUAGES = None
 ```
 
-**Important:** Always respect the exclusions above. Passing an unsupported language will either raise a runtime error or silently produce empty predictions.
+The values currently set in each script:
 
 ```python
-# African-Celtic × SeamlessM4T-v2 — correct
-MANUAL_LANGUAGES = ["igbo", "yoruba"]       # Hausa must be omitted
+# African-Celtic × SeamlessM4T-v2
+MANUAL_LANGUAGES = ["igbo", "yoruba"]
 
-# African-Celtic × Whisper+NLLB — correct
-MANUAL_LANGUAGES = ["yoruba"]               # Igbo and Hausa must be omitted
+# African-Celtic × Whisper+NLLB
+MANUAL_LANGUAGES = ["yoruba", "hausa"]      # Igbo excluded: no Whisper token
 
-# FLEURS × SeamlessM4T-v2 — correct
-MANUAL_LANGUAGES = ["igbo", "yoruba", "hausa"]
+# FLEURS × SeamlessM4T-v2
+MANUAL_LANGUAGES = None                     # auto-detects igbo, yoruba, hausa
 
-# FLEURS × Whisper+NLLB — correct
-MANUAL_LANGUAGES = ["yoruba", "hausa"]      # Igbo must be omitted
+# FLEURS × Whisper+NLLB
+MANUAL_LANGUAGES = ["yoruba", "hausa", "swahili"]   # Swahili substitutes Igbo
 ```
 
 ---
