@@ -153,7 +153,7 @@ def _mt(text: str, nllb_src: str, nllb_tgt: str) -> str:
     if not text: return ""
     nllb_tok.src_lang = nllb_src
     inp = nllb_tok(text, return_tensors="pt").to(DEVICE)
-    tgt_id = nllb_tok.lang_code_to_id[nllb_tgt]
+    tgt_id = nllb_tok.convert_tokens_to_ids(nllb_tgt)
     with torch.no_grad():
         ids = nllb_model.generate(**inp, forced_bos_token_id=tgt_id, max_new_tokens=256)
     return nllb_tok.decode(ids[0], skip_special_tokens=True)
