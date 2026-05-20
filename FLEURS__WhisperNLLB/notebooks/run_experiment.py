@@ -94,10 +94,10 @@ SAVE_CHECKPOINTS               = True
 EVAL_BEFORE_AFTER              = True
 # ─────────────────────────────────────────────────────────────────────────────
 WHISPER_ID        = "openai/whisper-large-v3"
-NLLB_ID           = "facebook/nllb-200-600M"
+NLLB_ID           = "facebook/nllb-200-distilled-600M"
 MODEL_ID          = "whisper_nllb"   # virtual id for capability lookup
 DATASET_ID        = "google/fleurs"
-MODEL_NAME        = "Whisper-large-v3 + NLLB-600M"
+MODEL_NAME        = "Whisper-large-v3 + NLLB-distilled-600M"
 DATASET_NAME      = "FLEURS"
 EXPERIMENT_FAMILY = "FLEURS__WhisperNLLB"
 SPLIT             = "validation"
