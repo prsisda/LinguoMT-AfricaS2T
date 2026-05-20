@@ -102,7 +102,7 @@ DATASET_NAME      = "FLEURS"
 EXPERIMENT_FAMILY = "FLEURS__WhisperNLLB"
 SPLIT             = "validation"
 TRAIN_SPLIT       = "train"
-MANUAL_LANGUAGES  = None   # None = auto | e.g. ["yoruba", "hausa", "swahili"]
+MANUAL_LANGUAGES  = ["yoruba", "hausa", "swahili"]   # Igbo excluded: no Whisper token; Swahili substituted
 SEED              = 42
 # ── Publication settings ──────────────────────────────────────────────────────
 PAPER_MODE        = "benchmark"   # benchmark | adaptation | audio | cascade | transfer
