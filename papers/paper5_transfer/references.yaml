@@ -1,0 +1,210 @@
+# references.yaml — Paper 5: LinguoMT-Transfer
+# Cross-lingual transfer and zero-shot learning baselines for African language ST.
+# Fill in 'score' for each entry to enable automatic comparison tables.
+# See README.md and schema.json for field descriptions.
+#
+# Required list fields: datasets, directions, metrics  (must be YAML lists)
+# Paper-specific required: transfer_type
+
+- citation_key: nunamaker1991systems
+  type: article
+  author: "Nunamaker, Jay F. and Chen, Minder and Purdin, Titus D.M."
+  title: "Systems Development in Information Systems Research"
+  year: 1991
+  journal: "Journal of Management Information Systems"
+  url: "https://doi.org/10.1080/07421222.1991.11517898"
+  model: "N/A (methodology)"
+  datasets: ["N/A"]
+  language: "N/A (methodology paper)"
+  directions: ["N/A"]
+  metrics: null
+  score: null
+  transfer_type: zero_shot
+  summary: >
+    Seminal paper defining the multi-methodological Systems Development Research framework
+    for information systems research. Introduces four mutually reinforcing research activities:
+    observation, theory building, implementation, and evaluation. Cited as the methodological
+    foundation for LinguoMT-Transfer.
+  notes: "Methodology reference — not a performance comparator"
+
+- citation_key: bapna2022mslam_transfer_yoruba
+  type: article
+  author: "Bapna, Ankur and Cherry, Colin and Zhang, Yu and Jia, Ye and Johnson, Melvin and Chrzanowski, Mike and others"
+  title: "mSLAM: Massively Multilingual Joint Pre-Training for Speech and Text"
+  year: 2022
+  journal: "arXiv preprint arXiv:2202.01374"
+  url: "https://arxiv.org/abs/2202.01374"
+  model: mSLAM
+  datasets: [FLEURS]
+  language: Yoruba
+  directions: ["Source → English"]
+  metrics: [BLEU]
+  score: null
+  transfer_type: zero_shot
+  summary: >
+    Jointly pretrained speech-text model covering 128 languages. Tests zero-shot cross-lingual
+    transfer by pretraining on high-resource languages and evaluating on low-resource ones.
+    Reports S2TT BLEU on FLEURS for African languages (Yoruba, Hausa, Swahili).
+    Primary cross-lingual transfer baseline — mSLAM's zero-shot performance relies entirely
+    on multilingual pretraining, analogous to our zero-shot evaluation setting.
+  notes: "Fill in BLEU from supplementary FLEURS S2TT table of arXiv:2202.01374"
+
+- citation_key: bapna2022mslam_transfer_hausa
+  type: article
+  author: "Bapna, Ankur and Cherry, Colin and Zhang, Yu and Jia, Ye and Johnson, Melvin and Chrzanowski, Mike and others"
+  title: "mSLAM: Massively Multilingual Joint Pre-Training for Speech and Text"
+  year: 2022
+  journal: "arXiv preprint arXiv:2202.01374"
+  url: "https://arxiv.org/abs/2202.01374"
+  model: mSLAM
+  datasets: [FLEURS]
+  language: Hausa
+  directions: ["Source → English"]
+  metrics: [BLEU]
+  score: null
+  transfer_type: zero_shot
+  summary: >
+    mSLAM zero-shot S2TT BLEU on FLEURS Hausa — same model as the Yoruba entry.
+    Key cross-lingual transfer baseline for LinguoMT-Transfer.
+  notes: "Fill in BLEU from supplementary FLEURS S2TT table of arXiv:2202.01374"
+
+- citation_key: pratap2023mms_transfer_yoruba
+  type: article
+  author: "Pratap, Vineel and Tjandra, Andros and Shi, Bowen and Tomasello, Paden and Babu, Arun and Xu, Sayani and others"
+  title: "Scaling Speech Technology to 1,000+ Languages"
+  year: 2023
+  journal: "arXiv preprint arXiv:2305.13516"
+  url: "https://arxiv.org/abs/2305.13516"
+  model: MMS-300M
+  datasets: [FLEURS]
+  language: Yoruba
+  directions: [ASR]
+  metrics: [WER]
+  score: null
+  transfer_type: cross_lingual_finetune
+  summary: >
+    ASR model covering 1100+ languages via cross-lingual transfer from wav2vec 2.0 pretrained
+    representations. Uses language-specific adapter fine-tuning on a shared multilingual backbone.
+    Reports WER on FLEURS per language. Relevant as the cross-lingual transfer ASR baseline —
+    shows WER achievable with language-specific adapters on a shared multilingual model.
+  notes: "Fill in WER from paper appendix — FLEURS ASR per-language results"
+
+- citation_key: pratap2023mms_transfer_hausa
+  type: article
+  author: "Pratap, Vineel and Tjandra, Andros and Shi, Bowen and Tomasello, Paden and Babu, Arun and Xu, Sayani and others"
+  title: "Scaling Speech Technology to 1,000+ Languages"
+  year: 2023
+  journal: "arXiv preprint arXiv:2305.13516"
+  url: "https://arxiv.org/abs/2305.13516"
+  model: MMS-300M
+  datasets: [FLEURS]
+  language: Hausa
+  directions: [ASR]
+  metrics: [WER]
+  score: null
+  transfer_type: cross_lingual_finetune
+  summary: >
+    MMS cross-lingual adapter fine-tuned ASR WER on FLEURS Hausa. Companion to the Yoruba entry.
+  notes: "Fill in WER from paper appendix — FLEURS ASR per-language results"
+
+- citation_key: babu2022xlsr_transfer_yoruba
+  type: inproceedings
+  author: "Babu, Arun and Wang, Changhan and Tjandra, Andros and Lakhotia, Kushal and Xu, Qiantong and Goyal, Naman and others"
+  title: "XLS-R: Self-Supervised Cross-Lingual Speech Representation Learning at Scale"
+  year: 2022
+  booktitle: "Interspeech 2022"
+  url: "https://arxiv.org/abs/2111.09296"
+  model: XLS-R-1B
+  datasets: [FLEURS]
+  language: Yoruba
+  directions: [ASR]
+  metrics: [WER]
+  score: null
+  transfer_type: cross_lingual_finetune
+  summary: >
+    Largest multilingual speech model (1B params) via self-supervised cross-lingual pretraining
+    on 128 languages including African ones. Fine-tuned with language-specific heads on FLEURS.
+    Reports WER per language in Table 4. Key cross-lingual transfer ASR baseline —
+    XLS-R covers Yoruba and Hausa, making it the strongest self-supervised baseline for those
+    languages. Precursor to MMS; widely used backbone for downstream African ASR systems.
+  notes: "Fill in WER from Table 4 of arXiv:2111.09296 — FLEURS ASR results"
+
+- citation_key: babu2022xlsr_transfer_hausa
+  type: inproceedings
+  author: "Babu, Arun and Wang, Changhan and Tjandra, Andros and Lakhotia, Kushal and Xu, Qiantong and Goyal, Naman and others"
+  title: "XLS-R: Self-Supervised Cross-Lingual Speech Representation Learning at Scale"
+  year: 2022
+  booktitle: "Interspeech 2022"
+  url: "https://arxiv.org/abs/2111.09296"
+  model: XLS-R-1B
+  datasets: [FLEURS]
+  language: Hausa
+  directions: [ASR]
+  metrics: [WER]
+  score: null
+  transfer_type: cross_lingual_finetune
+  summary: >
+    XLS-R cross-lingual fine-tuned ASR WER on FLEURS Hausa. Table 4 of arXiv:2111.09296.
+  notes: "Fill in WER from Table 4 of arXiv:2111.09296"
+
+- citation_key: dossou2022masakhaspeech_transfer_hausa
+  type: inproceedings
+  author: "Dossou, Bonaventure F. P. and Emezue, Chris Chinenye and Opoku, Nelda and Olatunji, Tobi and Osei, Salomey and Ameka, Grace Nsiroma and others"
+  title: "MasakhaSpeech: End-to-End Speech Recognition for 5 African Languages"
+  year: 2022
+  booktitle: "Proceedings of Interspeech 2022"
+  url: "https://arxiv.org/abs/2206.00253"
+  model: "Wav2Vec2-XLSR (cross-lingual fine-tune)"
+  datasets: [MasakhaSpeech]
+  language: Hausa
+  directions: [ASR]
+  metrics: [WER]
+  score: null
+  transfer_type: cross_lingual_finetune
+  summary: >
+    Fine-tunes Wav2Vec2-XLSR on 5 African languages (Hausa, Igbo, Yoruba, Swahili, Wolof)
+    using the MasakhaSpeech corpus (~10h per language). Demonstrates cross-lingual transfer
+    efficiency with very limited target language data. Directly relevant to LinguoMT-Transfer —
+    compare against our LoRA transfer fine-tuning approach. Scores in Table 2.
+  notes: "Fill in Hausa WER from Table 2 of arXiv:2206.00253"
+
+- citation_key: dossou2022masakhaspeech_transfer_yoruba
+  type: inproceedings
+  author: "Dossou, Bonaventure F. P. and Emezue, Chris Chinenye and Opoku, Nelda and Olatunji, Tobi and Osei, Salomey and Ameka, Grace Nsiroma and others"
+  title: "MasakhaSpeech: End-to-End Speech Recognition for 5 African Languages"
+  year: 2022
+  booktitle: "Proceedings of Interspeech 2022"
+  url: "https://arxiv.org/abs/2206.00253"
+  model: "Wav2Vec2-XLSR (cross-lingual fine-tune)"
+  datasets: [MasakhaSpeech]
+  language: Yoruba
+  directions: [ASR]
+  metrics: [WER]
+  score: null
+  transfer_type: cross_lingual_finetune
+  summary: >
+    Cross-lingual transfer ASR for Yoruba via Wav2Vec2-XLSR fine-tuning on MasakhaSpeech.
+    Directly relevant to LinguoMT-Transfer Yoruba comparison. Scores in Table 2.
+  notes: "Fill in Yoruba WER from Table 2 of arXiv:2206.00253"
+
+- citation_key: barrault2023seamlessm4t_transfer_yoruba
+  type: article
+  author: "Barrault, Loïc and Chung, Yu-An and Meglioli, Mariano Coria and Dale, David and Dong, Ning and others"
+  title: "SeamlessM4T: Massively Multilingual & Multimodal Machine Translation"
+  year: 2023
+  journal: "arXiv preprint arXiv:2308.11596"
+  url: "https://arxiv.org/abs/2308.11596"
+  model: SeamlessM4T-v2-large
+  datasets: [FLEURS]
+  language: Yoruba
+  directions: ["Source → English"]
+  metrics: [BLEU]
+  score: null
+  transfer_type: zero_shot
+  summary: >
+    SeamlessM4T-v2 zero-shot S2TT BLEU on FLEURS Yoruba — no target-language fine-tuning.
+    The zero-shot transfer upper bound for LinguoMT-Transfer: a large model pretrained on
+    diverse multilingual data without any Yoruba-specific adaptation. Comparing against our
+    transfer fine-tuned models shows the value of targeted cross-lingual adaptation.
+    Scores in Table B.1 of arXiv:2312.05187.
+  notes: "Zero-shot baseline. Fill in BLEU from Table B.1 of arXiv:2312.05187"

@@ -1,0 +1,58 @@
+{
+  "paper": "paper3_audio",
+  "title": "LinguoMT-Audio: Audio Preprocessing and Robustness for African Speech Translation",
+  "paper_mode": "audio",
+  "paper_specific_required": ["audio_condition"],
+  "paper_specific_optional": ["noise_type", "snr_db", "vad_applied", "sample_rate_hz"],
+  "field_definitions": {
+    "paper_title":    { "required": true,  "type": "str",   "description": "Full paper title" },
+    "authors":        { "required": true,  "type": "str",   "description": "First author + et al." },
+    "year":           { "required": true,  "type": "int",   "description": "4-digit publication year" },
+    "model":          { "required": true,  "type": "str",   "description": "Model name" },
+    "dataset":        { "required": true,  "type": "str",   "description": "Evaluation dataset name" },
+    "language":       { "required": true,  "type": "str",   "description": "Display language name matching our system output" },
+    "direction":      { "required": true,  "type": "str",   "description": "'Source → English' or 'English → Source'" },
+    "metric":         { "required": true,  "type": "str",   "description": "One of: BLEU, spBLEU, ChrF, WER, CER" },
+    "score":          { "required": true,  "type": "float", "description": "Numeric score — must be a number" },
+    "citation_key":   { "required": true,  "type": "str",   "description": "Citation key matching an entry in references.yaml" },
+    "audio_condition":{ "required": true,  "type": "str",   "description": "Audio processing label: 'clean', 'normalized', 'trimmed', 'chunked', 'noisy'" },
+    "notes":          { "required": false, "type": "str",   "description": "Details about the audio condition" },
+    "noise_type":     { "required": false, "type": "str",   "description": "Type of noise added: 'babble', 'music', 'street', 'none'" },
+    "snr_db":         { "required": false, "type": "float", "description": "Signal-to-noise ratio in dB (e.g. 10.0, 20.0)" },
+    "vad_applied":    { "required": false, "type": "bool",  "description": "Whether voice activity detection was applied: true or false" },
+    "sample_rate_hz": { "required": false, "type": "int",   "description": "Audio sample rate used for evaluation (typically 16000)" }
+  },
+  "reference_fields": {
+    "_comment": "Schema for entries in references.yaml. The framework validates and warns — never blocks model training.",
+    "required_standard": {
+      "citation_key": { "type": "str", "description": "Unique identifier, e.g. 'park2019specaugment'" },
+      "type":         { "type": "str", "description": "Entry type: 'article', 'inproceedings', 'misc'" },
+      "author":       { "type": "str", "description": "Full author list as a single string" },
+      "title":        { "type": "str", "description": "Full paper title" },
+      "year":         { "type": "int", "description": "4-digit publication year" }
+    },
+    "required_comparison": {
+      "model":           { "type": "str",           "description": "Model name, e.g. 'Whisper-large-v3'" },
+      "datasets":        { "type": "list[str]",    "description": "List of dataset names, e.g. [FLEURS] or [LibriSpeech, CHiME-6]" },
+      "language":        { "type": "str",          "description": "Target language. One entry per language." },
+      "directions":      { "type": "list[str]",    "description": "List of task directions, e.g. [ASR] or ['Source → English']" },
+      "metrics":         { "type": "list[str]",    "description": "List of reported metrics, e.g. [WER]. 'score' corresponds to metrics[0]." },
+      "score":           { "type": "float_or_null","description": "Numeric score for metrics[0]. null = not yet filled; excluded from comparison tables." },
+      "summary":         { "type": "str",          "description": "2–5 sentences: what the paper does, what audio conditions are evaluated, why it is relevant as a robustness comparator." },
+      "audio_condition": { "type": "str",          "description": "Audio condition label: 'clean', 'noisy', 'augmented', 'vad_filtered', 'normalized'" }
+    },
+    "optional_standard": {
+      "journal":   { "type": "str", "description": "Journal or preprint identifier" },
+      "booktitle": { "type": "str", "description": "Conference/workshop proceedings name" },
+      "url":       { "type": "str", "description": "Link to the paper" }
+    },
+    "optional_comparison": {
+      "notes":      { "type": "str",   "description": "Where to find the score, caveats, or audio condition details." },
+      "noise_type": { "type": "str",   "description": "Type of noise: 'babble', 'music', 'street', 'gaussian'" },
+      "snr_db":     { "type": "float", "description": "Signal-to-noise ratio in dB" },
+      "vad_applied":{ "type": "bool",  "description": "Whether VAD pre-processing was applied" }
+    },
+    "paper_specific_required": ["audio_condition"],
+    "paper_specific_optional": ["noise_type", "snr_db", "vad_applied"]
+  }
+}

@@ -1,0 +1,3 @@
+paper_title,authors,year,model,dataset,language,direction,metric,score,citation_key,notes,audio_condition,noise_type,snr_db,vad_applied,sample_rate_hz
+Robust Speech Recognition via Large-Scale Weak Supervision,Radford et al.,2023,Whisper-large-v3,FLEURS,Yoruba,Source → English,WER,,radford2023whisper,Fill in — clean eval condition,clean,none,,false,16000
+Robust Speech Recognition via Large-Scale Weak Supervision,Radford et al.,2023,Whisper-large-v3,FLEURS,Hausa,Source → English,WER,,radford2023whisper,Fill in — clean eval condition,clean,none,,false,16000

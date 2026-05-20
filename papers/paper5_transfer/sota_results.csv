@@ -1,0 +1,6 @@
+paper_title,authors,year,model,dataset,language,direction,metric,score,citation_key,notes,transfer_type,source_lang_family,target_lang_family,num_ft_samples,pretrain_langs,lang_similarity_score
+Massively Multilingual Speech,Pratap et al.,2023,MMS-300M,FLEURS,Yoruba,Source → English,WER,,pratap2023mms,Fill in WER — zero-shot cross-lingual,zero-shot,mixed,Niger-Congo,0,1100+ languages,
+Massively Multilingual Speech,Pratap et al.,2023,MMS-300M,FLEURS,Hausa,Source → English,WER,,pratap2023mms,Fill in WER — zero-shot cross-lingual,zero-shot,mixed,Afro-Asiatic,0,1100+ languages,
+Massively Multilingual Speech,Pratap et al.,2023,MMS-300M,FLEURS,Igbo,Source → English,WER,,pratap2023mms,Fill in WER — zero-shot cross-lingual,zero-shot,mixed,Niger-Congo,0,1100+ languages,
+mSLAM: Massively Multilingual Joint Pre-Training for Speech and Text,Bapna et al.,2022,mSLAM,FLEURS,Yoruba,Source → English,BLEU,,bapna2022mslam,Fill in S2TT BLEU,zero-shot,mixed,Niger-Congo,0,51 languages,
+mSLAM: Massively Multilingual Joint Pre-Training for Speech and Text,Bapna et al.,2022,mSLAM,FLEURS,Hausa,Source → English,BLEU,,bapna2022mslam,Fill in S2TT BLEU,zero-shot,mixed,Afro-Asiatic,0,51 languages,

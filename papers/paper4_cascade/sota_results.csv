@@ -1,0 +1,3 @@
+paper_title,authors,year,model,dataset,language,direction,metric,score,citation_key,notes,architecture,asr_model,mt_model,asr_wer,latency_ms
+SeamlessM4T: Massively Multilingual & Multimodal Machine Translation,Barrault et al.,2023,SeamlessM4T-v2-large,FLEURS,Yoruba,Source → English,BLEU,,barrault2023seamless,End-to-end direct S2TT,end-to-end,,,,
+SeamlessM4T: Massively Multilingual & Multimodal Machine Translation,Barrault et al.,2023,SeamlessM4T-v2-large,FLEURS,Hausa,Source → English,BLEU,,barrault2023seamless,End-to-end direct S2TT,end-to-end,,,,

@@ -1,0 +1,10 @@
+paper_title,authors,year,model,dataset,language,direction,metric,score,citation_key,notes
+SeamlessM4T: Massively Multilingual & Multimodal Machine Translation,Barrault et al.,2023,SeamlessM4T-v2-large,FLEURS,Yoruba,Source → English,BLEU,,barrault2023seamless,Fill in from official model card or paper appendix
+SeamlessM4T: Massively Multilingual & Multimodal Machine Translation,Barrault et al.,2023,SeamlessM4T-v2-large,FLEURS,Hausa,Source → English,BLEU,,barrault2023seamless,Fill in from official model card or paper appendix
+SeamlessM4T: Massively Multilingual & Multimodal Machine Translation,Barrault et al.,2023,SeamlessM4T-v2-large,FLEURS,Igbo,Source → English,BLEU,,barrault2023seamless,Fill in from official model card or paper appendix
+Robust Speech Recognition via Large-Scale Weak Supervision,Radford et al.,2023,Whisper-large-v3,FLEURS,Yoruba,Source → English,WER,,radford2023whisper,Fill in from Whisper paper Table or HuggingFace model card
+Robust Speech Recognition via Large-Scale Weak Supervision,Radford et al.,2023,Whisper-large-v3,FLEURS,Hausa,Source → English,WER,,radford2023whisper,Fill in from Whisper paper Table or HuggingFace model card
+Robust Speech Recognition via Large-Scale Weak Supervision,Radford et al.,2023,Whisper-large-v3,FLEURS,Igbo,Source → English,WER,,radford2023whisper,Fill in from Whisper paper Table or HuggingFace model card
+No Language Left Behind: Scaling Human-Centered Machine Translation,Costa-Jussà et al.,2022,NLLB-200-600M,FLEURS,Yoruba,Source → English,BLEU,,costajussa2022nllb,Text-only MT upper bound — Flores-200 yor_Latn→eng_Latn
+No Language Left Behind: Scaling Human-Centered Machine Translation,Costa-Jussà et al.,2022,NLLB-200-600M,FLEURS,Hausa,Source → English,BLEU,,costajussa2022nllb,Text-only MT upper bound — Flores-200 hau_Latn→eng_Latn
+No Language Left Behind: Scaling Human-Centered Machine Translation,Costa-Jussà et al.,2022,NLLB-200-600M,FLEURS,Igbo,Source → English,BLEU,,costajussa2022nllb,Text-only MT upper bound — Flores-200 ibo_Latn→eng_Latn

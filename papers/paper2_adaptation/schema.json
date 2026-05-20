@@ -1,0 +1,58 @@
+{
+  "paper": "paper2_adaptation",
+  "title": "LinguoMT-Adapt: Parameter-Efficient Fine-Tuning for African Speech Translation",
+  "paper_mode": "adaptation",
+  "paper_specific_required": ["ft_method"],
+  "paper_specific_optional": ["pretrained_score", "num_ft_samples", "trainable_params_pct", "training_hours"],
+  "field_definitions": {
+    "paper_title":          { "required": true,  "type": "str",   "description": "Full paper title" },
+    "authors":              { "required": true,  "type": "str",   "description": "First author + et al." },
+    "year":                 { "required": true,  "type": "int",   "description": "4-digit publication year" },
+    "model":                { "required": true,  "type": "str",   "description": "Base model + adaptation method, e.g. 'Whisper-large-v3 + LoRA'" },
+    "dataset":              { "required": true,  "type": "str",   "description": "Evaluation dataset name" },
+    "language":             { "required": true,  "type": "str",   "description": "Display language name matching our system output" },
+    "direction":            { "required": true,  "type": "str",   "description": "'Source → English' or 'English → Source'" },
+    "metric":               { "required": true,  "type": "str",   "description": "One of: BLEU, spBLEU, ChrF, WER, CER" },
+    "score":                { "required": true,  "type": "float", "description": "Score AFTER adaptation — must be a number" },
+    "citation_key":         { "required": true,  "type": "str",   "description": "Citation key matching an entry in references.yaml" },
+    "ft_method":            { "required": true,  "type": "str",   "description": "Adaptation method: 'LoRA', 'adapter', 'full', 'prefix', 'prompt'" },
+    "notes":                { "required": false, "type": "str",   "description": "Training conditions, data details" },
+    "pretrained_score":     { "required": false, "type": "float", "description": "Score BEFORE adaptation (same model, same eval) — enables before/after comparison" },
+    "num_ft_samples":       { "required": false, "type": "int",   "description": "Number of training samples used for adaptation" },
+    "trainable_params_pct": { "required": false, "type": "float", "description": "Percentage of total parameters that were trained (e.g. 0.5 for 0.5%)" },
+    "training_hours":       { "required": false, "type": "float", "description": "GPU hours required for fine-tuning" }
+  },
+  "reference_fields": {
+    "_comment": "Schema for entries in references.yaml. The framework validates each entry and warns on violations — never blocks model training.",
+    "required_standard": {
+      "citation_key": { "type": "str", "description": "Unique identifier, e.g. 'hu2022lora'" },
+      "type":         { "type": "str", "description": "Entry type: 'article', 'inproceedings', 'misc'" },
+      "author":       { "type": "str", "description": "Full author list as a single string" },
+      "title":        { "type": "str", "description": "Full paper title" },
+      "year":         { "type": "int", "description": "4-digit publication year" }
+    },
+    "required_comparison": {
+      "model":      { "type": "str",           "description": "Model name + adaptation method, e.g. 'Whisper-large-v2 (fine-tuned)'" },
+      "datasets":   { "type": "list[str]",    "description": "List of dataset names the paper evaluates on, e.g. [FLEURS, AfriSpeech-200]" },
+      "language":   { "type": "str",          "description": "Target language. One entry per language." },
+      "directions": { "type": "list[str]",    "description": "List of task directions reported, e.g. [ASR] or ['Source → English']" },
+      "metrics":    { "type": "list[str]",    "description": "List of reported metrics, e.g. [WER] or [BLEU]. 'score' corresponds to metrics[0]." },
+      "score":      { "type": "float_or_null","description": "Numeric score for metrics[0]. null = not yet filled; excluded from comparison tables." },
+      "summary":    { "type": "str",          "description": "2–5 sentences: what the paper does, what it evaluates, why it is relevant as an adaptation comparator." },
+      "ft_method":  { "type": "str",          "description": "Adaptation method used: 'lora', 'adapter', 'full_finetune', 'prefix', 'none' (for zero-shot baselines)" }
+    },
+    "optional_standard": {
+      "journal":   { "type": "str", "description": "Journal or preprint identifier" },
+      "booktitle": { "type": "str", "description": "Conference/workshop proceedings name" },
+      "url":       { "type": "str", "description": "Link to the paper" }
+    },
+    "optional_comparison": {
+      "notes":              { "type": "str",   "description": "Where to find the score, caveats, or dataset differences." },
+      "pretrained_score":   { "type": "float", "description": "Score before adaptation (enables before/after comparison)" },
+      "num_ft_samples":     { "type": "int",   "description": "Number of training samples used for adaptation" },
+      "trainable_params_pct": { "type": "float", "description": "% of parameters trained" }
+    },
+    "paper_specific_required": ["ft_method"],
+    "paper_specific_optional": ["pretrained_score", "num_ft_samples", "trainable_params_pct"]
+  }
+}

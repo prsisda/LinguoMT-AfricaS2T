@@ -1,0 +1,59 @@
+{
+  "paper": "paper4_cascade",
+  "title": "LinguoMT-Cascade: Cascade vs End-to-End Architectures for African Speech Translation",
+  "paper_mode": "cascade",
+  "paper_specific_required": ["architecture"],
+  "paper_specific_optional": ["asr_model", "mt_model", "asr_wer", "latency_ms"],
+  "field_definitions": {
+    "paper_title":  { "required": true,  "type": "str",   "description": "Full paper title" },
+    "authors":      { "required": true,  "type": "str",   "description": "First author + et al." },
+    "year":         { "required": true,  "type": "int",   "description": "4-digit publication year" },
+    "model":        { "required": true,  "type": "str",   "description": "Full pipeline description, e.g. 'Whisper-large-v3 + NLLB-200'" },
+    "dataset":      { "required": true,  "type": "str",   "description": "Evaluation dataset name" },
+    "language":     { "required": true,  "type": "str",   "description": "Display language name matching our system output" },
+    "direction":    { "required": true,  "type": "str",   "description": "'Source → English' or 'English → Source'" },
+    "metric":       { "required": true,  "type": "str",   "description": "One of: BLEU, spBLEU, ChrF, WER, CER" },
+    "score":        { "required": true,  "type": "float", "description": "Numeric score — must be a number" },
+    "citation_key": { "required": true,  "type": "str",   "description": "Citation key matching an entry in references.yaml" },
+    "architecture": { "required": true,  "type": "str",   "description": "Architecture type: 'cascade', 'end_to_end', or 'direct'" },
+    "notes":        { "required": false, "type": "str",   "description": "Architecture details, beam size, rescoring" },
+    "asr_model":    { "required": false, "type": "str",   "description": "ASR component used in cascade pipeline" },
+    "mt_model":     { "required": false, "type": "str",   "description": "MT component used in cascade pipeline" },
+    "asr_wer":      { "required": false, "type": "float", "description": "Intermediate ASR WER before translation (cascade only)" },
+    "latency_ms":   { "required": false, "type": "float", "description": "End-to-end inference latency in milliseconds, if reported" }
+  },
+  "reference_fields": {
+    "_comment": "Schema for entries in references.yaml. The framework validates and warns — never blocks model training.",
+    "required_standard": {
+      "citation_key": { "type": "str", "description": "Unique identifier, e.g. 'bentivogli2021cascade_vs_e2e'" },
+      "type":         { "type": "str", "description": "Entry type: 'article', 'inproceedings', 'misc'" },
+      "author":       { "type": "str", "description": "Full author list as a single string" },
+      "title":        { "type": "str", "description": "Full paper title" },
+      "year":         { "type": "int", "description": "4-digit publication year" }
+    },
+    "required_comparison": {
+      "model":        { "type": "str",           "description": "Full pipeline, e.g. 'Whisper-large-v3 + NLLB-200-600M' or 'SeamlessM4T-v2-large'" },
+      "datasets":     { "type": "list[str]",    "description": "List of datasets the paper evaluates on, e.g. [FLEURS] or [MuST-C, CoVoST-2]" },
+      "language":     { "type": "str",          "description": "Target language. One entry per language." },
+      "directions":   { "type": "list[str]",    "description": "List of task directions, e.g. ['Source → English'] or ['Source → German', 'Source → French']" },
+      "metrics":      { "type": "list[str]",    "description": "List of reported metrics, e.g. [BLEU] or [BLEU, WER]. 'score' corresponds to metrics[0]." },
+      "score":        { "type": "float_or_null","description": "Numeric score for metrics[0]. null = not yet filled; excluded from comparison tables." },
+      "summary":      { "type": "str",          "description": "2–5 sentences: what the paper does, which architecture it evaluates, why it is relevant as an architectural comparator." },
+      "architecture": { "type": "str",          "description": "Architecture: 'cascade', 'end_to_end', 'direct'. Use 'cascade' for ASR+MT pipelines." }
+    },
+    "optional_standard": {
+      "journal":   { "type": "str", "description": "Journal or preprint identifier" },
+      "booktitle": { "type": "str", "description": "Conference/workshop proceedings name" },
+      "url":       { "type": "str", "description": "Link to the paper" }
+    },
+    "optional_comparison": {
+      "notes":      { "type": "str",   "description": "Where to find the score, caveats, dataset/language differences." },
+      "asr_model":  { "type": "str",   "description": "ASR component in cascade pipeline" },
+      "mt_model":   { "type": "str",   "description": "MT component in cascade pipeline" },
+      "asr_wer":    { "type": "float", "description": "Intermediate ASR WER (cascade only)" },
+      "latency_ms": { "type": "float", "description": "Inference latency in ms if reported" }
+    },
+    "paper_specific_required": ["architecture"],
+    "paper_specific_optional": ["asr_model", "mt_model", "asr_wer", "latency_ms"]
+  }
+}

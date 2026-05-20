@@ -1,0 +1,174 @@
+# references.yaml — Paper 2: LinguoMT-Adapt
+# Fine-tuning and adaptation baselines for African language speech translation.
+# Fill in 'score' for each entry to enable automatic comparison tables.
+# See README.md and schema.json for field descriptions.
+#
+# Required list fields: datasets, directions, metrics  (must be YAML lists)
+# Paper-specific required: ft_method
+
+- citation_key: hu2022lora
+  type: article
+  author: "Hu, Edward J. and Shen, Yelong and Wallis, Phillip and Allen-Zhu, Zeyuan and Li, Yuanzhi and Wang, Shean and Wang, Lu and Chen, Weizhu"
+  title: "LoRA: Low-Rank Adaptation of Large Language Models"
+  year: 2022
+  journal: "International Conference on Learning Representations (ICLR 2022)"
+  url: "https://arxiv.org/abs/2106.09685"
+  model: "LoRA (general)"
+  datasets: ["Various NLP benchmarks"]
+  language: "English (methodology paper)"
+  directions: ["Text classification and generation"]
+  metrics: null
+  score: null
+  ft_method: lora
+  summary: >
+    Foundational paper introducing LoRA (Low-Rank Adaptation) for parameter-efficient
+    fine-tuning of large language models. Freezes pretrained weights and injects trainable
+    low-rank decomposition matrices. Not evaluated on speech or African languages — relevant
+    as the methodology reference for the LoRA approach used in LinguoMT-Adapt.
+    Not a direct performance comparator; cite for method attribution only.
+  notes: "Methodology reference — not a direct performance baseline"
+
+- citation_key: olatunji2023afrispeech_hausa
+  type: inproceedings
+  author: "Olatunji, Tobi and Wairagala, Eric Peter and Mukiibi, Samuel and Naous, Tamer and Odunowo, Tejumade and Azime, Israel Abebe and Emezue, Chris Chinenye and others"
+  title: "AfriSpeech-200: Pan-African Accented Speech Dataset for Clinical and General Domain ASR"
+  year: 2023
+  booktitle: "Findings of the Association for Computational Linguistics: ACL 2023"
+  url: "https://arxiv.org/abs/2104.02010"
+  model: "Whisper-large-v2 (fine-tuned)"
+  datasets: [AfriSpeech-200]
+  language: Hausa
+  directions: [ASR]
+  metrics: [WER]
+  score: null
+  ft_method: full_finetune
+  summary: >
+    Introduces AfriSpeech-200, a pan-African accented English speech dataset for clinical
+    and general-domain ASR. Fine-tunes Whisper on African-accented English (not African-language
+    ASR). Demonstrates that Whisper WER on African accented speech improves substantially with
+    domain-specific fine-tuning. Relevant to show adaptation gains on African speech; note the
+    target language is accented English, not Hausa itself.
+  notes: "Covers African-accented English, not African-language ASR. Check Table 4 for WER"
+
+- citation_key: dossou2022masakhaspeech_hausa
+  type: inproceedings
+  author: "Dossou, Bonaventure F. P. and Emezue, Chris Chinenye and Opoku, Nelda and Olatunji, Tobi and Osei, Salomey and Ameka, Grace Nsiroma and others"
+  title: "MasakhaSpeech: End-to-End Speech Recognition for 5 African Languages"
+  year: 2022
+  booktitle: "Proceedings of Interspeech 2022"
+  url: "https://arxiv.org/abs/2206.00253"
+  model: "Wav2Vec2-XLSR (fine-tuned)"
+  datasets: [MasakhaSpeech]
+  language: Hausa
+  directions: [ASR]
+  metrics: [WER]
+  score: null
+  ft_method: full_finetune
+  summary: >
+    Introduces MasakhaSpeech corpus and fine-tunes Wav2Vec2-XLSR on 5 African languages:
+    Hausa, Igbo, Yoruba, Swahili, and Wolof. Reports WER per language after full fine-tuning
+    on limited training data (~10h per language). Direct adaptation baseline for Hausa ASR
+    fine-tuning — shows what full fine-tuning achieves with ~10h of data. Scores in Table 2.
+  notes: "Fill in Hausa WER from Table 2 of arXiv:2206.00253"
+
+- citation_key: dossou2022masakhaspeech_yoruba
+  type: inproceedings
+  author: "Dossou, Bonaventure F. P. and Emezue, Chris Chinenye and Opoku, Nelda and Olatunji, Tobi and Osei, Salomey and Ameka, Grace Nsiroma and others"
+  title: "MasakhaSpeech: End-to-End Speech Recognition for 5 African Languages"
+  year: 2022
+  booktitle: "Proceedings of Interspeech 2022"
+  url: "https://arxiv.org/abs/2206.00253"
+  model: "Wav2Vec2-XLSR (fine-tuned)"
+  datasets: [MasakhaSpeech]
+  language: Yoruba
+  directions: [ASR]
+  metrics: [WER]
+  score: null
+  ft_method: full_finetune
+  summary: >
+    Fine-tunes Wav2Vec2-XLSR on Yoruba using the MasakhaSpeech corpus (~10h).
+    Direct adaptation baseline for Yoruba ASR fine-tuning. Scores in Table 2.
+  notes: "Fill in Yoruba WER from Table 2 of arXiv:2206.00253"
+
+- citation_key: bapna2019simple_adapters
+  type: article
+  author: "Bapna, Ankur and Firat, Orhan"
+  title: "Simple, Scalable Adaptation for Neural Machine Translation"
+  year: 2019
+  journal: "Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing"
+  url: "https://arxiv.org/abs/1909.08478"
+  model: "Transformer + Adapters"
+  datasets: [WMT]
+  language: "Multiple (English-centric)"
+  directions: ["Text MT (Source → English)"]
+  metrics: [BLEU]
+  score: null
+  ft_method: adapter
+  summary: >
+    Introduces lightweight adapter modules inserted into pretrained Transformer layers
+    for domain/language adaptation in NMT. Trains only ~1–3% of parameters per task.
+    Evaluated on English-centric WMT pairs — not on African languages.
+    Relevant as the adapter methodology reference; positions our LoRA approach in the
+    PEFT landscape. Not a direct performance comparator.
+  notes: "Methodology reference — English-centric WMT pairs only"
+
+- citation_key: seamlesscommunication2023seamless_yoruba
+  type: article
+  author: "Seamless Communication and Barrault, Loïc and Chung, Yu-An and Meglioli, Mariano Coria and Dale, David and Dong, Ning and others"
+  title: "Seamless: Multilingual Expressive and Streaming Speech Translation"
+  year: 2023
+  journal: "arXiv preprint arXiv:2312.05187"
+  url: "https://arxiv.org/abs/2312.05187"
+  model: "SeamlessM4T-v2-large (pre-trained, no fine-tuning)"
+  datasets: [FLEURS]
+  language: Yoruba
+  directions: ["Source → English"]
+  metrics: [BLEU]
+  score: null
+  ft_method: none
+  summary: >
+    Describes SeamlessM4T-v2 with improved multilingual coverage. Reports S2TT BLEU on FLEURS
+    for African languages in Table B.1. Used as the zero-shot (pre-training only) baseline for
+    LinguoMT-Adapt — our fine-tuning results should be compared against this to quantify the
+    adaptation gain. Fine-tuning delta BLEU = our score − this baseline.
+  notes: "Zero-shot baseline (no fine-tuning). Fill in BLEU from Table B.1 of arXiv:2312.05187"
+
+- citation_key: nunamaker1991systems
+  type: article
+  author: "Nunamaker, Jay F. and Chen, Minder and Purdin, Titus D.M."
+  title: "Systems Development in Information Systems Research"
+  year: 1991
+  journal: "Journal of Management Information Systems"
+  url: "https://doi.org/10.1080/07421222.1991.11517898"
+  model: "N/A (methodology)"
+  datasets: ["N/A"]
+  language: "N/A (methodology paper)"
+  directions: ["N/A"]
+  metrics: null
+  score: null
+  ft_method: none
+  summary: >
+    Seminal paper defining the multi-methodological Systems Development Research framework
+    for information systems research. Introduces four mutually reinforcing research activities:
+    observation, theory building, implementation, and evaluation. Cited as the methodological
+    foundation for LinguoMT-Adapt.
+  notes: "Methodology reference — not a performance comparator"
+
+- citation_key: seamlesscommunication2023seamless_hausa
+  type: article
+  author: "Seamless Communication and Barrault, Loïc and Chung, Yu-An and Meglioli, Mariano Coria and Dale, David and Dong, Ning and others"
+  title: "Seamless: Multilingual Expressive and Streaming Speech Translation"
+  year: 2023
+  journal: "arXiv preprint arXiv:2312.05187"
+  url: "https://arxiv.org/abs/2312.05187"
+  model: "SeamlessM4T-v2-large (pre-trained, no fine-tuning)"
+  datasets: [FLEURS]
+  language: Hausa
+  directions: ["Source → English"]
+  metrics: [BLEU]
+  score: null
+  ft_method: none
+  summary: >
+    SeamlessM4T-v2 zero-shot S2TT BLEU on FLEURS Hausa. Zero-shot baseline for LinguoMT-Adapt.
+    Scores in Table B.1 of arXiv:2312.05187.
+  notes: "Zero-shot baseline (no fine-tuning). Fill in BLEU from Table B.1 of arXiv:2312.05187"
