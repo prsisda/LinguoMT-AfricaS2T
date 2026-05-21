@@ -1,0 +1,28 @@
+key,value,experiment,language,metric,notes
+e2e.yoruba.bleu,,paper1_import,Yoruba,BLEU,SeamlessM4T E2E BLEU from Paper 1
+e2e.igbo.bleu,,paper1_import,Igbo,BLEU,SeamlessM4T E2E BLEU from Paper 1
+e2e.swahili.bleu,,paper1_import,Swahili,BLEU,SeamlessM4T E2E BLEU from Paper 1
+cascade.yoruba.bleu,,paper1_import,Yoruba,BLEU,Whisper+NLLB cascade BLEU from Paper 1
+cascade.hausa.bleu,,paper1_import,Hausa,BLEU,Whisper+NLLB cascade BLEU from Paper 1
+cascade.swahili.bleu,,paper1_import,Swahili,BLEU,Whisper+NLLB cascade BLEU from Paper 1
+cascade.yoruba.wer,,paper1_import,Yoruba,WER,Whisper intermediate WER from Paper 1
+cascade.hausa.wer,,paper1_import,Hausa,WER,Whisper intermediate WER from Paper 1
+cascade.swahili.wer,,paper1_import,Swahili,WER,Whisper intermediate WER from Paper 1
+oracle.yoruba.bleu,,FLEURS__WhisperNLLB,Yoruba,BLEU,NLLB on gold FLEURS transcripts
+oracle.hausa.bleu,,FLEURS__WhisperNLLB,Hausa,BLEU,NLLB on gold FLEURS transcripts
+oracle.igbo.bleu,,FLEURS__WhisperNLLB,Igbo,BLEU,NLLB on gold FLEURS transcripts (text only)
+oracle.swahili.bleu,,FLEURS__WhisperNLLB,Swahili,BLEU,NLLB on gold FLEURS transcripts
+error.yoruba.asr,,computed,Yoruba,BLEU,oracle.bleu - cascade.bleu (ASR error contribution)
+error.hausa.asr,,computed,Hausa,BLEU,oracle.bleu - cascade.bleu
+error.swahili.asr,,computed,Swahili,BLEU,oracle.bleu - cascade.bleu
+error.yoruba.arch,,computed,Yoruba,BLEU,e2e.bleu - cascade.bleu (architecture gap)
+error.swahili.arch,,computed,Swahili,BLEU,e2e.bleu - cascade.bleu
+breakeven.yoruba.wer,,computed,Yoruba,WER,WER at which cascade BLEU = E2E BLEU
+breakeven.hausa.wer,,computed,Hausa,WER,WER at which cascade BLEU = E2E BLEU
+breakeven.swahili.wer,,computed,Swahili,WER,WER at which cascade BLEU = E2E BLEU
+latency.e2e.median_ms,,measured,all,ms,SeamlessM4T median latency per sample
+latency.e2e.p95_ms,,measured,all,ms,SeamlessM4T P95 latency per sample
+latency.e2e.vram_mb,,measured,all,MB,SeamlessM4T peak VRAM
+latency.cascade.median_ms,,measured,all,ms,Whisper+NLLB cascade median latency
+latency.cascade.p95_ms,,measured,all,ms,Whisper+NLLB cascade P95 latency
+latency.cascade.vram_mb,,measured,all,MB,Whisper+NLLB cascade peak VRAM

@@ -1,0 +1,50 @@
+key,value,experiment,language,metric,notes
+fleurs_seamless.yoruba.bleu,,FLEURS__SeamlessM4Tv2,Yoruba,BLEU,Source→English S2TT
+fleurs_seamless.igbo.bleu,,FLEURS__SeamlessM4Tv2,Igbo,BLEU,Source→English S2TT
+fleurs_seamless.swahili.bleu,,FLEURS__SeamlessM4Tv2,Swahili,BLEU,Source→English S2TT
+fleurs_seamless.yoruba.spbleu,,FLEURS__SeamlessM4Tv2,Yoruba,spBLEU,Source→English S2TT
+fleurs_seamless.igbo.spbleu,,FLEURS__SeamlessM4Tv2,Igbo,spBLEU,Source→English S2TT
+fleurs_seamless.swahili.spbleu,,FLEURS__SeamlessM4Tv2,Swahili,spBLEU,Source→English S2TT
+fleurs_seamless.yoruba.chrf,,FLEURS__SeamlessM4Tv2,Yoruba,chrF,Source→English S2TT
+fleurs_seamless.igbo.chrf,,FLEURS__SeamlessM4Tv2,Igbo,chrF,Source→English S2TT
+fleurs_seamless.swahili.chrf,,FLEURS__SeamlessM4Tv2,Swahili,chrF,Source→English S2TT
+fleurs_seamless.yoruba.wer,,FLEURS__SeamlessM4Tv2,Yoruba,WER,ASR transcription
+fleurs_seamless.igbo.wer,,FLEURS__SeamlessM4Tv2,Igbo,WER,ASR transcription
+fleurs_seamless.swahili.wer,,FLEURS__SeamlessM4Tv2,Swahili,WER,ASR transcription
+fleurs_seamless.yoruba.textmt.bleu,,FLEURS__SeamlessM4Tv2,Yoruba,BLEU,English→Yoruba text MT
+fleurs_seamless.igbo.textmt.bleu,,FLEURS__SeamlessM4Tv2,Igbo,BLEU,English→Igbo text MT
+fleurs_seamless.swahili.textmt.bleu,,FLEURS__SeamlessM4Tv2,Swahili,BLEU,English→Swahili text MT
+fleurs_whisper.yoruba.wer,,FLEURS__WhisperNLLB,Yoruba,WER,Whisper ASR
+fleurs_whisper.hausa.wer,,FLEURS__WhisperNLLB,Hausa,WER,Whisper ASR
+fleurs_whisper.swahili.wer,,FLEURS__WhisperNLLB,Swahili,WER,Whisper ASR
+fleurs_whisper.yoruba.bleu,,FLEURS__WhisperNLLB,Yoruba,BLEU,Cascade S2TT Source→English
+fleurs_whisper.hausa.bleu,,FLEURS__WhisperNLLB,Hausa,BLEU,Cascade S2TT Source→English
+fleurs_whisper.swahili.bleu,,FLEURS__WhisperNLLB,Swahili,BLEU,Cascade S2TT Source→English
+fleurs_whisper.yoruba.spbleu,,FLEURS__WhisperNLLB,Yoruba,spBLEU,Cascade S2TT
+fleurs_whisper.hausa.spbleu,,FLEURS__WhisperNLLB,Hausa,spBLEU,Cascade S2TT
+fleurs_whisper.swahili.spbleu,,FLEURS__WhisperNLLB,Swahili,spBLEU,Cascade S2TT
+fleurs_whisper.yoruba.chrf,,FLEURS__WhisperNLLB,Yoruba,chrF,Cascade S2TT
+fleurs_whisper.hausa.chrf,,FLEURS__WhisperNLLB,Hausa,chrF,Cascade S2TT
+fleurs_whisper.swahili.chrf,,FLEURS__WhisperNLLB,Swahili,chrF,Cascade S2TT
+ac_seamless.yoruba.bleu,,AfricanCeltic__SeamlessM4Tv2,Yoruba,BLEU,Source→English S2TT
+ac_seamless.igbo.bleu,,AfricanCeltic__SeamlessM4Tv2,Igbo,BLEU,Source→English S2TT
+ac_seamless.yoruba.wer,,AfricanCeltic__SeamlessM4Tv2,Yoruba,WER,ASR transcription
+ac_seamless.igbo.wer,,AfricanCeltic__SeamlessM4Tv2,Igbo,WER,ASR transcription
+ac_seamless.yoruba.textmt.bleu,,AfricanCeltic__SeamlessM4Tv2,Yoruba,BLEU,English→Yoruba text MT
+ac_whisper.yoruba.wer,,AfricanCeltic__WhisperNLLB,Yoruba,WER,Whisper ASR
+ac_whisper.hausa.wer,,AfricanCeltic__WhisperNLLB,Hausa,WER,Whisper ASR
+ac_whisper.yoruba.bleu,,AfricanCeltic__WhisperNLLB,Yoruba,BLEU,Cascade S2TT
+ac_whisper.hausa.bleu,,AfricanCeltic__WhisperNLLB,Hausa,BLEU,Cascade S2TT
+gap.french.wer,,FLEURS__SeamlessM4Tv2,French,WER,High-resource reference — run separately
+gap.german.wer,,FLEURS__SeamlessM4Tv2,German,WER,High-resource reference — run separately
+gap.spanish.wer,,FLEURS__SeamlessM4Tv2,Spanish,WER,High-resource reference — run separately
+gap.french.bleu,,FLEURS__SeamlessM4Tv2,French,BLEU,High-resource reference — run separately
+gap.german.bleu,,FLEURS__SeamlessM4Tv2,German,BLEU,High-resource reference — run separately
+gap.spanish.bleu,,FLEURS__SeamlessM4Tv2,Spanish,BLEU,High-resource reference — run separately
+gap.yoruba.bleu_gap,,computed,Yoruba,BLEU_gap,Absolute gap vs French BLEU
+gap.hausa.bleu_gap,,computed,Hausa,BLEU_gap,Absolute gap vs French BLEU
+gap.igbo.bleu_gap,,computed,Igbo,BLEU_gap,Absolute gap vs French BLEU
+gap.swahili.bleu_gap,,computed,Swahili,BLEU_gap,Absolute gap vs French BLEU
+metric_tau.bleu_spbleu,,computed,all,kendall_tau,Kendall tau BLEU vs spBLEU
+metric_tau.bleu_chrf,,computed,all,kendall_tau,Kendall tau BLEU vs chrF
+metric_tau.spbleu_chrf,,computed,all,kendall_tau,Kendall tau spBLEU vs chrF

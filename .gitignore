@@ -17,7 +17,9 @@ venv/
 env/
 
 # Experiment outputs (generated at run time)
-results/
+# Track template files (results.csv, README.md) but not raw Colab outputs
+results/**/from_colab/
+results/**/outputs/
 outputs/
 checkpoints/
 cache/

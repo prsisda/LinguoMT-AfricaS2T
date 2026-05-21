@@ -1,0 +1,35 @@
+key,value,experiment,language,metric,notes
+topo.yoruba_igbo,,computed,Yoruba+Igbo,cosine,URIEL syntax_knn cosine similarity
+topo.yoruba_hausa,,computed,Yoruba+Hausa,cosine,URIEL syntax_knn cosine similarity
+topo.igbo_hausa,,computed,Igbo+Hausa,cosine,URIEL syntax_knn cosine similarity
+topo.yoruba_english,,computed,Yoruba+English,cosine,URIEL syntax_knn reference pair
+zero.yoruba.bleu,,paper1_import,Yoruba,BLEU,SeamlessM4T zero-shot from Paper 1
+zero.igbo.bleu,,paper1_import,Igbo,BLEU,SeamlessM4T zero-shot from Paper 1
+zero.swahili.bleu,,paper1_import,Swahili,BLEU,SeamlessM4T zero-shot from Paper 1
+zero.yoruba.wer,,paper1_import,Yoruba,WER,Whisper zero-shot from Paper 1
+zero.hausa.wer,,paper1_import,Hausa,WER,Whisper zero-shot from Paper 1
+xfer.yor_to_ibo.bleu,,FLEURS__SeamlessM4Tv2,Igbo,BLEU,FT on Yoruba eval on Igbo (same family)
+xfer.ibo_to_yor.bleu,,FLEURS__SeamlessM4Tv2,Yoruba,BLEU,FT on Igbo eval on Yoruba (same family)
+xfer.yor_to_hau.wer,,FLEURS__WhisperNLLB,Hausa,WER,FT on Yoruba eval on Hausa (cross-family)
+xfer.hau_to_yor.wer,,FLEURS__WhisperNLLB,Yoruba,WER,FT on Hausa eval on Yoruba (cross-family)
+xfer.eng_to_yor.bleu,,FLEURS__SeamlessM4Tv2,Yoruba,BLEU,FT on English eval on Yoruba (reference)
+xfer.eng_to_hau.wer,,FLEURS__WhisperNLLB,Hausa,WER,FT on English eval on Hausa (reference)
+mono.yoruba.bleu,,FLEURS__SeamlessM4Tv2,Yoruba,BLEU,Monolingual FT upper bound (1000 samples)
+mono.igbo.bleu,,FLEURS__SeamlessM4Tv2,Igbo,BLEU,Monolingual FT upper bound
+mono.swahili.bleu,,FLEURS__SeamlessM4Tv2,Swahili,BLEU,Monolingual FT upper bound
+mono.yoruba.wer,,FLEURS__WhisperNLLB,Yoruba,WER,Monolingual FT upper bound
+mono.hausa.wer,,FLEURS__WhisperNLLB,Hausa,WER,Monolingual FT upper bound
+few.yoruba.wer.25,,FLEURS__WhisperNLLB,Yoruba,WER,Few-shot WER at 25 samples
+few.yoruba.wer.50,,FLEURS__WhisperNLLB,Yoruba,WER,Few-shot WER at 50 samples
+few.yoruba.wer.100,,FLEURS__WhisperNLLB,Yoruba,WER,Few-shot WER at 100 samples
+few.yoruba.wer.200,,FLEURS__WhisperNLLB,Yoruba,WER,Few-shot WER at 200 samples
+few.igbo.bleu.25,,FLEURS__SeamlessM4Tv2,Igbo,BLEU,Few-shot BLEU at 25 samples
+few.igbo.bleu.50,,FLEURS__SeamlessM4Tv2,Igbo,BLEU,Few-shot BLEU at 50 samples
+few.igbo.bleu.100,,FLEURS__SeamlessM4Tv2,Igbo,BLEU,Few-shot BLEU at 100 samples
+few.igbo.bleu.200,,FLEURS__SeamlessM4Tv2,Igbo,BLEU,Few-shot BLEU at 200 samples
+few.hausa.wer.25,,FLEURS__WhisperNLLB,Hausa,WER,Few-shot WER at 25 samples
+few.hausa.wer.50,,FLEURS__WhisperNLLB,Hausa,WER,Few-shot WER at 50 samples
+few.hausa.wer.100,,FLEURS__WhisperNLLB,Hausa,WER,Few-shot WER at 100 samples
+few.hausa.wer.200,,FLEURS__WhisperNLLB,Hausa,WER,Few-shot WER at 200 samples
+interaction.coeff,,computed,all,regression_coeff,Interaction term: log(samples) x lang_family
+interaction.pvalue,,computed,all,p_value,p-value for interaction term (significant if < 0.05)

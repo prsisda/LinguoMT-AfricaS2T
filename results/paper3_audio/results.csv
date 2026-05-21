@@ -1,0 +1,23 @@
+key,value,experiment,language,metric,notes
+seamless.yoruba.s2tt.bleu,,FLEURS__SeamlessM4Tv2,Yoruba,BLEU,Direct S2TT audio→English
+seamless.igbo.s2tt.bleu,,FLEURS__SeamlessM4Tv2,Igbo,BLEU,Direct S2TT
+seamless.swahili.s2tt.bleu,,FLEURS__SeamlessM4Tv2,Swahili,BLEU,Direct S2TT
+seamless.yoruba.asr.wer,,FLEURS__SeamlessM4Tv2,Yoruba,WER,ASR transcription only
+seamless.igbo.asr.wer,,FLEURS__SeamlessM4Tv2,Igbo,WER,ASR transcription only
+seamless.swahili.asr.wer,,FLEURS__SeamlessM4Tv2,Swahili,WER,ASR transcription only
+seamless.yoruba.textmt.bleu,,FLEURS__SeamlessM4Tv2,Yoruba,BLEU,Text MT on gold transcripts (ceiling)
+seamless.igbo.textmt.bleu,,FLEURS__SeamlessM4Tv2,Igbo,BLEU,Text MT on gold transcripts (ceiling)
+seamless.swahili.textmt.bleu,,FLEURS__SeamlessM4Tv2,Swahili,BLEU,Text MT on gold transcripts (ceiling)
+cascade.yoruba.asr.wer,,FLEURS__WhisperNLLB,Yoruba,WER,Whisper ASR intermediate step
+cascade.hausa.asr.wer,,FLEURS__WhisperNLLB,Hausa,WER,Whisper ASR intermediate step
+cascade.swahili.asr.wer,,FLEURS__WhisperNLLB,Swahili,WER,Whisper ASR intermediate step
+cascade.yoruba.s2tt.bleu,,FLEURS__WhisperNLLB,Yoruba,BLEU,Cascade S2TT (Whisper+NLLB)
+cascade.hausa.s2tt.bleu,,FLEURS__WhisperNLLB,Hausa,BLEU,Cascade S2TT
+cascade.swahili.s2tt.bleu,,FLEURS__WhisperNLLB,Swahili,BLEU,Cascade S2TT
+cascade.yoruba.textmt.bleu,,FLEURS__WhisperNLLB,Yoruba,BLEU,NLLB on gold transcripts (cascade ceiling)
+cascade.hausa.textmt.bleu,,FLEURS__WhisperNLLB,Hausa,BLEU,NLLB on gold transcripts (cascade ceiling)
+cascade.swahili.textmt.bleu,,FLEURS__WhisperNLLB,Swahili,BLEU,NLLB on gold transcripts
+cascade.igbo.textmt.bleu,,FLEURS__WhisperNLLB,Igbo,BLEU,NLLB on gold transcripts (Igbo text only)
+cascade.yoruba.gap,,computed,Yoruba,BLEU,ceiling BLEU - cascade BLEU
+cascade.hausa.gap,,computed,Hausa,BLEU,ceiling BLEU - cascade BLEU
+cascade.swahili.gap,,computed,Swahili,BLEU,ceiling BLEU - cascade BLEU

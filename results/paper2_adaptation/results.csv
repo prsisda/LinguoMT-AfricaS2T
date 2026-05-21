@@ -1,0 +1,41 @@
+key,value,experiment,language,metric,notes
+seamless_lora.yoruba.bleu.before,,paper1_import,Yoruba,BLEU,Zero-shot from Paper 1 Table 2
+seamless_lora.igbo.bleu.before,,paper1_import,Igbo,BLEU,Zero-shot from Paper 1 Table 2
+seamless_lora.swahili.bleu.before,,paper1_import,Swahili,BLEU,Zero-shot from Paper 1 Table 2
+seamless_lora.yoruba.wer.before,,paper1_import,Yoruba,WER,Zero-shot from Paper 1 Table 1
+seamless_lora.igbo.wer.before,,paper1_import,Igbo,WER,Zero-shot from Paper 1 Table 1
+whisper_lora.yoruba.wer.before,,paper1_import,Yoruba,WER,Zero-shot Whisper from Paper 1 Table 1
+whisper_lora.hausa.wer.before,,paper1_import,Hausa,WER,Zero-shot Whisper from Paper 1 Table 1
+seamless_lora.yoruba.bleu.after,,FLEURS__SeamlessM4Tv2,Yoruba,BLEU,After LoRA fine-tuning (1000 samples)
+seamless_lora.igbo.bleu.after,,FLEURS__SeamlessM4Tv2,Igbo,BLEU,After LoRA fine-tuning
+seamless_lora.swahili.bleu.after,,FLEURS__SeamlessM4Tv2,Swahili,BLEU,After LoRA fine-tuning
+seamless_lora.yoruba.wer.after,,FLEURS__SeamlessM4Tv2,Yoruba,WER,After LoRA fine-tuning
+seamless_lora.yoruba.bleu.gain,,computed,Yoruba,BLEU_gain,after.bleu - before.bleu
+seamless_lora.yoruba.wer.gain,,computed,Yoruba,WER_gain,before.wer - after.wer
+seamless_adapter.yoruba.bleu.after,,FLEURS__SeamlessM4Tv2,Yoruba,BLEU,After Adapter fine-tuning
+seamless_adapter.igbo.bleu.after,,FLEURS__SeamlessM4Tv2,Igbo,BLEU,After Adapter fine-tuning
+whisper_lora.yoruba.wer.after,,FLEURS__WhisperNLLB,Yoruba,WER,After LoRA fine-tuning
+whisper_lora.hausa.wer.after,,FLEURS__WhisperNLLB,Hausa,WER,After LoRA fine-tuning
+lora.trainable_params_m,,computed,all,params,LoRA trainable params in millions
+lora.trainable_pct,,computed,all,pct,LoRA trainable params as % of total
+lora.gpu_hours,,measured,all,hours,Wall-clock GPU hours for LoRA run
+adapter.trainable_params_m,,computed,all,params,Adapter trainable params in millions
+adapter.trainable_pct,,computed,all,pct,Adapter trainable params as % of total
+adapter.gpu_hours,,measured,all,hours,Wall-clock GPU hours for Adapter run
+scaling.yoruba.bleu.100,,FLEURS__SeamlessM4Tv2,Yoruba,BLEU,LoRA with 100 samples
+scaling.yoruba.bleu.500,,FLEURS__SeamlessM4Tv2,Yoruba,BLEU,LoRA with 500 samples
+scaling.yoruba.bleu.1000,,FLEURS__SeamlessM4Tv2,Yoruba,BLEU,LoRA with 1000 samples
+scaling.yoruba.bleu.full,,FLEURS__SeamlessM4Tv2,Yoruba,BLEU,LoRA with full train data
+scaling.igbo.bleu.100,,FLEURS__SeamlessM4Tv2,Igbo,BLEU,LoRA with 100 samples
+scaling.igbo.bleu.500,,FLEURS__SeamlessM4Tv2,Igbo,BLEU,LoRA with 500 samples
+scaling.igbo.bleu.1000,,FLEURS__SeamlessM4Tv2,Igbo,BLEU,LoRA with 1000 samples
+scaling.igbo.bleu.full,,FLEURS__SeamlessM4Tv2,Igbo,BLEU,LoRA with full train data
+scaling.yoruba.wer.100,,FLEURS__WhisperNLLB,Yoruba,WER,LoRA with 100 samples
+scaling.yoruba.wer.500,,FLEURS__WhisperNLLB,Yoruba,WER,LoRA with 500 samples
+scaling.yoruba.wer.1000,,FLEURS__WhisperNLLB,Yoruba,WER,LoRA with 1000 samples
+scaling.yoruba.wer.full,,FLEURS__WhisperNLLB,Yoruba,WER,LoRA with full train data
+scaling.hausa.wer.100,,FLEURS__WhisperNLLB,Hausa,WER,LoRA with 100 samples
+scaling.hausa.wer.500,,FLEURS__WhisperNLLB,Hausa,WER,LoRA with 500 samples
+scaling.hausa.wer.1000,,FLEURS__WhisperNLLB,Hausa,WER,LoRA with 1000 samples
+scaling.hausa.wer.full,,FLEURS__WhisperNLLB,Hausa,WER,LoRA with full train data
+scaling.min_threshold_samples,,computed,all,samples,Min samples for significant improvement p<0.05
