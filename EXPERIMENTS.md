@@ -27,7 +27,19 @@ framework/                                          # Shared evaluation, metrics
 
 ---
 
-## Language support matrix
+## Models and datasets
+
+| Role | Model / Dataset | HuggingFace |
+|---|---|---|
+| End-to-end S2TT | SeamlessM4T-v2-Large | [facebook/seamless-m4t-v2-large](https://huggingface.co/facebook/seamless-m4t-v2-large) |
+| ASR (cascade) | Whisper large-v3 | [openai/whisper-large-v3](https://huggingface.co/openai/whisper-large-v3) |
+| MT (cascade) | NLLB-200-distilled-600M | [facebook/nllb-200-distilled-600M](https://huggingface.co/facebook/nllb-200-distilled-600M) |
+| Dataset 1 | African-Celtic (IWSLT 2026) | [McGill-NLP/african_celtic_dataset](https://huggingface.co/datasets/McGill-NLP/african_celtic_dataset) |
+| Dataset 2 | FLEURS | [google/fleurs](https://huggingface.co/datasets/google/fleurs) |
+
+---
+
+## Language support matrix — current baselines
 
 | Experiment | Igbo | Yoruba | Hausa | Swahili | Notes |
 |---|:---:|:---:|:---:|:---:|---|
@@ -35,6 +47,104 @@ framework/                                          # Shared evaluation, metrics
 | AfricanCeltic × Whisper+NLLB | — | ✓ | ✓ | — | Igbo excluded: no Whisper language token |
 | FLEURS × SeamlessM4T-v2 | ✓ | ✓ | — | ✓ | Hausa excluded: `hau` not in SeamlessM4T S2TT list; Swahili substituted |
 | FLEURS × Whisper+NLLB | — | ✓ | ✓ | ✓ | Igbo excluded: no Whisper token; Swahili substituted for parity |
+
+---
+
+## Full language support matrix — all 16 registered languages
+
+The framework supports 16 African languages across the two models and two datasets.
+The table below shows exactly which experiment each language can be used in.
+
+| Language | ISO | Family | Region | AC × SeamlessM4T | AC × Whisper+NLLB | FLEURS × SeamlessM4T | FLEURS × Whisper+NLLB |
+|---|---|---|---|:---:|:---:|:---:|:---:|
+| Igbo | ibo | Niger-Congo | Nigeria | ✓ | — | ✓ | — |
+| Yoruba | yor | Niger-Congo | Nigeria | ✓ | ✓ | ✓ | ✓ |
+| Hausa | hau | Afro-Asiatic | West Africa | — | ✓ | — | ✓ |
+| Swahili | swh | Bantu | East Africa | — | — | ✓ | ✓ |
+| Amharic | amh | Semitic | Ethiopia | — | — | ✓ | — |
+| Wolof | wol | Niger-Congo | Senegal | — | — | ✓ | — |
+| Somali | som | Cushitic | Horn of Africa | — | — | ✓ | — |
+| Oromo | orm | Cushitic | Ethiopia / Kenya | — | — | ✓ | — |
+| Zulu | zul | Bantu | South Africa | — | — | ✓ | — |
+| Xhosa | xho | Bantu | South Africa | — | — | ✓ | — |
+| Lingala | lin | Bantu | DRC / Congo | — | — | ✓ | — |
+| Fula | ful | Niger-Congo | West Africa | — | — | ✓ | — |
+| Twi | twi | Niger-Congo | Ghana | — | — | ✓ | — |
+| Ewe | ewe | Niger-Congo | Ghana / Togo | — | — | ✓ | — |
+| Kikuyu | kik | Bantu | Kenya | — | — | ✓ | — |
+| Luo | luo | Nilo-Saharan | Kenya | — | — | — | — |
+
+**Why each gap exists:**
+
+| Language | Excluded from | Reason |
+|---|---|---|
+| Igbo | All Whisper experiments | Whisper has no language token for Igbo |
+| Hausa | FLEURS × SeamlessM4T | `hau` is not in SeamlessM4T's S2TT output vocabulary |
+| Swahili | African-Celtic experiments | African-Celtic / IWSLT 2026 has no Swahili audio |
+| Amharic – Kikuyu | All Whisper experiments | None of these languages have a Whisper language token |
+| Luo | All experiments | No standalone FLEURS config; not in African-Celtic |
+| All 13 non-AC languages | African-Celtic experiments | African-Celtic only contains Igbo, Yoruba, Hausa |
+
+---
+
+## Extending experiments — adding languages
+
+### Step 1 — Choose the right experiment
+
+Only **FLEURS × SeamlessM4T-v2** allows new languages without code changes.
+The other three experiments are constrained by the dataset (African-Celtic) or by Whisper's
+limited language token support.
+
+| Experiment | Can you add languages? | How many more available? |
+|---|---|---|
+| FLEURS × SeamlessM4T-v2 | **Yes** | 11 more (see table above) |
+| FLEURS × Whisper+NLLB | No | Whisper only supports 3 African languages |
+| AfricanCeltic × SeamlessM4T-v2 | No | Dataset only contains Igbo + Yoruba |
+| AfricanCeltic × Whisper+NLLB | No | Dataset only contains Yoruba + Hausa (with audio) |
+
+### Step 2 — Edit `MANUAL_LANGUAGES` in the script
+
+Open `FLEURS__SeamlessM4Tv2/notebooks/run_experiment.py` and update the list:
+
+```python
+# Default (current baselines)
+MANUAL_LANGUAGES = ["igbo", "yoruba", "swahili"]
+
+# Extended example — add Amharic, Wolof, Somali
+MANUAL_LANGUAGES = ["igbo", "yoruba", "swahili", "amharic", "wolof", "somali"]
+
+# All 14 supported languages at once
+MANUAL_LANGUAGES = [
+    "igbo", "yoruba", "swahili",
+    "amharic", "wolof", "somali", "oromo",
+    "zulu", "xhosa", "lingala", "fula",
+    "twi", "ewe", "kikuyu",
+]
+```
+
+Use the exact key names from the `Language` column of the full support table (lowercase, no spaces).
+
+### Step 3 — Runtime
+
+Adding languages multiplies the evaluation time proportionally.
+Each language adds roughly the same amount of time as the others.
+
+| Languages | Approx. FULL runtime |
+|---|---|
+| 3 (current baseline) | ~45 min |
+| 6 | ~90 min |
+| 10 | ~2.5 h |
+| 14 (all available) | ~3.5 h |
+
+### Step 4 — Set `None` for auto-detection (optional)
+
+If you set `MANUAL_LANGUAGES = None`, the framework auto-detects which languages are
+supported by both the model and dataset at runtime. This is less reproducible than an
+explicit list but useful for exploratory runs.
+
+```python
+MANUAL_LANGUAGES = None   # auto-detect from model + dataset capabilities
+```
 
 ---
 
