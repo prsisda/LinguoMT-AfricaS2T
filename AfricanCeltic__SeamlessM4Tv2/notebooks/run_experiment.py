@@ -132,10 +132,26 @@ PAPER_MODE        = "benchmark"
 # Required columns: system, language, BLEU, venue, year
 # Leave "" to skip the SOTA comparison section in the report entirely.
 SOTA_FILE         = ""    # e.g. "sota/paper1_benchmark/sota_results.csv"
-# Paper 2 only: training-set sizes for the data scaling analysis.
-# Each value triggers a separate fine-tuning run at that many training examples.
-# 0 = use the full available training set. Leave [] to disable scaling experiments.
-# e.g. SCALING_BUDGETS = [100, 500, 1000, 0]
+# SCALING_BUDGETS — Paper 2 only.
+# Answers the question: "how much does performance improve as the model gets more training data?"
+# Each value triggers a separate fine-tuning pass at that many training examples.
+# The result is a learning curve (samples on X axis, BLEU/WER on Y axis) that shows
+# whether the model is still improving with more data or has already plateaued.
+#
+# Example — [100, 500, 1000, 0] runs 4 fine-tuning passes:
+#   100  → fine-tune on 100 randomly sampled examples  → record BLEU/WER
+#   500  → fine-tune on 500 randomly sampled examples  → record BLEU/WER
+#   1000 → fine-tune on 1000 randomly sampled examples → record BLEU/WER
+#   0    → fine-tune on the full training split        → record BLEU/WER
+#
+# Special values:
+#   any positive integer → use exactly that many training examples
+#   0                    → use the entire training split ("full set" sentinel)
+#   []                   → skip scaling entirely (correct for Papers 1, 3, 4, 5)
+#
+# Runtime: each budget is a full fine-tuning pass.
+# [100, 500, 1000, 0] multiplies total runtime by 4.
+# Budget 0 alone can take 1–2 h on a T4 GPU — plan accordingly.
 SCALING_BUDGETS   = []
 # ─────────────────────────────────────────────────────────────────────────────
 MODEL_ID          = "facebook/seamless-m4t-v2-large"
