@@ -63,21 +63,49 @@ from framework import (
 warnings.filterwarnings("ignore")
 
 # %% --- configuration ---
+
+# ── Run mode ──────────────────────────────────────────────────────────────────
+# DEBUG_MODE = True  → evaluates ~20 samples per language in ~10 min.
+#                      Results are statistically meaningless at this scale.
+#                      Use ONLY to verify the pipeline runs without errors
+#                      before committing to a full run.
+# DEBUG_MODE = False → evaluates the full dev set (30 min – 4 h on GPU).
+#                      REQUIRED for any number you intend to report in a paper.
 DEBUG_MODE        = True
+# FAST_MODE = True forces DEBUG_MODE = True regardless of the setting above.
+# Use as a shortcut when you just want to re-enter the pipeline quickly.
 FAST_MODE         = False
+# True → skip audio evaluation steps in debug runs to save time.
+# False → run audio evaluation in all modes.
 SKIP_AUDIO_DEBUG  = True
+# True → delete and rebuild the dataset cache even if one already exists.
+# False → reuse the existing cache (saves 5–15 min on re-runs). Only set True
+#         if the dataset has changed or you suspect a corrupted cache file.
 FORCE_RERUN       = False
-RUN_FULL_GRID     = True    # False → only Experiment_1 in full mode
-ENABLE_FINETUNING = False   # set True once baseline is stable
+# True → run all experiment configurations (recommended for paper results).
+# False → run only Experiment_1, even in full mode. Useful for a quick
+#         single-configuration sanity check without the full grid.
+RUN_FULL_GRID     = True
+# True → fine-tune the model before evaluation (Papers 2 & 3 only).
+# False → evaluate the pretrained model zero-shot (Papers 1, 4, 5).
+ENABLE_FINETUNING = False
+
 # ── Fine-tuning configuration (only used when ENABLE_FINETUNING = True) ──────
+# Fine-tuning strategy — trade-off between quality, GPU memory, and training time:
+#   "lora"    → low-rank adapters; most weights frozen. Runs on T4 (~10 GB). Recommended.
+#   "adapter" → bottleneck adapters inserted between layers. Needs ~14 GB GPU.
+#   "full"    → all weights updated. Best quality; needs A100 (24+ GB). Slowest.
 FINETUNING_METHOD              = "lora"
-FINETUNE_TEXT_TRANSLATION      = True
-FINETUNE_REVERSE_TRANSLATION   = True
-FINETUNE_ASR                   = True
-FINETUNE_DIRECT_SPEECH_TRANSLATION = False
+FINETUNE_TEXT_TRANSLATION      = True    # fine-tune text-to-text translation (improves BLEU/ChrF)
+FINETUNE_REVERSE_TRANSLATION   = True    # also fine-tune the English→source direction
+FINETUNE_ASR                   = True    # fine-tune speech recognition (improves WER/CER)
+FINETUNE_DIRECT_SPEECH_TRANSLATION = False   # not applicable to cascade; kept for API compatibility
+# Max training samples per task. Capped by dataset size if the split is smaller.
 TEXT_FINETUNE_SAMPLES          = 1000
 ASR_FINETUNE_SAMPLES           = 500
 ST_FINETUNE_SAMPLES            = 200
+# Training hyperparameters. Conservative defaults that run on a T4 GPU.
+# Reduce batch sizes if you see an out-of-memory (OOM) error.
 TEXT_EPOCHS                    = 3
 TEXT_BATCH_SIZE                = 8
 TEXT_LR                        = 5e-5
@@ -87,11 +115,11 @@ ASR_LR                         = 1e-5
 ST_EPOCHS                      = 3
 ST_BATCH_SIZE                  = 4
 ST_LR                          = 1e-5
-GRADIENT_ACCUMULATION_STEPS    = 4
-FP16                           = True
-EARLY_STOPPING_PATIENCE        = 2
-SAVE_CHECKPOINTS               = True
-EVAL_BEFORE_AFTER              = True
+GRADIENT_ACCUMULATION_STEPS    = 4    # effective batch size = batch_size × this value
+FP16                           = True    # mixed-precision training; set False if NaN losses appear
+EARLY_STOPPING_PATIENCE        = 2    # stop training if dev loss does not improve for N epochs
+SAVE_CHECKPOINTS               = True    # save model weights to disk after fine-tuning
+EVAL_BEFORE_AFTER              = True    # record metrics before AND after fine-tuning for comparison
 # ─────────────────────────────────────────────────────────────────────────────
 WHISPER_ID        = "openai/whisper-large-v3"
 NLLB_ID           = "facebook/nllb-200-distilled-600M"
@@ -102,12 +130,26 @@ DATASET_NAME      = "FLEURS"
 EXPERIMENT_FAMILY = "FLEURS__WhisperNLLB"
 SPLIT             = "validation"
 TRAIN_SPLIT       = "train"
-MANUAL_LANGUAGES  = ["yoruba", "hausa", "swahili"]   # Igbo excluded: no Whisper token; Swahili substituted
+MANUAL_LANGUAGES  = ["yoruba", "hausa", "swahili"]   # Igbo excluded: no Whisper token; Swahili added for parity
 SEED              = 42
+
 # ── Publication settings ──────────────────────────────────────────────────────
-PAPER_MODE        = "benchmark"   # benchmark | adaptation | audio | cascade | transfer
-SOTA_FILE         = ""            # e.g. "papers/paper1_benchmark/baselines.csv"
-# Paper 2 only: data scaling budgets. Set to [] to skip.
+# PAPER_MODE controls which analyses run and which report sections are produced.
+# Set this to match the paper you are writing:
+#   "benchmark"  → Paper 1: zero-shot baselines + SOTA gap analysis
+#   "adaptation" → Paper 2: before/after fine-tuning + data scaling curves
+#   "audio"      → Paper 3: audio strategy comparison (S2TT, normalise, trim, chunk)
+#   "cascade"    → Paper 4: oracle cascade, error propagation, break-even WER
+#   "transfer"   → Paper 5: typological similarity, cross-lingual transfer, few-shot
+PAPER_MODE        = "benchmark"
+# Path to a CSV of published baselines for SOTA comparison (used by Paper 1).
+# Required columns: system, language, BLEU, venue, year
+# Leave "" to skip the SOTA comparison section in the report entirely.
+SOTA_FILE         = ""            # e.g. "sota/paper1_benchmark/sota_results.csv"
+# Paper 2 only: training-set sizes for the data scaling analysis.
+# Each value triggers a separate fine-tuning run at that many training examples.
+# 0 = use the full available training set. Leave [] to disable scaling experiments.
+# e.g. SCALING_BUDGETS = [100, 500, 1000, 0]
 SCALING_BUDGETS   = []
 # ─────────────────────────────────────────────────────────────────────────────
 
