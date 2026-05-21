@@ -209,9 +209,12 @@ The Colab notebook patches these values automatically before running.
 
 | Variable | Default | Effect |
 |---|---|---|
-| `DEBUG_MODE` | `True` | `True` → scan fewer rows, run fewer samples (~10 min/experiment). `False` → full evaluation. |
+| `DEBUG_MODE` | `True` | `True` → ~20 samples/language (~10 min, pipeline check only). `False` → full evaluation, required for paper results. |
 | `FAST_MODE` | `False` | Forces `DEBUG_MODE = True`. |
-| `RUN_FULL_GRID` | `True` | `False` → run Experiment_1 only even in full mode. |
+| `N_EVAL_RUNS` | `3` | How many evaluation passes to run (1, 2, or 3). Each pass uses a larger sample size. |
+| `EVAL_TEXT_SAMPLES` | `[100, 200, 300]` | Text pairs evaluated in pass 1, 2, 3. Increase for more reliable metrics. |
+| `EVAL_AUDIO_SAMPLES` | `[30, 75, 100]` | Audio utterances evaluated in pass 1, 2, 3. Audio eval is slower than text. |
+| `RUN_FULL_GRID` | `True` | Legacy: `False` → run only pass 1. Prefer setting `N_EVAL_RUNS = 1` instead. |
 | `FORCE_RERUN` | `False` | Re-download and rebuild the dataset cache. |
 
 ### Paper mode

@@ -76,13 +76,41 @@ class RunConfig:
         return not (self.debug_mode and self.skip_audio_debug)
 
 
-def default_experiment_configs(debug_mode: bool) -> list[dict]:
+def default_experiment_configs(
+    debug_mode: bool,
+    n_runs: int = 3,
+    text_samples: list | None = None,
+    audio_samples: list | None = None,
+) -> list[dict]:
+    """Return the list of experiment grid configs.
+
+    Args:
+        debug_mode:    When True returns a single tiny config for pipeline checks.
+        n_runs:        How many evaluation passes to run (1, 2, or 3).
+                       Each pass evaluates on a progressively larger sample.
+        text_samples:  Text-pair counts per pass, e.g. [100, 200, 300].
+                       Defaults to [100, 200, 300]. Sliced to n_runs entries.
+        audio_samples: Audio-pair counts per pass, e.g. [30, 75, 100].
+                       Defaults to [30, 75, 100]. Sliced to n_runs entries.
+    """
     if debug_mode:
         return [{"experiment": "debug", "max_text_train": 0, "max_text_dev": 8, "max_audio_dev": 3}]
+
+    n_runs       = max(1, min(3, int(n_runs)))
+    default_text  = [100, 200, 300]
+    default_audio = [ 30,  75, 100]
+    text_s  = (text_samples  if text_samples  is not None else default_text) [:n_runs]
+    audio_s = (audio_samples if audio_samples is not None else default_audio)[:n_runs]
+
+    train_bases = [500, 600, 700]
     return [
-        {"experiment": "Experiment_1", "max_text_train": 500, "max_text_dev": 100, "max_audio_dev": 30},
-        {"experiment": "Experiment_2", "max_text_train": 600, "max_text_dev": 200, "max_audio_dev": 75},
-        {"experiment": "Experiment_3", "max_text_train": 700, "max_text_dev": 300, "max_audio_dev": 100},
+        {
+            "experiment":    f"Experiment_{i + 1}",
+            "max_text_train": train_bases[i],
+            "max_text_dev":   text_s[i],
+            "max_audio_dev":  audio_s[i],
+        }
+        for i in range(n_runs)
     ]
 
 

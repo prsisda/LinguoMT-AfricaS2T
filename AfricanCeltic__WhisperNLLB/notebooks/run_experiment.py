@@ -81,9 +81,25 @@ SKIP_AUDIO_DEBUG  = True
 # False → reuse the existing cache (saves 5–15 min on re-runs). Only set True
 #         if the dataset has changed or you suspect a corrupted cache file.
 FORCE_RERUN       = False
-# True → run all experiment configurations (recommended for paper results).
-# False → run only Experiment_1, even in full mode. Useful for a quick
-#         single-configuration sanity check without the full grid.
+# Number of evaluation passes to run: 1, 2, or 3. Default is 3.
+# Each pass evaluates on a progressively larger sample, producing three
+# data points that show metric stability as sample size grows.
+#   1 pass  → fastest; one result per language (Experiment_1 only)
+#   2 passes → two results per language (Experiment_1 + Experiment_2)
+#   3 passes → three results per language — recommended for paper results
+N_EVAL_RUNS       = 3
+
+# Text pairs (source+reference) evaluated in each pass.
+# The Nth value is used for the Nth pass. Must have at least N_EVAL_RUNS values.
+# Increase these for more reliable metrics; decrease to save time.
+EVAL_TEXT_SAMPLES  = [100, 200, 300]
+
+# Audio utterances evaluated in each pass (speech-to-text and ASR tasks).
+# Keep proportional to EVAL_TEXT_SAMPLES. Audio evaluation is slower than text.
+EVAL_AUDIO_SAMPLES = [ 30,  75, 100]
+
+# True → run all N_EVAL_RUNS passes. False → run only pass 1 (legacy override).
+# Prefer setting N_EVAL_RUNS = 1 over RUN_FULL_GRID = False for clarity.
 RUN_FULL_GRID     = True
 # True → fine-tune the model before evaluation (Papers 2 & 3 only).
 # False → evaluate the pretrained model zero-shot (Papers 1, 4, 5).
@@ -263,7 +279,7 @@ if ENABLE_FINETUNING:
     )
 
 # %% --- data cache ---
-exp_cfgs      = default_experiment_configs(DEBUG_MODE)
+exp_cfgs      = default_experiment_configs(DEBUG_MODE, N_EVAL_RUNS, EVAL_TEXT_SAMPLES, EVAL_AUDIO_SAMPLES)
 max_dev_pairs = max(e["max_text_dev"]   for e in exp_cfgs)
 max_trn_pairs = max(e["max_text_train"] for e in exp_cfgs)
 
