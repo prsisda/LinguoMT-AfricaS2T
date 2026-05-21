@@ -1,0 +1,132 @@
+# Paper 4 — LinguoMT-Cascade: config.yaml
+# Systematic cascade vs end-to-end architecture comparison.
+# E2E and cascade zero-shot baselines imported from Paper 1.
+
+paper:
+  id: paper4_cascade
+  title: "LinguoMT-Cascade: When Does Cascade Beat End-to-End for African Speech Translation?"
+  paper_mode: cascade
+  enable_finetuning: false
+  sota_file: papers/paper4_cascade/baselines.csv
+
+# ─── What to run ─────────────────────────────────────────────────────────────
+
+experiments:
+  - id: fleurs_seamless_e2e
+    script: FLEURS__SeamlessM4Tv2/notebooks/run_experiment.py
+    run_settings:
+      DEBUG_MODE: false
+      PAPER_MODE: cascade
+      ENABLE_FINETUNING: false
+      MANUAL_LANGUAGES: ["igbo", "yoruba", "swahili"]
+      SOTA_FILE: papers/paper4_cascade/baselines.csv
+    note: "End-to-end baseline — reuse Paper 1 numbers if available"
+
+  - id: fleurs_whisper_nllb_cascade
+    script: FLEURS__WhisperNLLB/notebooks/run_experiment.py
+    run_settings:
+      DEBUG_MODE: false
+      PAPER_MODE: cascade
+      ENABLE_FINETUNING: false
+      MANUAL_LANGUAGES: ["yoruba", "hausa", "swahili"]
+      SOTA_FILE: papers/paper4_cascade/baselines.csv
+    note: "Cascade baseline — reuse Paper 1 numbers if available"
+
+  - id: oracle_cascade
+    description: "Run NLLB-200 on gold FLEURS reference transcripts (not audio)"
+    model: nllb_200_distilled_600m
+    input_type: gold_transcript
+    datasets: [fleurs]
+    languages: [yoruba, hausa, igbo, swahili]
+    note: >
+      Feed the FLEURS validation set reference text directly into NLLB-200.
+      This bypasses Whisper entirely and gives the MT-ceiling BLEU for any
+      cascade that uses NLLB-200 as its MT component.
+
+# ─── Error propagation experiment ────────────────────────────────────────────
+
+error_propagation:
+  description: >
+    Take Whisper transcripts from Paper 1 cascade run.
+    Corrupt them at controlled WER rates by substituting random words.
+    Pass each corrupted set through NLLB-200 and record resulting BLEU.
+    Plot WER (x) vs BLEU (y) to find the break-even WER.
+  wer_rates: [0, 0.1, 0.2, 0.3, 0.4, 0.5]
+  languages: [yoruba, hausa, swahili]
+  seed: 42
+
+# ─── Latency measurement ──────────────────────────────────────────────────────
+
+latency:
+  n_warmup_samples: 10
+  n_measurement_samples: 100
+  report: [median_ms, p95_ms, peak_vram_mb]
+  architectures: [cascade, end_to_end]
+
+# ─── NLLB model size ablation ─────────────────────────────────────────────────
+
+mt_component_ablation:
+  asr_model: whisper_large_v3   # fixed
+  mt_variants:
+    - hf_id: facebook/nllb-200-distilled-600M
+      display: NLLB-200-distilled-600M
+    - hf_id: facebook/nllb-200-1.3B
+      display: NLLB-200-1.3B
+
+# ─── Result keys ──────────────────────────────────────────────────────────────
+
+result_keys:
+  # E2E baselines (from Paper 1)
+  e2e.yoruba.bleu:    "SeamlessM4T-v2, Yoruba, E2E BLEU"
+  e2e.igbo.bleu:      "SeamlessM4T-v2, Igbo, E2E BLEU"
+  e2e.swahili.bleu:   "SeamlessM4T-v2, Swahili, E2E BLEU"
+
+  # Cascade baselines (from Paper 1)
+  cascade.yoruba.bleu:   "Whisper+NLLB, Yoruba, cascade BLEU"
+  cascade.hausa.bleu:    "Whisper+NLLB, Hausa, cascade BLEU"
+  cascade.swahili.bleu:  "Whisper+NLLB, Swahili, cascade BLEU"
+  cascade.yoruba.wer:    "Whisper, Yoruba, intermediate ASR WER"
+  cascade.hausa.wer:     "Whisper, Hausa, intermediate ASR WER"
+
+  # Oracle cascade
+  oracle.yoruba.bleu:    "NLLB on gold transcripts, Yoruba BLEU"
+  oracle.hausa.bleu:     "NLLB on gold transcripts, Hausa BLEU"
+  oracle.igbo.bleu:      "NLLB on gold transcripts, Igbo BLEU"
+  oracle.swahili.bleu:   "NLLB on gold transcripts, Swahili BLEU"
+
+  # Break-even WER
+  breakeven.yoruba.wer:  "WER at which cascade BLEU = E2E BLEU — Yoruba"
+  breakeven.hausa.wer:   "WER at which cascade BLEU = E2E BLEU — Hausa"
+  breakeven.swahili.wer: "WER at which cascade BLEU = E2E BLEU — Swahili"
+
+  # Latency
+  latency.cascade.median_ms:  "Cascade median latency (ms/sample)"
+  latency.e2e.median_ms:      "E2E median latency (ms/sample)"
+  latency.cascade.vram_mb:    "Cascade peak VRAM (MB)"
+  latency.e2e.vram_mb:        "E2E peak VRAM (MB)"
+
+# ─── Tables ──────────────────────────────────────────────────────────────────
+
+tables:
+  table1_arch_comparison:
+    title: "Cascade vs E2E vs oracle vs text ceiling"
+    rows: [E2E (SeamlessM4T), Cascade (Whisper+NLLB), Oracle cascade (gold transcripts), Text ceiling (NLLB)]
+    columns: [Yoruba, Hausa, Igbo, Swahili]
+    metric: BLEU
+
+  table2_error_propagation:
+    title: "Error propagation decomposition"
+    rows: [ASR error contribution, Translation noise, Architecture gap]
+    columns: [Yoruba, Hausa, Swahili]
+
+  table3_oracle:
+    title: "Oracle ASR cascade BLEU"
+    columns: [Yoruba, Hausa, Igbo, Swahili]
+
+  table4_breakeven:
+    title: "Break-even WER by language"
+    columns: [Language, Break-even WER, Cascade wins when WER <, E2E wins when WER >]
+
+  table5_latency:
+    title: "Latency and resource comparison"
+    columns: [Architecture, Median latency (ms), P95 latency (ms), Peak VRAM (MB)]

@@ -1,0 +1,288 @@
+# experiment_setup.yaml
+# Single source of truth for ALL LinguoMT experiments.
+# Every script, notebook, and paper references this file for model IDs,
+# language codes, dataset splits, and supported experiment combinations.
+#
+# Read by: reporting scripts, paper_outline.md placeholder filler, GUIDELINES.md
+
+# ─── Models ───────────────────────────────────────────────────────────────────
+
+models:
+  seamless_m4t_v2:
+    hf_id: facebook/seamless-m4t-v2-large
+    display: SeamlessM4T-v2 Large
+    type: end_to_end          # handles S2TT + text MT + ASR in one model
+    paper_id: barrault2023seamless
+    paper_arxiv: "2312.05187"
+    capabilities:
+      text_translation: true
+      asr: true
+      speech_translation: true   # S2TT (audio → text in another language)
+    framework_variable: MODEL_ID = "facebook/seamless-m4t-v2-large"
+    lang_attr_text: seamless_code
+    lang_attr_asr: seamless_code
+
+  whisper_large_v3:
+    hf_id: openai/whisper-large-v3
+    display: Whisper large-v3
+    type: asr_only
+    paper_id: radford2023whisper
+    paper_arxiv: "2212.04356"
+    capabilities:
+      text_translation: false
+      asr: true
+      speech_translation: false
+    framework_variable: WHISPER_ID = "openai/whisper-large-v3"
+    lang_attr_asr: whisper_code
+
+  nllb_200_distilled_600m:
+    hf_id: facebook/nllb-200-distilled-600M
+    display: NLLB-200-distilled-600M
+    type: text_mt_only
+    paper_id: costajussa2022nllb
+    paper_arxiv: "2207.04672"
+    capabilities:
+      text_translation: true
+      asr: false
+      speech_translation: false
+    framework_variable: NLLB_ID = "facebook/nllb-200-distilled-600M"
+    lang_attr_src: nllb_code
+    lang_attr_tgt: nllb_code
+    published_metrics_url: "https://dl.fbaipublicfiles.com/large_objects/nllb/models/nllb_200_dense_distill_600m/metrics.csv"
+    published_metrics_note: "metrics.csv contains chrF++ only (not spBLEU); see arXiv:2207.04672 Table 2 for spBLEU"
+
+  whisper_nllb_cascade:
+    display: "Whisper-large-v3 + NLLB-200-distilled-600M"
+    type: cascade             # sequential: Whisper for ASR, NLLB for MT
+    components: [whisper_large_v3, nllb_200_distilled_600m]
+    framework_variable: MODEL_ID = "whisper_nllb"
+    lang_attr_asr: whisper_code
+    lang_attr_mt: nllb_code
+
+# ─── Datasets ─────────────────────────────────────────────────────────────────
+
+datasets:
+  fleurs:
+    hf_id: google/fleurs
+    display: FLEURS
+    full_name: Few-shot Learning Evaluation of Universal Representations of Speech
+    paper_id: conneau2022fleurs
+    paper_arxiv: "2205.12446"
+    type: benchmark_dataset   # NOT a language
+    eval_split: validation
+    train_split: train
+    test_split: test
+    audio_sample_rate: 16000
+    languages_total: 102
+    note: >
+      FLEURS is a multilingual speech BENCHMARK DATASET covering 102 languages.
+      Each language is a separate HuggingFace config (e.g. "yo_ng" for Yoruba).
+      Not to be confused with Flores-200 (a text-only MT benchmark used by NLLB).
+
+  african_celtic:
+    hf_id: McGill-NLP/african_celtic_dataset
+    display: African-Celtic
+    eval_split: dev
+    train_split: train
+    audio_sample_rate: 48000
+    note: >
+      48 kHz audio; requires torchcodec for audio loading.
+      Single default config (no per-language config like FLEURS).
+      Languages identified via text_id field.
+
+# ─── Languages ────────────────────────────────────────────────────────────────
+# Every code needed by every model and dataset, in one place.
+
+languages:
+  yoruba:
+    display: Yoruba
+    iso639_1: yo
+    family: Niger-Congo
+    subfamily: Volta-Niger
+    seamless_code: yor       # SeamlessM4T source/target lang token
+    whisper_code: yo         # Whisper forced_decoder_ids language
+    nllb_code: yor_Latn      # NLLB-200 src_lang / forced_bos_token
+    fleurs_config: yo_ng     # HuggingFace dataset config name for FLEURS
+    support:
+      fleurs_seamless_s2tt: true
+      fleurs_seamless_asr: true
+      fleurs_seamless_text: true
+      fleurs_whisper_asr: true
+      fleurs_nllb_text: true
+      african_celtic_seamless: true
+      african_celtic_whisper: true
+
+  hausa:
+    display: Hausa
+    iso639_1: ha
+    family: Afro-Asiatic
+    subfamily: Chadic
+    seamless_code: hau
+    whisper_code: ha
+    nllb_code: hau_Latn
+    fleurs_config: ha_ng
+    support:
+      fleurs_seamless_s2tt: false  # hau NOT in SeamlessM4T-v2 S2TT output vocab
+      fleurs_seamless_asr: false   # same restriction
+      fleurs_seamless_text: true   # text MT (hau→en) works fine
+      fleurs_whisper_asr: true
+      fleurs_nllb_text: true
+      african_celtic_seamless: false   # audio not present in African-Celtic
+      african_celtic_whisper: true
+    exclusion_notes:
+      seamless_speech: "hau is not in SeamlessM4T-v2 speech output language list; use text-only direction only"
+
+  igbo:
+    display: Igbo
+    iso639_1: ig
+    family: Niger-Congo
+    subfamily: Volta-Niger
+    seamless_code: ibo
+    whisper_code: null       # Igbo has NO Whisper language token
+    nllb_code: ibo_Latn
+    fleurs_config: ig_ng
+    support:
+      fleurs_seamless_s2tt: true
+      fleurs_seamless_asr: true
+      fleurs_seamless_text: true
+      fleurs_whisper_asr: false    # no Whisper token for Igbo
+      fleurs_nllb_text: true
+      african_celtic_seamless: true
+      african_celtic_whisper: false
+    exclusion_notes:
+      whisper: "Igbo has no Whisper language token; cannot use Whisper-based ASR or cascade"
+
+  swahili:
+    display: Swahili
+    iso639_1: sw
+    family: Niger-Congo
+    subfamily: Bantu
+    seamless_code: swh
+    whisper_code: sw
+    nllb_code: swh_Latn
+    fleurs_config: sw_ke
+    support:
+      fleurs_seamless_s2tt: true
+      fleurs_seamless_asr: true
+      fleurs_seamless_text: true
+      fleurs_whisper_asr: true
+      fleurs_nllb_text: true
+      african_celtic_seamless: false   # not in African-Celtic dataset
+      african_celtic_whisper: false
+    usage_note: "Substituted for Hausa in FLEURS×SeamlessM4T and for Igbo in FLEURS×WhisperNLLB to maintain 3-language evaluation sets"
+
+# ─── Experiment Matrix ────────────────────────────────────────────────────────
+# Canonical mapping of which languages are used in each experiment script.
+# Source of truth for MANUAL_LANGUAGES in each run_experiment.py.
+
+experiment_matrix:
+  fleurs_seamless:
+    script: FLEURS__SeamlessM4Tv2/notebooks/run_experiment.py
+    models: [seamless_m4t_v2]
+    datasets: [fleurs]
+    languages: [igbo, yoruba, swahili]
+    manual_languages_setting: '["igbo", "yoruba", "swahili"]'
+    excluded: {hausa: "hau not in SeamlessM4T-v2 speech output vocab"}
+
+  fleurs_whisper_nllb:
+    script: FLEURS__WhisperNLLB/notebooks/run_experiment.py
+    models: [whisper_nllb_cascade]
+    datasets: [fleurs]
+    languages: [yoruba, hausa, swahili]
+    manual_languages_setting: '["yoruba", "hausa", "swahili"]'
+    excluded: {igbo: "no Whisper language token for Igbo"}
+
+  african_celtic_seamless:
+    script: AfricanCeltic__SeamlessM4Tv2/notebooks/run_experiment.py
+    models: [seamless_m4t_v2]
+    datasets: [african_celtic]
+    languages: [igbo, yoruba]
+    manual_languages_setting: '["igbo", "yoruba"]'
+    excluded:
+      hausa: "Hausa audio not present in African-Celtic dataset"
+      swahili: "Swahili not in African-Celtic dataset"
+
+  african_celtic_whisper_nllb:
+    script: AfricanCeltic__WhisperNLLB/notebooks/run_experiment.py
+    models: [whisper_nllb_cascade]
+    datasets: [african_celtic]
+    languages: [yoruba, hausa]
+    manual_languages_setting: '["yoruba", "hausa"]'
+    excluded:
+      igbo: "no Whisper language token for Igbo"
+      swahili: "Swahili not in African-Celtic dataset"
+
+# ─── Metrics ──────────────────────────────────────────────────────────────────
+
+metrics:
+  bleu:
+    display: BLEU
+    tool: sacrebleu
+    tokenize: 13a
+    higher_is_better: true
+    applies_to: [text_mt, s2tt, cascade_s2tt]
+
+  spbleu:
+    display: spBLEU
+    tool: sacrebleu
+    tokenize: flores101
+    higher_is_better: true
+    applies_to: [text_mt, s2tt, cascade_s2tt]
+    note: "sentencepiece BLEU; used by NLLB paper on Flores-200"
+
+  chrf:
+    display: chrF
+    tool: sacrebleu
+    higher_is_better: true
+    applies_to: [text_mt, s2tt, cascade_s2tt]
+
+  wer:
+    display: WER
+    tool: jiwer
+    higher_is_better: false
+    applies_to: [asr]
+    unit: percent
+
+  cer:
+    display: CER
+    tool: jiwer
+    higher_is_better: false
+    applies_to: [asr]
+    unit: percent
+
+# ─── Script Configuration Template ───────────────────────────────────────────
+# Values that must be set in each run_experiment.py for each paper.
+
+script_config_per_paper:
+  paper1_benchmark:
+    paper_mode: benchmark
+    enable_finetuning: false
+    debug_mode: false     # set True only for smoke tests
+    sota_file: papers/paper1_benchmark/baselines.csv
+
+  paper2_adaptation:
+    paper_mode: adaptation
+    enable_finetuning: true
+    finetuning_method: lora
+    debug_mode: false
+    sota_file: papers/paper2_adaptation/baselines.csv
+    eval_before_after: true
+
+  paper3_audio:
+    paper_mode: audio
+    enable_finetuning: false
+    debug_mode: false
+    sota_file: papers/paper3_audio/baselines.csv
+
+  paper4_cascade:
+    paper_mode: cascade
+    enable_finetuning: false
+    debug_mode: false
+    sota_file: papers/paper4_cascade/baselines.csv
+
+  paper5_transfer:
+    paper_mode: transfer
+    enable_finetuning: true
+    finetuning_method: full
+    debug_mode: false
+    sota_file: papers/paper5_transfer/baselines.csv

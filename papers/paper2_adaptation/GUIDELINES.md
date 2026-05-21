@@ -1,190 +1,137 @@
-# Paper 2 — Experiment Guidelines: LinguoMT-Adapt
+# Paper 2 — LinguoMT-Adapt: Experiment Guidelines
 
-Step-by-step workflow for running and reporting all PEFT experiments. Follow in order — data scaling (Step 4) depends on the single fine-tuning run (Step 3).
+PEFT fine-tuning on FLEURS. Zero-shot baselines come from Paper 1 — do not re-run them.
 
-<!-- TOC -->
-- [Paper 2 — Experiment Guidelines: LinguoMT-Adapt](#paper-2-experiment-guidelines-linguomt-adapt)
-  - [Overview](#overview)
-  - [Prerequisites](#prerequisites)
-  - [Step 1 — Record pre-adaptation baselines](#step-1-record-pre-adaptation-baselines)
-  - [Step 2 — Prepare fine-tuning data](#step-2-prepare-fine-tuning-data)
-  - [Step 3 — Run LoRA fine-tuning (main experiment)](#step-3-run-lora-fine-tuning-main-experiment)
-  - [Step 4 — Run adapter fine-tuning (comparison)](#step-4-run-adapter-fine-tuning-comparison)
-  - [Step 5 — Data scaling experiment (Table 3, Figure 1)](#step-5-data-scaling-experiment-table-3-figure-1)
-  - [Step 6 — Parameter efficiency analysis (Table 2)](#step-6-parameter-efficiency-analysis-table-2)
-  - [Step 7 — Generate tables and figures](#step-7-generate-tables-and-figures)
-  - [Step 8 — Validate](#step-8-validate)
-  - [Reporting checklist](#reporting-checklist)
-  - [Scope reminder](#scope-reminder)
-<!-- /TOC -->
+**Deliverables:** Table 1 (before/after), Table 2 (parameter budget), Table 3 (data scaling), Figures 1–2, paper_outline.filled.md.
 
 ---
 
-## Overview
+## Key files
 
-This paper asks: how much of the full-fine-tuning gain can LoRA recover, with how few trainable parameters, and with how little data? The zero-shot baselines come from Paper 1 — do not re-run them here, cite them. Your job is to run and compare three adaptation conditions: LoRA, adapter modules, and full fine-tuning.
-
-**Deliverables:** Table 1 (before/after per method), Table 2 (parameter budget comparison), Table 3 (data scaling), Figure 1 (learning curves), Figure 2 (PEFT efficiency frontier).
+| File | Purpose |
+|------|---------|
+| `papers/experiment_setup.yaml` | Model IDs, language codes — shared reference |
+| `papers/paper2_adaptation/config.yaml` | Run settings, data budgets, result key mapping |
+| `papers/paper2_adaptation/baselines.csv` | Pre-adaptation baselines (imported from Paper 1) |
+| `papers/paper2_adaptation/paper_outline.md` | Paper skeleton with `[RESULT:key]` placeholders |
+| `papers/fill_results.py` | Fills placeholders from experiment output CSVs |
 
 ---
 
 ## Prerequisites
 
-- [ ] Paper 1 zero-shot results available (BLEU for SeamlessM4T-v2, WER for Whisper)
-- [ ] FLEURS **train** split accessible (used for fine-tuning data)
-- [ ] GPU with at least 24 GB VRAM for LoRA on SeamlessM4T-v2-large; 16 GB sufficient for smaller variants
-- [ ] `peft` library installed (`pip install peft`)
-- [ ] `PAPER_MODE = "adaptation"` and `ENABLE_FINETUNING = True` in your run script
+- [ ] Paper 1 zero-shot results available
+- [ ] GPU with ≥ 24 GB VRAM (LoRA on SeamlessM4T-v2-large); 16 GB for WhisperNLLB
+- [ ] `peft` installed: `pip install peft`
+- [ ] `PAPER_MODE = "adaptation"` and `ENABLE_FINETUNING = True` in run scripts
 
 ---
 
-## Step 1 — Record pre-adaptation baselines
+## Step 1 — Import Paper 1 baselines
 
-Copy the zero-shot scores from Paper 1 into `references.yaml` as entries with `ft_method: none`. These are your "before" column.
+Copy zero-shot scores from Paper 1 into `baselines.csv`:
 
-| Entry | Score source |
-|-------|-------------|
-| SeamlessM4T-v2-large zero-shot BLEU | Paper 1, Table 2 |
-| SeamlessM4T-v2-large zero-shot WER | Paper 1, Table 1 |
-
-Also fill in the full fine-tuning upper bounds from published work:
-
-| Entry | Where to find the score |
-|-------|------------------------|
-| Wav2Vec2-XLSR full FT WER (Hausa, Yoruba) | Table 2 of `arXiv:2206.00253` (MasakhaSpeech) |
-| Whisper-large-v2 full FT WER (AfriSpeech) | Table 4 of `arXiv:2104.02010` |
-
-These upper bounds define the ceiling your PEFT methods are measured against.
-
----
-
-## Step 2 — Prepare fine-tuning data
-
-Use the FLEURS **train** split only. Keep the test split clean — never touch it during training.
-
-Prepare three data budgets for the data scaling experiment in Step 4:
-
-| Budget name | Samples per language | Approximate audio hours |
-|-------------|---------------------|------------------------|
-| `tiny` | 100 | ~0.5 h |
-| `small` | 500 | ~2.5 h |
-| `medium` | 1 000 | ~5 h |
-| `full` | all train | ~8–10 h |
-
-Save each split as a reproducible subset (fix the random seed to 42):
-```python
-FT_SEED    = 42
-FT_SAMPLES = 500   # vary per budget
+```bash
+# Extract Paper 1 zero-shot scores and append to Paper 2 baselines
+python -c "
+import csv, shutil
+src = 'papers/paper1_benchmark/baselines.csv'
+dst = 'papers/paper2_adaptation/baselines.csv'
+# open src, filter rows with score, append to dst with ft_method=none column
+print('Copy Paper 1 scores into paper2 baselines.csv')
+"
 ```
+
+Or manually copy the SeamlessM4T-v2 BLEU and Whisper WER rows (after they are populated in Step 1 of Paper 1) into `baselines.csv` with a `ft_method: none` note.
+
+---
+
+## Step 2 — Configure run scripts
+
+In each `run_experiment.py`, set:
+
+```python
+DEBUG_MODE             = False
+PAPER_MODE             = "adaptation"
+ENABLE_FINETUNING      = True
+FINETUNING_METHOD      = "lora"     # change to "adapter" for second run
+TEXT_FINETUNE_SAMPLES  = 1000
+ASR_FINETUNE_SAMPLES   = 500
+EVAL_BEFORE_AFTER      = True
+SOTA_FILE              = "papers/paper2_adaptation/baselines.csv"
+```
+
+Language settings:
+- `FLEURS__SeamlessM4Tv2`: `MANUAL_LANGUAGES = ["igbo", "yoruba", "swahili"]`
+- `FLEURS__WhisperNLLB`:   `MANUAL_LANGUAGES = ["yoruba", "hausa", "swahili"]`
 
 ---
 
 ## Step 3 — Run LoRA fine-tuning (main experiment)
 
-Use the `medium` budget (1 000 samples) as the main result. Run for all three languages independently.
-
-```python
-PAPER_MODE        = "adaptation"
-ENABLE_FINETUNING = True
-FT_METHOD         = "lora"    # framework.finetuning FinetuneConfig.finetuning_method
-LORA_R            = 8
-LORA_ALPHA        = 16
-LORA_DROPOUT      = 0.05
-FT_SAMPLES        = 1000
-SOTA_FILE         = "papers/paper2_adaptation/references.yaml"
+```bash
+python FLEURS__SeamlessM4Tv2/notebooks/run_experiment.py   # SeamlessM4T + LoRA
+python FLEURS__WhisperNLLB/notebooks/run_experiment.py     # Whisper+NLLB + LoRA
 ```
 
-Record for each language after fine-tuning:
-- Post-adaptation BLEU (S2TT, Source → English)
-- Post-adaptation WER (ASR)
-- Number of trainable parameters (absolute and as % of total)
-- Training wall-clock time (GPU hours)
-- Fill `pretrained_score` in `references.yaml` with the Paper 1 zero-shot score
+Record per language after fine-tuning: BLEU, WER, trainable parameter count.
 
 ---
 
 ## Step 4 — Run adapter fine-tuning (comparison)
 
-Repeat Step 3 with `FT_METHOD = "adapter"` (Bapna & Firat 2019 style). Use the same `medium` budget and seed.
-
-Record the same metrics as Step 3. This is the direct comparison point against LoRA in Table 2.
+Change `FINETUNING_METHOD = "adapter"` and re-run the same scripts with the same data budget (1000 samples, seed 42).
 
 ---
 
-## Step 5 — Data scaling experiment (Table 3, Figure 1)
+## Step 5 — Data scaling experiment
 
-Run LoRA fine-tuning (best configuration from Step 3) at all four data budgets defined in Step 2. One run per language × budget = 12 runs total.
+Run LoRA at all four data budgets (100, 500, 1000, all-train). One run per budget:
 
 ```python
-for samples in [100, 500, 1000, "all"]:
-    FT_SAMPLES = samples
-    # run LoRA fine-tuning
+# In run_experiment.py, change TEXT_FINETUNE_SAMPLES for each run:
+TEXT_FINETUNE_SAMPLES = 100    # then 500, then 1000, then None (all)
+ASR_FINETUNE_SAMPLES  = 50     # proportionally
 ```
 
-Record post-adaptation WER and BLEU for each budget. Plot learning curves: x-axis = number of training samples, y-axis = WER (ASR) and BLEU (S2TT).
-
-Identify the **minimum data threshold**: the smallest budget at which PEFT shows a statistically significant improvement over the zero-shot baseline (paired t-test, p < 0.05 on FLEURS test).
-
 ---
 
-## Step 6 — Parameter efficiency analysis (Table 2)
-
-For each method (LoRA, adapter, full fine-tune), report:
-
-| Column | How to compute |
-|--------|---------------|
-| Trainable params (M) | count parameters where `requires_grad=True` |
-| % of total params | trainable / total × 100 |
-| BLEU gain over zero-shot | post_score − pretrained_score |
-| BLEU gain per 1M trainable params | BLEU gain / trainable_M |
-| GPU hours | wall-clock training time |
-
-Full fine-tuning numbers come from published baselines (Step 1) — you do not need to run full fine-tuning yourself unless compute allows.
-
----
-
-## Step 7 — Generate tables and figures
+## Step 6 — Fill in paper_outline.md
 
 ```bash
-python run_adaptation.py --output-only
+python papers/fill_results.py paper2_adaptation
 ```
 
-Check:
-- Table 1 has non-null before/after scores for all three languages
-- Table 2 shows all three methods with parameter counts
-- Figure 1 shows learning curves with error bars (if multiple seeds were run)
+Output: `papers/paper2_adaptation/paper_outline.filled.md`
 
 ---
 
-## Step 8 — Validate
+## Step 7 — Validate
 
 ```bash
 python -c "
 from framework.sota import load_and_validate_sota
-load_and_validate_sota('papers/paper2_adaptation/references.yaml', 'papers/paper2_adaptation/schema.json')
+load_and_validate_sota('papers/paper2_adaptation/baselines.csv', 'papers/paper2_adaptation/schema.json')
 print('Schema OK')
 "
 ```
-
-Confirm that every entry has `ft_method` set and `pretrained_score` filled where available.
 
 ---
 
 ## Reporting checklist
 
 - [ ] Table 1: Before/after BLEU and WER for LoRA and adapter, per language
-- [ ] Table 2: Parameter budget comparison (LoRA vs adapter vs full FT upper bound)
-- [ ] Table 3: Data scaling — BLEU/WER at each budget, per language
-- [ ] Figure 1: Learning curves (samples vs BLEU/WER) for all three languages
-- [ ] Figure 2: Efficiency frontier — BLEU gain vs trainable parameters (scatter plot)
-- [ ] Minimum data threshold identified and stated in the text
-- [ ] `references.yaml` has `pretrained_score` filled for all fine-tuned entries
-- [ ] `paper_references.csv` updated
+- [ ] Table 2: Parameter budget — trainable %, BLEU gain, GPU hours
+- [ ] Table 3: Data scaling — BLEU/WER at 100/500/1000/full per language
+- [ ] Figure 1: Learning curves (samples vs WER/BLEU)
+- [ ] Figure 2: Efficiency frontier — BLEU gain vs trainable parameters
+- [ ] Minimum data threshold identified (paired t-test, p < 0.05)
+- [ ] `paper_outline.filled.md` generated
 
 ---
 
 ## Scope reminder
 
-Do **not** run audio preprocessing experiments here — that is Paper 3.  
-Do **not** compare cascade vs E2E architectures here — that is Paper 4.  
-Do **not** vary source language for cross-lingual transfer here — that is Paper 5. Adaptation in this paper always uses target-language data only.
+- Do NOT run audio preprocessing experiments here → Paper 3
+- Do NOT compare cascade vs E2E here → Paper 4
+- Do NOT vary source language for cross-lingual transfer here → Paper 5

@@ -112,6 +112,32 @@ SOTA_FILE  = "papers/paper1_benchmark/references.yaml"   # baseline references
 
 ---
 
+## Documentation structure
+
+Each paper follows a three-layer documentation system:
+
+```
+papers/
+├── experiment_setup.yaml          ← shared: all model IDs, language codes, dataset splits
+├── fill_results.py                ← script: fills paper_outline.md from experiment CSVs
+└── paper1_benchmark/
+    ├── config.yaml                ← what to run + expected table structure
+    ├── baselines.csv              ← published SOTA scores (SOTA_FILE for run scripts)
+    ├── paper_outline.md           ← paper skeleton with [RESULT:key] placeholders
+    ├── paper_outline.filled.md    ← auto-generated after running experiments
+    ├── GUIDELINES.md              ← step-by-step workflow
+    ├── references.yaml            ← BibTeX-style reference records
+    └── schema.json                ← validation schema
+```
+
+**Workflow for each paper:**
+1. Fill `baselines.csv` with published SOTA scores (Step 1 of GUIDELINES.md)
+2. Set script config from `config.yaml` and run experiments
+3. Run `python papers/fill_results.py paper1_benchmark` → produces `paper_outline.filled.md`
+4. Fill `[NARRATIVE:key]` sections manually in the filled outline
+
+---
+
 ## Papers
 
 Each paper builds on the previous one's results. The scope boundaries are strict — no paper duplicates experiments owned by another.
@@ -124,70 +150,72 @@ Each paper builds on the previous one's results. The scope boundaries are strict
 
 | File | Purpose |
 |------|---------|
-| [README.md](paper1_benchmark/README.md) | Abstract, RQs, data field reference |
+| [config.yaml](paper1_benchmark/config.yaml) | Run settings, expected tables, result key mapping |
+| [baselines.csv](paper1_benchmark/baselines.csv) | Published SOTA scores — partially verified, rest to fill |
+| [paper_outline.md](paper1_benchmark/paper_outline.md) | Paper skeleton with placeholders |
 | [GUIDELINES.md](paper1_benchmark/GUIDELINES.md) | Step-by-step experiment workflow |
-| [references.yaml](paper1_benchmark/references.yaml) | SOTA baselines |
+| [references.yaml](paper1_benchmark/references.yaml) | BibTeX-style reference records |
 | [schema.json](paper1_benchmark/schema.json) | Validation schema |
 
 ---
 
 ### Paper 2 — LinguoMT-Adapt: PEFT Fine-Tuning
 
-> Parameter-efficient fine-tuning (LoRA, adapters) applied to SeamlessM4T-v2. Answers how much PEFT recovers vs full fine-tuning and at what parameter budget.
+> Parameter-efficient fine-tuning (LoRA, adapters) applied to SeamlessM4T-v2 and Whisper. Zero-shot baselines from Paper 1.
 
 **Mode:** `adaptation` | **Folder:** `paper2_adaptation/`
 
 | File | Purpose |
 |------|---------|
-| [README.md](paper2_adaptation/README.md) | Abstract, RQs, data field reference |
+| [config.yaml](paper2_adaptation/config.yaml) | Run settings, data budgets, fine-tuning hyperparams |
+| [baselines.csv](paper2_adaptation/baselines.csv) | Pre-adaptation baselines (imported from Paper 1) |
+| [paper_outline.md](paper2_adaptation/paper_outline.md) | Paper skeleton with placeholders |
 | [GUIDELINES.md](paper2_adaptation/GUIDELINES.md) | Step-by-step experiment workflow |
-| [references.yaml](paper2_adaptation/references.yaml) | SOTA baselines |
-| [schema.json](paper2_adaptation/schema.json) | Validation schema |
 
 ---
 
-### Paper 3 — LinguoMT-Audio: Preprocessing & Robustness
+### Paper 3 — LinguoMT-Audio: Audio Strategy Analysis
 
-> Audio preprocessing ablation (VAD, normalisation, SpecAugment) and robustness under SNR degradation. No model fine-tuning except augmentation-trained robustness probes.
+> Compare S2TT (direct), cascade (ASR+MT), and ASR-only audio processing strategies.
 
 **Mode:** `audio` | **Folder:** `paper3_audio/`
 
 | File | Purpose |
 |------|---------|
-| [README.md](paper3_audio/README.md) | Abstract, RQs, data field reference |
+| [config.yaml](paper3_audio/config.yaml) | Audio strategies defined, text-MT ceiling setup |
+| [baselines.csv](paper3_audio/baselines.csv) | Clean-audio baselines (from Paper 1) |
+| [paper_outline.md](paper3_audio/paper_outline.md) | Paper skeleton with placeholders |
 | [GUIDELINES.md](paper3_audio/GUIDELINES.md) | Step-by-step experiment workflow |
-| [references.yaml](paper3_audio/references.yaml) | SOTA baselines |
-| [schema.json](paper3_audio/schema.json) | Validation schema |
 
 ---
 
 ### Paper 4 — LinguoMT-Cascade: Architecture Comparison
 
-> Controlled comparison of the Whisper + NLLB-200 cascade against end-to-end SeamlessM4T-v2. Includes error propagation analysis and inference latency.
+> Controlled comparison of cascade vs end-to-end. Error propagation, oracle, latency analysis.
 
 **Mode:** `cascade` | **Folder:** `paper4_cascade/`
 
 | File | Purpose |
 |------|---------|
-| [README.md](paper4_cascade/README.md) | Abstract, RQs, data field reference |
+| [config.yaml](paper4_cascade/config.yaml) | Oracle setup, error propagation, latency config |
+| [baselines.csv](paper4_cascade/baselines.csv) | Cascade and E2E baselines (from Paper 1) |
+| [paper_outline.md](paper4_cascade/paper_outline.md) | Paper skeleton with placeholders |
 | [GUIDELINES.md](paper4_cascade/GUIDELINES.md) | Step-by-step experiment workflow |
-| [references.yaml](paper4_cascade/references.yaml) | SOTA baselines |
-| [schema.json](paper4_cascade/schema.json) | Validation schema |
 
 ---
 
 ### Paper 5 — LinguoMT-Transfer: Cross-Lingual Adaptation
 
-> How linguistic family membership (Niger-Congo vs Afro-Asiatic) moderates cross-lingual transfer efficiency across zero-shot, few-shot, and fine-tuning regimes.
+> Niger-Congo vs Afro-Asiatic: how linguistic family membership drives transfer efficiency.
 
 **Mode:** `transfer` | **Folder:** `paper5_transfer/`
 
 | File | Purpose |
 |------|---------|
-| [README.md](paper5_transfer/README.md) | Abstract, RQs, data field reference |
+| [config.yaml](paper5_transfer/config.yaml) | Transfer pairs, few-shot budgets, URIEL setup |
+| [baselines.csv](paper5_transfer/baselines.csv) | Zero-shot baselines (from Paper 1) |
+| [paper_outline.md](paper5_transfer/paper_outline.md) | Paper skeleton with placeholders |
 | [GUIDELINES.md](paper5_transfer/GUIDELINES.md) | Step-by-step experiment workflow |
-| [references.yaml](paper5_transfer/references.yaml) | SOTA baselines |
-| [schema.json](paper5_transfer/schema.json) | Validation schema |
 
 ---
 

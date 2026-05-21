@@ -1,0 +1,134 @@
+# Paper 2 — LinguoMT-Adapt: config.yaml
+# PEFT fine-tuning experiments. Zero-shot baselines come from Paper 1.
+#
+# Cross-reference: ../experiment_setup.yaml for model/language codes
+
+paper:
+  id: paper2_adaptation
+  title: "LinguoMT-Adapt: Parameter-Efficient Adaptation for African Speech Translation"
+  paper_mode: adaptation
+  enable_finetuning: true
+  sota_file: papers/paper2_adaptation/baselines.csv
+
+# ─── What to run ─────────────────────────────────────────────────────────────
+
+experiments:
+  - id: fleurs_seamless_lora
+    script: FLEURS__SeamlessM4Tv2/notebooks/run_experiment.py
+    run_settings:
+      DEBUG_MODE: false
+      PAPER_MODE: adaptation
+      ENABLE_FINETUNING: true
+      FINETUNING_METHOD: lora
+      FINETUNE_TEXT_TRANSLATION: true
+      FINETUNE_REVERSE_TRANSLATION: true
+      FINETUNE_ASR: true
+      TEXT_FINETUNE_SAMPLES: 1000
+      ASR_FINETUNE_SAMPLES: 500
+      EVAL_BEFORE_AFTER: true
+      MANUAL_LANGUAGES: ["igbo", "yoruba", "swahili"]
+      SOTA_FILE: papers/paper2_adaptation/baselines.csv
+
+  - id: fleurs_seamless_adapter
+    script: FLEURS__SeamlessM4Tv2/notebooks/run_experiment.py
+    run_settings:
+      DEBUG_MODE: false
+      PAPER_MODE: adaptation
+      ENABLE_FINETUNING: true
+      FINETUNING_METHOD: adapter
+      TEXT_FINETUNE_SAMPLES: 1000
+      ASR_FINETUNE_SAMPLES: 500
+      EVAL_BEFORE_AFTER: true
+      MANUAL_LANGUAGES: ["igbo", "yoruba", "swahili"]
+
+  - id: fleurs_whisper_nllb_lora
+    script: FLEURS__WhisperNLLB/notebooks/run_experiment.py
+    run_settings:
+      DEBUG_MODE: false
+      PAPER_MODE: adaptation
+      ENABLE_FINETUNING: true
+      FINETUNING_METHOD: lora
+      TEXT_FINETUNE_SAMPLES: 1000
+      ASR_FINETUNE_SAMPLES: 500
+      EVAL_BEFORE_AFTER: true
+      MANUAL_LANGUAGES: ["yoruba", "hausa", "swahili"]
+
+# ─── Data budgets for scaling experiment ─────────────────────────────────────
+
+data_budgets:
+  tiny:   {samples: 100,   approx_hours: "0.5h"}
+  small:  {samples: 500,   approx_hours: "2.5h"}
+  medium: {samples: 1000,  approx_hours: "5h"}
+  full:   {samples: null,  approx_hours: "8-10h"}   # null = all train samples
+
+main_budget: medium    # 1000 samples — used for Table 1 main result
+seed: 42
+
+# ─── Expected result keys ─────────────────────────────────────────────────────
+
+result_keys:
+  # Before/after LoRA — SeamlessM4T
+  seamless_lora.yoruba.bleu.before:  "SeamlessM4T, Yoruba, BLEU, zero-shot (from Paper 1)"
+  seamless_lora.yoruba.bleu.after:   "SeamlessM4T, Yoruba, BLEU, after LoRA (1000 samples)"
+  seamless_lora.igbo.bleu.before:    "SeamlessM4T, Igbo, BLEU, zero-shot"
+  seamless_lora.igbo.bleu.after:     "SeamlessM4T, Igbo, BLEU, after LoRA"
+  seamless_lora.swahili.bleu.before: "SeamlessM4T, Swahili, BLEU, zero-shot"
+  seamless_lora.swahili.bleu.after:  "SeamlessM4T, Swahili, BLEU, after LoRA"
+  seamless_lora.yoruba.wer.before:   "SeamlessM4T, Yoruba, WER, zero-shot"
+  seamless_lora.yoruba.wer.after:    "SeamlessM4T, Yoruba, WER, after LoRA"
+
+  # Before/after LoRA — WhisperNLLB
+  whisper_lora.yoruba.wer.before:  "Whisper, Yoruba, WER, zero-shot"
+  whisper_lora.yoruba.wer.after:   "Whisper, Yoruba, WER, after LoRA"
+  whisper_lora.hausa.wer.before:   "Whisper, Hausa, WER, zero-shot"
+  whisper_lora.hausa.wer.after:    "Whisper, Hausa, WER, after LoRA"
+
+  # Parameter efficiency
+  lora.trainable_params_m:         "LoRA trainable parameters (millions)"
+  lora.trainable_pct:              "LoRA trainable parameters (% of total)"
+  adapter.trainable_params_m:      "Adapter trainable parameters (millions)"
+  adapter.trainable_pct:           "Adapter trainable parameters (% of total)"
+
+  # Data scaling — Yoruba BLEU at each budget
+  scaling.yoruba.bleu.100:   "Yoruba BLEU after LoRA with 100 samples"
+  scaling.yoruba.bleu.500:   "Yoruba BLEU after LoRA with 500 samples"
+  scaling.yoruba.bleu.1000:  "Yoruba BLEU after LoRA with 1000 samples"
+  scaling.yoruba.bleu.full:  "Yoruba BLEU after LoRA with full train data"
+
+# ─── Tables ──────────────────────────────────────────────────────────────────
+
+tables:
+  table1_before_after:
+    title: "Before/after adaptation — BLEU (S2TT) and WER (ASR)"
+    rows: [LoRA, Adapter, "Full FT (published upper bound)"]
+    languages: [Yoruba, Igbo, Swahili, Hausa]
+
+  table2_parameter_budget:
+    title: "Parameter efficiency comparison"
+    columns: [Method, Trainable params (M), "% of total", BLEU gain, WER gain, GPU hours]
+
+  table3_data_scaling:
+    title: "BLEU/WER vs fine-tuning data budget (LoRA)"
+    rows: [100, 500, 1000, Full]
+    languages: [Yoruba, Igbo, Hausa]
+
+# ─── Published baselines ──────────────────────────────────────────────────────
+
+published_baselines:
+  - citation_key: lugo2022masakhane
+    model: Wav2Vec2-XLSR (full FT)
+    dataset: MasakhaSpeech
+    metric: WER
+    source: "Table 2 of arXiv:2206.00253 — full fine-tuning upper bound"
+    entries:
+      - language: Yoruba  score: null
+      - language: Hausa   score: null
+
+  - citation_key: olatunji2022afrispeech
+    model: Whisper-large-v2 (full FT)
+    dataset: AfriSpeech
+    metric: WER
+    source: "Table 4 of arXiv:2104.02010"
+    entries:
+      - language: Yoruba  score: null
+      - language: Hausa   score: null

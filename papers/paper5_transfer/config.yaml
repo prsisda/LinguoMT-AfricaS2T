@@ -1,0 +1,130 @@
+# Paper 5 — LinguoMT-Transfer: config.yaml
+# Cross-lingual transfer analysis: Niger-Congo vs Afro-Asiatic.
+# Zero-shot baselines from Paper 1. Fine-tuning is full (not PEFT).
+
+paper:
+  id: paper5_transfer
+  title: "LinguoMT-Transfer: Linguistic Family Drives Cross-Lingual Transfer for African Speech"
+  paper_mode: transfer
+  enable_finetuning: true
+  finetuning_method: full
+  sota_file: papers/paper5_transfer/baselines.csv
+
+# ─── What to run ─────────────────────────────────────────────────────────────
+
+experiments:
+  - id: fleurs_seamless_transfer
+    script: FLEURS__SeamlessM4Tv2/notebooks/run_experiment.py
+    run_settings:
+      DEBUG_MODE: false
+      PAPER_MODE: transfer
+      ENABLE_FINETUNING: true
+      FINETUNING_METHOD: full
+      MANUAL_LANGUAGES: ["igbo", "yoruba", "swahili"]
+      SOTA_FILE: papers/paper5_transfer/baselines.csv
+
+  - id: fleurs_whisper_nllb_transfer
+    script: FLEURS__WhisperNLLB/notebooks/run_experiment.py
+    run_settings:
+      DEBUG_MODE: false
+      PAPER_MODE: transfer
+      ENABLE_FINETUNING: true
+      FINETUNING_METHOD: full
+      MANUAL_LANGUAGES: ["yoruba", "hausa", "swahili"]
+      SOTA_FILE: papers/paper5_transfer/baselines.csv
+
+# ─── Language families ────────────────────────────────────────────────────────
+
+language_families:
+  niger_congo:
+    languages: [yoruba, igbo, swahili]
+    subfamily_note: "Yoruba and Igbo are Volta-Niger; Swahili is Bantu — both Niger-Congo"
+
+  afro_asiatic:
+    languages: [hausa]
+    subfamily: Chadic
+
+# ─── Transfer experiments ─────────────────────────────────────────────────────
+
+transfer_types:
+  zero_shot:
+    description: "No fine-tuning — imported from Paper 1"
+    num_ft_samples: 0
+
+  few_shot:
+    description: "Fine-tune on small target-language data"
+    data_budgets: [25, 50, 100, 200]
+    seed: 42
+
+  cross_lingual:
+    description: "Fine-tune on a source language, evaluate on a different target language"
+    pairs:
+      - {train: yoruba, eval: igbo,   expected: good transfer (related family)}
+      - {train: igbo,   eval: yoruba, expected: good transfer (related family)}
+      - {train: yoruba, eval: hausa,  expected: poor transfer (cross-family)}
+      - {train: hausa,  eval: yoruba, expected: poor transfer (cross-family)}
+      - {train: english, eval: yoruba, expected: reference baseline}
+      - {train: english, eval: hausa,  expected: reference baseline}
+    ft_samples: 1000
+
+# ─── Typological similarity ───────────────────────────────────────────────────
+
+typological_similarity:
+  tool: lang2vec
+  install: "pip install lang2vec"
+  feature_set: syntax_knn
+  language_codes: {yoruba: yor, igbo: ibo, hausa: hau, english: eng, french: fra}
+  pairs_to_report:
+    - [yoruba, igbo]
+    - [yoruba, hausa]
+    - [igbo, hausa]
+    - [yoruba, english]
+
+# ─── Result keys ──────────────────────────────────────────────────────────────
+
+result_keys:
+  # Typological similarity
+  topo.yoruba_igbo:   "URIEL cosine similarity: Yoruba ↔ Igbo"
+  topo.yoruba_hausa:  "URIEL cosine similarity: Yoruba ↔ Hausa"
+  topo.igbo_hausa:    "URIEL cosine similarity: Igbo ↔ Hausa"
+  topo.yoruba_english: "URIEL cosine similarity: Yoruba ↔ English (reference)"
+
+  # Zero-shot (from Paper 1)
+  zero.yoruba.bleu:   "SeamlessM4T, Yoruba, zero-shot BLEU"
+  zero.igbo.bleu:     "SeamlessM4T, Igbo, zero-shot BLEU"
+  zero.yoruba.wer:    "Whisper, Yoruba, zero-shot WER"
+  zero.hausa.wer:     "Whisper, Hausa, zero-shot WER"
+
+  # Cross-lingual transfer
+  xfer.yor_to_ibo.bleu:  "SeamlessM4T, trained Yoruba → evaluated Igbo, BLEU"
+  xfer.ibo_to_yor.bleu:  "SeamlessM4T, trained Igbo → evaluated Yoruba, BLEU"
+  xfer.yor_to_hau.wer:   "Whisper, trained Yoruba → evaluated Hausa, WER"
+  xfer.hau_to_yor.wer:   "Whisper, trained Hausa → evaluated Yoruba, WER"
+
+  # Few-shot scaling — Yoruba
+  few.yoruba.wer.25:     "Whisper, Yoruba few-shot WER at 25 samples"
+  few.yoruba.wer.50:     "Whisper, Yoruba few-shot WER at 50 samples"
+  few.yoruba.wer.100:    "Whisper, Yoruba few-shot WER at 100 samples"
+  few.yoruba.wer.200:    "Whisper, Yoruba few-shot WER at 200 samples"
+
+  # Interaction analysis
+  interaction.coeff:   "Regression interaction term: log(samples) × lang_family"
+  interaction.pvalue:  "Interaction term p-value"
+
+# ─── Tables ──────────────────────────────────────────────────────────────────
+
+tables:
+  table1_typological_similarity:
+    title: "URIEL typological similarity (cosine) — syntax_knn features"
+    rows: [Yoruba, Igbo, Hausa, English]
+
+  table2_transfer_strategies:
+    title: "Transfer strategy comparison — WER (ASR) and BLEU (S2TT)"
+    rows: [Zero-shot, Few-shot (100 samples), Cross-lingual FT, Monolingual FT (upper bound)]
+    columns: [Yoruba, Hausa, Igbo]
+
+  table3_data_scaling:
+    title: "Few-shot learning curves by language and family"
+    rows: [25, 50, 100, 200 samples]
+    columns: [Yoruba (NC), Igbo (NC), Hausa (AA)]
+    note: "NC = Niger-Congo, AA = Afro-Asiatic"

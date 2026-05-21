@@ -1,0 +1,118 @@
+# Paper 3 — LinguoMT-Audio: config.yaml
+# Audio strategy analysis: S2TT vs ASR+MT cascade vs ASR-only paths.
+# Clean baselines come from Paper 1. No PEFT here.
+
+paper:
+  id: paper3_audio
+  title: "LinguoMT-Audio: Audio Strategy Analysis for African Speech Translation"
+  paper_mode: audio
+  enable_finetuning: false
+  sota_file: papers/paper3_audio/baselines.csv
+
+# ─── What to run ─────────────────────────────────────────────────────────────
+
+experiments:
+  - id: fleurs_seamless_audio
+    script: FLEURS__SeamlessM4Tv2/notebooks/run_experiment.py
+    run_settings:
+      DEBUG_MODE: false
+      PAPER_MODE: audio
+      ENABLE_FINETUNING: false
+      MANUAL_LANGUAGES: ["igbo", "yoruba", "swahili"]
+      SOTA_FILE: papers/paper3_audio/baselines.csv
+    tasks: [s2tt, asr, text_mt]
+    note: "SeamlessM4T provides all three audio paths natively: S2TT (direct), ASR, and text MT"
+
+  - id: fleurs_whisper_nllb_audio
+    script: FLEURS__WhisperNLLB/notebooks/run_experiment.py
+    run_settings:
+      DEBUG_MODE: false
+      PAPER_MODE: audio
+      ENABLE_FINETUNING: false
+      MANUAL_LANGUAGES: ["yoruba", "hausa", "swahili"]
+      SOTA_FILE: papers/paper3_audio/baselines.csv
+    tasks: [asr, cascade_s2tt, text_mt]
+    note: "Whisper+NLLB cascade: ASR-only (Whisper) and cascade S2TT (Whisper→NLLB)"
+
+# ─── Audio strategies compared ────────────────────────────────────────────────
+
+audio_strategies:
+  s2tt_direct:
+    description: "End-to-end speech → English text (SeamlessM4T only)"
+    model: seamless_m4t_v2
+    input: audio
+    output: english_text
+    metric: BLEU
+
+  asr_plus_mt:
+    description: "Cascade: ASR transcription → MT translation"
+    models: [whisper_large_v3, nllb_200_distilled_600m]
+    input: audio
+    intermediate: source_language_text
+    output: english_text
+    metrics: [WER (intermediate ASR), BLEU (final translation)]
+
+  asr_only:
+    description: "ASR transcription only — no translation"
+    models: [whisper_large_v3, seamless_m4t_v2]
+    input: audio
+    output: source_language_text
+    metric: WER
+
+  text_mt_ceiling:
+    description: "MT on gold transcripts — upper bound for any cascade"
+    model: nllb_200_distilled_600m
+    input: gold_reference_transcripts
+    output: english_text
+    metric: BLEU
+    note: "Run NLLB on FLEURS reference text (not audio) to establish cascade upper bound"
+
+# ─── Result keys ──────────────────────────────────────────────────────────────
+
+result_keys:
+  # SeamlessM4T audio paths — Yoruba
+  seamless.yoruba.s2tt.bleu:     "SeamlessM4T, Yoruba, direct S2TT BLEU"
+  seamless.yoruba.asr.wer:       "SeamlessM4T, Yoruba, ASR WER"
+  seamless.yoruba.textmt.bleu:   "SeamlessM4T, Yoruba, text MT BLEU (gold transcript input)"
+
+  # SeamlessM4T audio paths — Igbo
+  seamless.igbo.s2tt.bleu:      "SeamlessM4T, Igbo, direct S2TT BLEU"
+  seamless.igbo.asr.wer:        "SeamlessM4T, Igbo, ASR WER"
+
+  # SeamlessM4T audio paths — Swahili
+  seamless.swahili.s2tt.bleu:   "SeamlessM4T, Swahili, direct S2TT BLEU"
+  seamless.swahili.asr.wer:     "SeamlessM4T, Swahili, ASR WER"
+
+  # Whisper+NLLB paths — Yoruba
+  cascade.yoruba.asr.wer:       "Whisper, Yoruba, ASR WER (intermediate)"
+  cascade.yoruba.s2tt.bleu:     "Whisper+NLLB, Yoruba, cascade S2TT BLEU"
+  cascade.yoruba.textmt.bleu:   "NLLB, Yoruba, text MT BLEU (gold transcript)"
+
+  # Whisper+NLLB paths — Hausa
+  cascade.hausa.asr.wer:        "Whisper, Hausa, ASR WER"
+  cascade.hausa.s2tt.bleu:      "Whisper+NLLB, Hausa, cascade S2TT BLEU"
+  cascade.hausa.textmt.bleu:    "NLLB, Hausa, text MT BLEU (gold transcript)"
+
+# ─── Tables ──────────────────────────────────────────────────────────────────
+
+tables:
+  table1_strategy_comparison:
+    title: "Audio strategy comparison — BLEU (S2TT, cascade) and WER (ASR)"
+    rows: [S2TT direct, ASR-only, Cascade ASR+MT, Text MT ceiling]
+    columns: [Yoruba, Hausa, Igbo, Swahili]
+    metrics: [BLEU (translation), WER (transcription)]
+
+  table2_asr_quality_effect:
+    title: "Effect of intermediate ASR quality on cascade BLEU"
+    description: "Shows how intermediate WER predicts final cascade BLEU"
+    columns: [Yoruba, Hausa, Swahili]
+    rows: [ASR WER (%), Cascade BLEU, Text ceiling BLEU, Gap (ceiling − cascade)]
+
+# ─── Published baselines ──────────────────────────────────────────────────────
+
+published_baselines:
+  note: "Clean-audio baselines come from Paper 1. Fill in paper3 baselines.csv after running Paper 1."
+  cross_paper:
+    - import_from: paper1_benchmark/baselines.csv
+      fields: [SeamlessM4T BLEU, Whisper WER]
+      condition: clean audio

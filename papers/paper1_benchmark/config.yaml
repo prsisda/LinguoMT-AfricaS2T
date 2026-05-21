@@ -1,0 +1,226 @@
+# Paper 1 — LinguoMT Benchmark: config.yaml
+# All parameters needed to reproduce this paper's experiments.
+# Cross-reference with ../experiment_setup.yaml for model/language codes.
+#
+# Used by: run scripts, reporting script, GUIDELINES.md
+
+paper:
+  id: paper1_benchmark
+  title: "LinguoMT: Zero-Shot Speech Translation Benchmarking for African Languages"
+  paper_mode: benchmark
+  enable_finetuning: false
+  sota_file: papers/paper1_benchmark/baselines.csv
+
+# ─── What to run ─────────────────────────────────────────────────────────────
+
+experiments:
+  - id: fleurs_seamless
+    script: FLEURS__SeamlessM4Tv2/notebooks/run_experiment.py
+    run_settings:
+      DEBUG_MODE: false
+      RUN_FULL_GRID: true
+      PAPER_MODE: benchmark
+      ENABLE_FINETUNING: false
+      SOTA_FILE: papers/paper1_benchmark/baselines.csv
+      MANUAL_LANGUAGES: ["igbo", "yoruba", "swahili"]
+    tasks: [text_mt, asr, s2tt]
+    directions: [source_to_english, english_to_source]
+
+  - id: fleurs_whisper_nllb
+    script: FLEURS__WhisperNLLB/notebooks/run_experiment.py
+    run_settings:
+      DEBUG_MODE: false
+      RUN_FULL_GRID: true
+      PAPER_MODE: benchmark
+      ENABLE_FINETUNING: false
+      SOTA_FILE: papers/paper1_benchmark/baselines.csv
+      MANUAL_LANGUAGES: ["yoruba", "hausa", "swahili"]
+    tasks: [text_mt, asr, cascade_s2tt]
+    directions: [source_to_english]
+
+  - id: african_celtic_seamless
+    script: AfricanCeltic__SeamlessM4Tv2/notebooks/run_experiment.py
+    run_settings:
+      DEBUG_MODE: false
+      RUN_FULL_GRID: true
+      PAPER_MODE: benchmark
+      ENABLE_FINETUNING: false
+      SOTA_FILE: papers/paper1_benchmark/baselines.csv
+      MANUAL_LANGUAGES: ["igbo", "yoruba"]
+    tasks: [text_mt, asr, s2tt]
+    directions: [source_to_english, english_to_source]
+
+  - id: african_celtic_whisper_nllb
+    script: AfricanCeltic__WhisperNLLB/notebooks/run_experiment.py
+    run_settings:
+      DEBUG_MODE: false
+      RUN_FULL_GRID: true
+      PAPER_MODE: benchmark
+      ENABLE_FINETUNING: false
+      SOTA_FILE: papers/paper1_benchmark/baselines.csv
+      MANUAL_LANGUAGES: ["yoruba", "hausa"]
+    tasks: [text_mt, asr, cascade_s2tt]
+    directions: [source_to_english]
+
+# ─── Expected output structure ────────────────────────────────────────────────
+# Result keys follow the pattern: experiment_id.language.metric
+# These keys link paper_outline.md placeholders to rows in output CSVs.
+
+result_keys:
+  # SeamlessM4T on FLEURS
+  fleurs_seamless.yoruba.bleu: "FLEURS × SeamlessM4T-v2, Yoruba, Source→English BLEU"
+  fleurs_seamless.igbo.bleu:   "FLEURS × SeamlessM4T-v2, Igbo, Source→English BLEU"
+  fleurs_seamless.swahili.bleu: "FLEURS × SeamlessM4T-v2, Swahili, Source→English BLEU"
+  fleurs_seamless.yoruba.wer:  "FLEURS × SeamlessM4T-v2, Yoruba, ASR WER"
+  fleurs_seamless.igbo.wer:    "FLEURS × SeamlessM4T-v2, Igbo, ASR WER"
+  fleurs_seamless.swahili.wer: "FLEURS × SeamlessM4T-v2, Swahili, ASR WER"
+
+  # WhisperNLLB on FLEURS
+  fleurs_whisper.yoruba.wer:   "FLEURS × Whisper, Yoruba, ASR WER"
+  fleurs_whisper.hausa.wer:    "FLEURS × Whisper, Hausa, ASR WER"
+  fleurs_whisper.swahili.wer:  "FLEURS × Whisper, Swahili, ASR WER"
+  fleurs_whisper.yoruba.bleu:  "FLEURS × Whisper+NLLB cascade, Yoruba, Source→English BLEU"
+  fleurs_whisper.hausa.bleu:   "FLEURS × Whisper+NLLB cascade, Hausa, Source→English BLEU"
+  fleurs_whisper.swahili.bleu: "FLEURS × Whisper+NLLB cascade, Swahili, Source→English BLEU"
+
+  # SeamlessM4T on African-Celtic
+  ac_seamless.yoruba.bleu:  "African-Celtic × SeamlessM4T-v2, Yoruba, Source→English BLEU"
+  ac_seamless.igbo.bleu:    "African-Celtic × SeamlessM4T-v2, Igbo, Source→English BLEU"
+  ac_seamless.yoruba.wer:   "African-Celtic × SeamlessM4T-v2, Yoruba, ASR WER"
+  ac_seamless.igbo.wer:     "African-Celtic × SeamlessM4T-v2, Igbo, ASR WER"
+
+  # WhisperNLLB on African-Celtic
+  ac_whisper.yoruba.wer:    "African-Celtic × Whisper, Yoruba, ASR WER"
+  ac_whisper.hausa.wer:     "African-Celtic × Whisper, Hausa, ASR WER"
+  ac_whisper.yoruba.bleu:   "African-Celtic × Whisper+NLLB cascade, Yoruba, Source→English BLEU"
+  ac_whisper.hausa.bleu:    "African-Celtic × Whisper+NLLB cascade, Hausa, Source→English BLEU"
+
+# ─── Paper tables ─────────────────────────────────────────────────────────────
+
+tables:
+  table1_asr_fleurs:
+    title: "ASR WER (%) on FLEURS — lower is better"
+    columns: [Yoruba, Hausa, Igbo, Swahili]
+    rows:
+      - model: SeamlessM4T-v2 Large
+        keys: [fleurs_seamless.yoruba.wer, "(unsupported)", fleurs_seamless.igbo.wer, fleurs_seamless.swahili.wer]
+      - model: Whisper large-v3
+        keys: [fleurs_whisper.yoruba.wer, fleurs_whisper.hausa.wer, "(no token)", fleurs_whisper.swahili.wer]
+    note: "— = model does not support this language; (no token) = Whisper has no Igbo token"
+
+  table2_s2tt_fleurs:
+    title: "S2TT BLEU on FLEURS (Source → English)"
+    columns: [Yoruba, Hausa, Igbo, Swahili]
+    rows:
+      - model: SeamlessM4T-v2 Large (E2E)
+        keys: [fleurs_seamless.yoruba.bleu, "(unsupported)", fleurs_seamless.igbo.bleu, fleurs_seamless.swahili.bleu]
+      - model: Whisper+NLLB-200 (Cascade)
+        keys: [fleurs_whisper.yoruba.bleu, fleurs_whisper.hausa.bleu, "(no token)", fleurs_whisper.swahili.bleu]
+
+  table3_african_celtic:
+    title: "Results on African-Celtic dataset"
+    columns: [Yoruba, Hausa, Igbo]
+    sub_tables:
+      - metric: ASR WER (%)
+        rows:
+          - model: SeamlessM4T-v2
+            keys: [ac_seamless.yoruba.wer, "(not in dataset)", ac_seamless.igbo.wer]
+          - model: Whisper large-v3
+            keys: [ac_whisper.yoruba.wer, ac_whisper.hausa.wer, "(no token)"]
+      - metric: S2TT BLEU
+        rows:
+          - model: SeamlessM4T-v2 (E2E)
+            keys: [ac_seamless.yoruba.bleu, "(not in dataset)", ac_seamless.igbo.bleu]
+          - model: Whisper+NLLB (Cascade)
+            keys: [ac_whisper.yoruba.bleu, ac_whisper.hausa.bleu, "(no token)"]
+
+  table4_gap_analysis:
+    title: "High-resource vs African language performance gap"
+    columns: [Yoruba, Hausa, Igbo, Swahili, French, German, Spanish]
+    rows:
+      - model: Whisper large-v3
+        metric: WER (%)
+      - model: SeamlessM4T-v2
+        metric: BLEU
+    note: "French/German/Spanish run separately using same scripts with MANUAL_LANGUAGES override"
+
+  table5_metric_correlation:
+    title: "Kendall τ between metric rankings"
+    pairs: [[BLEU, spBLEU], [BLEU, chrF], [spBLEU, chrF]]
+    note: "Computed from SeamlessM4T-v2 output re-scored with all three metrics"
+
+# ─── Published baselines ──────────────────────────────────────────────────────
+# Full list of comparison points needed in baselines.csv.
+# score: null means the value must be looked up and filled manually.
+
+published_baselines:
+  - citation_key: barrault2023seamless
+    model: SeamlessM4T-v2-large
+    dataset: FLEURS
+    metric: BLEU
+    source: "Table B.1 of arXiv:2312.05187 (Seamless paper)"
+    entries:
+      - language: Yoruba   score: null
+      - language: Igbo     score: null
+      - language: Swahili  score: null
+      - language: Hausa    score: null    # text-only direction
+
+  - citation_key: radford2023whisper
+    model: Whisper-large-v3
+    dataset: FLEURS
+    metric: WER
+    source: "Table in arXiv:2212.04356 or HuggingFace openai/whisper-large-v3 model card"
+    entries:
+      - language: Yoruba   score: null
+      - language: Hausa    score: null
+      - language: Swahili  score: null
+      # Igbo: not supported
+
+  - citation_key: costajussa2022nllb
+    model: NLLB-200-distilled-600M
+    dataset: Flores-200
+    metric: chrF++
+    metric_note: "Published metrics file contains chrF++ only; spBLEU from Table 2 of arXiv:2207.04672"
+    verified_scores:
+      yoruba_to_english: 39.9    # from metrics.csv: yor_Latn-eng_Latn
+      hausa_to_english: 52.6     # from metrics.csv: hau_Latn-eng_Latn
+    source: "https://dl.fbaipublicfiles.com/large_objects/nllb/models/nllb_200_dense_distill_600m/metrics.csv"
+    entries:
+      - language: Yoruba   score: 39.9   metric: chrF++
+      - language: Hausa    score: 52.6   metric: chrF++
+
+  - citation_key: conneau2022fleurs
+    model: mSLAM-CTC
+    dataset: FLEURS
+    metric: BLEU
+    source: "Table 3 of arXiv:2205.12446 (FLEURS dataset paper)"
+    entries:
+      - language: Yoruba   score: null
+
+  - citation_key: bapna2022mslam
+    model: mSLAM
+    dataset: FLEURS
+    metric: BLEU
+    source: "Supplementary S2TT table of arXiv:2202.01374"
+    entries:
+      - language: Yoruba   score: null
+      - language: Hausa    score: null
+
+  - citation_key: pratap2023mms
+    model: MMS-300M
+    dataset: FLEURS
+    metric: WER
+    source: "Per-language appendix table of arXiv:2305.13516"
+    entries:
+      - language: Yoruba   score: null
+      - language: Hausa    score: null
+      - language: Igbo     score: null
+
+  - citation_key: babu2022xlsr
+    model: XLS-R-1B
+    dataset: FLEURS
+    metric: WER
+    source: "Table 4 of arXiv:2111.09296"
+    entries:
+      - language: Yoruba   score: null
+      - language: Hausa    score: null
