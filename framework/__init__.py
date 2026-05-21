@@ -31,6 +31,19 @@ from .paper_modes import (
     PAPER_MODES,
     describe_paper_modes,
 )
+from .scaling import run_scaling_experiment
+from .cascade_analysis import (
+    run_oracle_cascade,
+    run_error_propagation,
+    run_breakeven_analysis,
+    run_latency_profile,
+)
+from .transfer import (
+    compute_typological_similarity,
+    run_crosslingual_transfer,
+    run_few_shot_scaling,
+    run_interaction_regression,
+)
 
 __all__ = [
     "detect_environment", "install_colab_dependencies", "mount_google_drive",
@@ -50,4 +63,9 @@ __all__ = [
     "build_sota_comparison_table", "build_gap_table",
     "build_system_ranking_table", "build_improvement_table", "generate_sota_interpretation",
     "PaperModeConfig", "get_paper_mode_config", "PAPER_MODES", "describe_paper_modes",
+    # Paper-specific analyses
+    "run_scaling_experiment",
+    "run_oracle_cascade", "run_error_propagation", "run_breakeven_analysis", "run_latency_profile",
+    "compute_typological_similarity", "run_crosslingual_transfer",
+    "run_few_shot_scaling", "run_interaction_regression",
 ]

@@ -100,6 +100,8 @@ EVAL_BEFORE_AFTER              = True
 PAPER_MODE        = "benchmark"
 # Path to sota_results.csv or published_baselines.json (leave "" to skip SOTA tables)
 SOTA_FILE         = ""    # e.g. "sota/sota_results.csv"
+# Paper 2 only: data scaling budgets. Set to [] to skip.
+SCALING_BUDGETS   = []
 # ─────────────────────────────────────────────────────────────────────────────
 MODEL_ID          = "facebook/seamless-m4t-v2-large"
 DATASET_ID        = "McGill-NLP/african_celtic_dataset"
@@ -226,6 +228,7 @@ ExperimentRunner(
         directions=["source_to_english", "english_to_source"],
         paper_mode=PAPER_MODE,
         sota_path=SOTA_FILE,
+        scaling_budgets=SCALING_BUDGETS,
     ),
     capabilities=caps, data_cache=dev_cache, train_cache=train_cache,
     language_configs=lang_cfgs, dirs=dirs, monitor=monitor, experiment_configs=exp_cfgs,

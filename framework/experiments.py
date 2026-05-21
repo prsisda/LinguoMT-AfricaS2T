@@ -68,6 +68,7 @@ class RunConfig:
     paper_mode:        str  = "benchmark"  # benchmark | adaptation | audio | cascade | transfer
     sota_path:         str  = ""           # path to sota_results.csv or published_baselines.json
     directions:        list[str] = field(default_factory=lambda: ["source_to_english", "english_to_source"])
+    scaling_budgets:   list[int] = field(default_factory=list)  # Paper 2: data scaling budgets
     extra:             dict = field(default_factory=dict)
 
     @property
@@ -169,6 +170,7 @@ class ExperimentRunner:
             self._run_audio_experiments()
         if self.caps.asr and self._asr is not None:
             self._run_asr_experiments()
+        self._run_paper_mode_extras()
         self._build_all_outputs()
         self.monitor.step("Run complete")
         print(f"\nOutputs → {self.dirs.base}")
@@ -201,6 +203,53 @@ class ExperimentRunner:
                 except Exception as e:
                     self.monitor.step(f"  [{lang_cfg['display']}] fine-tune error", str(e)[:120])
         self.monitor.step("Fine-tuning complete")
+
+    # ── paper-mode extras ─────────────────────────────────────────────────────
+
+    def _run_paper_mode_extras(self) -> None:
+        """Run additional analyses triggered by PAPER_MODE and optional config."""
+        mode = self.cfg.paper_mode
+
+        # Paper 2 — data scaling experiment
+        if (
+            mode == "adaptation"
+            and self.cfg.scaling_budgets
+            and self._finetune is not None
+            and self.train_cache is not None
+        ):
+            from .scaling import run_scaling_experiment
+            self.monitor.step("Scaling experiment (paper2)")
+            try:
+                run_scaling_experiment(
+                    budgets=self.cfg.scaling_budgets,
+                    train_cache=self.train_cache,
+                    dev_cache=self.cache,
+                    lang_cfgs=self.lang_cfgs,
+                    finetune_fn=self._finetune,
+                    translate_text_fn=self._t_text,
+                    asr_fn=self._asr,
+                    caps=self.caps,
+                    dirs=self.dirs,
+                    monitor=self.monitor,
+                )
+            except Exception as e:
+                self.monitor.step("Scaling experiment error", str(e)[:120])
+
+        # Paper 4 — oracle cascade (text MT ceiling on gold transcripts)
+        if mode == "cascade" and self._t_text is not None:
+            from .cascade_analysis import run_oracle_cascade
+            self.monitor.step("Oracle cascade (paper4)")
+            try:
+                run_oracle_cascade(
+                    translate_text_fn=self._t_text,
+                    dev_cache=self.cache,
+                    lang_cfgs=self.lang_cfgs,
+                    caps=self.caps,
+                    dirs=self.dirs,
+                    monitor=self.monitor,
+                )
+            except Exception as e:
+                self.monitor.step("Oracle cascade error", str(e)[:120])
 
     # ── EDA ───────────────────────────────────────────────────────────────────
 

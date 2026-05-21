@@ -100,7 +100,10 @@ MANUAL_LANGUAGES  = ["igbo", "yoruba", "swahili"]   # Hausa excluded: no Seamles
 SEED              = 42
 # ── Publication settings ──────────────────────────────────────────────────────
 PAPER_MODE        = "benchmark"   # benchmark | adaptation | audio | cascade | transfer
-SOTA_FILE         = ""            # e.g. "sota/paper1_benchmark/sota_results.csv"
+SOTA_FILE         = ""            # e.g. "papers/paper1_benchmark/baselines.csv"
+# Paper 2 only: data scaling budgets. Set to [] to skip.
+# e.g. SCALING_BUDGETS = [100, 500, 1000, 0]   # 0 = full train set
+SCALING_BUDGETS   = []
 # ─────────────────────────────────────────────────────────────────────────────
 
 if FAST_MODE: DEBUG_MODE = True
@@ -218,6 +221,7 @@ ExperimentRunner(
         directions=["source_to_english", "english_to_source"],
         paper_mode=PAPER_MODE,
         sota_path=SOTA_FILE,
+        scaling_budgets=SCALING_BUDGETS,
     ),
     capabilities=caps, data_cache=dev_cache, train_cache=train_cache,
     language_configs=lang_cfgs, dirs=dirs, monitor=monitor, experiment_configs=exp_cfgs,
