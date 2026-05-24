@@ -17,8 +17,20 @@
 # End-to-end speech translation using SeamlessM4T-v2-large on FLEURS.
 # Supported African languages auto-detected (up to 3 selected).
 #
+# ── How to run this script directly on Colab ──────────────────────────────────
+# 1. Open this file as a Colab notebook (File → Open → upload or open from Drive)
+# 2. Set runtime to T4 or A100: Runtime → Change runtime type → GPU
+# 3. Edit the configuration block below — minimum required changes:
+#      DEBUG_MODE        = False   ← False for a paper run, True for a quick test
+#      HF_CACHE_DIR      = "/content/drive/MyDrive/LinguoMT-AfricaS2T/hf_cache"
+#      DATASET_CACHE_DIR = "/content/drive/MyDrive/LinguoMT-AfricaS2T/dataset_cache"
+# 4. Runtime → Run all
+#
+# If HF_CACHE_DIR points to the cache built in Step 5 of run_on_colab.ipynb,
+# models load from Drive (no re-download). If DATASET_CACHE_DIR points to the
+# cache built in Step 6, dataset scanning is skipped (loads in < 5 sec).
+# ─────────────────────────────────────────────────────────────────────────────
 # Run locally : python run_experiment.py
-# Run on Colab: set DEBUG_MODE below, then Run All
 
 # %% --- bootstrap ---
 import sys, subprocess
