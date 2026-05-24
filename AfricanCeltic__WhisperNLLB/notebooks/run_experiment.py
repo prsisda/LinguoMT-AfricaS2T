@@ -182,9 +182,15 @@ SOTA_FILE         = ""            # e.g. "sota/paper1_benchmark/sota_results.csv
 # [100, 500, 1000, 0] multiplies total runtime by 4.
 # Budget 0 alone can take 1–2 h on a T4 GPU — plan accordingly.
 SCALING_BUDGETS   = []
+# ── HuggingFace cache directory ──────────────────────────────────────────────
+# Set to persist model and dataset downloads across sessions (e.g. on Drive).
+# Patched automatically by run_on_colab.ipynb — set "" for ephemeral cache.
+HF_CACHE_DIR      = ""
 # ─────────────────────────────────────────────────────────────────────────────
 
 if FAST_MODE: DEBUG_MODE = True
+if HF_CACHE_DIR:
+    import os; os.makedirs(HF_CACHE_DIR, exist_ok=True); os.environ["HF_HOME"] = HF_CACHE_DIR
 random.seed(SEED); np.random.seed(SEED); torch.manual_seed(SEED)
 
 # %% --- capabilities + languages ---
