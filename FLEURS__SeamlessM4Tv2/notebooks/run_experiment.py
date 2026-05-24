@@ -184,6 +184,9 @@ HF_CACHE_DIR      = ""
 # Pre-built dataset sample cache directory (from Step 6 in run_on_colab.ipynb).
 # Patched automatically by run_on_colab.ipynb — set "" to build cache locally.
 DATASET_CACHE_DIR = ""
+# Max text pairs pre-cached in Step 6; must match MAX_CACHED_PAIRS in notebook.
+# Patched automatically by run_on_colab.ipynb.
+MAX_CACHED_PAIRS  = 300
 # ─────────────────────────────────────────────────────────────────────────────
 
 if FAST_MODE: DEBUG_MODE = True
@@ -267,7 +270,7 @@ max_trn_pairs = max(e["max_text_train"] for e in exp_cfgs)
 dev_cache = DatasetCache(
     dataset_id=DATASET_ID, adapter_type=get_adapter_type(DATASET_ID),
     language_configs=lang_cfgs, split=SPLIT,
-    max_pairs=max_dev_pairs,
+    max_pairs=MAX_CACHED_PAIRS if DATASET_CACHE_DIR else max_dev_pairs,
     max_scan_rows=20000 if DEBUG_MODE else 50000,
     cache_dir=Path(DATASET_CACHE_DIR) / Path(__file__).parent.parent.name if DATASET_CACHE_DIR else Path(__file__).parent.parent / "cache",
     force_rerun=FORCE_RERUN,
