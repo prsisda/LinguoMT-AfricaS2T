@@ -193,3 +193,115 @@ One row per system × language × transfer type × metric. Flat fields — no li
 PAPER_MODE = "transfer"
 SOTA_FILE  = "sota/paper5_transfer/references.yaml"
 ```
+
+---
+
+## Experiment Steps
+
+**Research question:** Does multilingual pretraining transfer better within the same language family (Yoruba ↔ Igbo, Niger-Congo) than across families (Yoruba/Igbo ↔ Hausa, Afro-Asiatic)?
+
+### Which experiments to run
+
+Both FLEURS experiments — the transfer analysis compares languages across and within families:
+
+| Experiment | Model | Dataset | Languages |
+|---|---|---|---|
+| `FLEURS__SeamlessM4Tv2` | SeamlessM4T-v2 | FLEURS | Igbo, Yoruba, Swahili |
+| `FLEURS__WhisperNLLB` | Whisper + NLLB | FLEURS | Yoruba, Hausa, Swahili |
+
+The framework automatically runs four analyses when `PAPER_MODE = "transfer"`:
+- **Typological similarity** — URIEL cosine distance between language pairs (requires `lang2vec`)
+- **Cross-lingual transfer** — fine-tune on language A, evaluate on language B
+- **Few-shot scaling** — learning curves at multiple sample budgets per language
+- **Interaction regression** — tests whether log(samples) × language-family interaction is statistically significant
+
+> **Prerequisite:** Install `lang2vec` before running: add `lang2vec` to the deps cell (Step 3) or run `pip install lang2vec` in a Colab cell before Step 8.
+
+### Phase 1 — One-time setup (do once, reuse across all sessions)
+
+Open `run_on_colab.ipynb` on Google Colab.
+
+1. **Set runtime** → Runtime → Change runtime type → **T4 GPU**
+2. **Run Step 1** — mount Google Drive
+3. **Run Step 2** — clone the repository
+4. **Run Step 3** — install dependencies (~3–5 min)
+5. **Install lang2vec** (required for typological similarity analysis):
+   ```python
+   import subprocess, sys
+   subprocess.run([sys.executable, "-m", "pip", "-q", "install", "lang2vec"])
+   ```
+6. **Edit & run Step 4** — set cache paths:
+   ```python
+   EXPERIMENTS       = ["FLEURS__SeamlessM4Tv2", "FLEURS__WhisperNLLB"]
+   HF_CACHE_DIR      = "/content/drive/MyDrive/LinguoMT-AfricaS2T/hf_cache"
+   DATASET_CACHE_DIR = "/content/drive/MyDrive/LinguoMT-AfricaS2T/dataset_cache"
+   MAX_CACHED_PAIRS  = 300
+   ```
+7. **Run Step 5** — download models to Drive (~45–60 min first time, < 1 min after)
+8. **Run Step 6** — build dataset sample cache (~10–15 min first time, < 5 sec after)
+
+### Phase 2 — Smoke test (always do this before the full run)
+
+9. **Edit & run Step 7** — debug settings:
+   ```python
+   PAPER_MODE         = "transfer"
+   DEBUG_MODE         = True
+   ENABLE_FINETUNING  = False
+   SCALING_BUDGETS    = []
+   N_EVAL_RUNS        = 1
+   EVAL_TEXT_SAMPLES  = [8]
+   EVAL_AUDIO_SAMPLES = [3]
+   SOTA_FILE          = ""
+   FORCE_RERUN        = False
+   ```
+10. **Run Step 8** — debug run (~40–60 min)
+11. **Run Steps 9, 10, 11** — verify typological distance matrix and transfer tables appear in the report.
+
+### Phase 3 — Full paper run
+
+12. **Edit & run Step 7** — full settings:
+    ```python
+    PAPER_MODE         = "transfer"
+    DEBUG_MODE         = False
+    ENABLE_FINETUNING  = False       # transfer analysis uses its own fine-tuning internally
+    SCALING_BUDGETS    = []
+    N_EVAL_RUNS        = 3
+    EVAL_TEXT_SAMPLES  = [100, 200, 300]
+    EVAL_AUDIO_SAMPLES = [30,  75,  100]
+    SOTA_FILE          = "sota/paper5_transfer/sota_results.csv"
+    FORCE_RERUN        = False
+    ```
+13. **Run Step 8** — full experiments (~3–4 h on T4; cross-lingual fine-tuning multiplies runs per language pair)
+14. **Run Step 9** — consolidate metrics
+15. **Run Step 10** — generate results report
+16. **Run Step 11** — download ZIP
+
+### Outputs for the paper
+
+| File in ZIP | Paper section |
+|---|---|
+| `*/tables/typological_similarity*.md` | Language distance matrix |
+| `*/tables/crosslingual_transfer*.md` | Transfer efficiency table (WER gain A→B) |
+| `*/tables/few_shot_scaling*.md` | Learning curves per language |
+| `*/tables/interaction_regression*.md` | Statistical test — family × data interaction |
+| `*/plots/transfer_heatmap*.png` | Cross-lingual transfer heatmap |
+| `*/plots/few_shot_curves*.png` | Data efficiency learning curve figures |
+| `papers/transfer/results_report.md` | Typological analysis, family-membership hypothesis |
+
+### Language families (reference)
+
+| Language | Family | Branch | Relation to others |
+|---|---|---|---|
+| Yoruba | Niger-Congo | Volta-Niger | Related to Igbo |
+| Igbo | Niger-Congo | Volta-Niger | Related to Yoruba |
+| Swahili | Niger-Congo | Bantu | Distant from Yoruba/Igbo |
+| Hausa | Afro-Asiatic | Chadic | Unrelated to the Niger-Congo languages |
+
+### If the session disconnects mid-run
+
+1. Re-run Steps 1–4
+2. Reinstall `lang2vec` if needed
+3. Skip Steps 5 and 6
+4. In Step 7, comment out completed experiments
+5. Set `FORCE_RERUN = False` — cross-lingual checkpoints are saved to Drive
+6. Re-run Steps 8–11

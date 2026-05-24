@@ -169,3 +169,94 @@ One row per system × language × audio condition × metric. Flat fields — no 
 PAPER_MODE = "audio"
 SOTA_FILE  = "sota/paper3_audio/references.yaml"
 ```
+
+---
+
+## Experiment Steps
+
+**Research question:** How do audio preprocessing choices (normalisation, silence trimming, chunking) affect translation quality? Which strategy works best per language?
+
+### Which experiments to run
+
+FLEURS only — FLEURS has standardised audio conditions that make preprocessing comparisons meaningful:
+
+| Experiment | Model | Dataset | Languages |
+|---|---|---|---|
+| `FLEURS__SeamlessM4Tv2` | SeamlessM4T-v2 | FLEURS | Igbo, Yoruba, Swahili |
+| `FLEURS__WhisperNLLB` | Whisper + NLLB | FLEURS | Yoruba, Hausa, Swahili |
+
+The framework automatically evaluates all audio strategies (direct, normalised, trimmed, chunk-based) and computes the text-MT ceiling (gold transcript → English) within each experiment run.
+
+### Phase 1 — One-time setup (do once, reuse across all sessions)
+
+Open `run_on_colab.ipynb` on Google Colab.
+
+1. **Set runtime** → Runtime → Change runtime type → **T4 GPU**
+2. **Run Step 1** — mount Google Drive
+3. **Run Step 2** — clone the repository
+4. **Run Step 3** — install dependencies (~3–5 min)
+5. **Edit & run Step 4** — set cache paths:
+   ```python
+   EXPERIMENTS       = ["FLEURS__SeamlessM4Tv2", "FLEURS__WhisperNLLB"]
+   HF_CACHE_DIR      = "/content/drive/MyDrive/LinguoMT-AfricaS2T/hf_cache"
+   DATASET_CACHE_DIR = "/content/drive/MyDrive/LinguoMT-AfricaS2T/dataset_cache"
+   MAX_CACHED_PAIRS  = 300
+   ```
+6. **Run Step 5** — download models to Drive (~45–60 min first time, < 1 min after)
+7. **Run Step 6** — build dataset sample cache (~10–15 min first time, < 5 sec after)
+
+### Phase 2 — Smoke test (always do this before the full run)
+
+8. **Edit & run Step 7** — debug settings:
+   ```python
+   PAPER_MODE         = "audio"
+   DEBUG_MODE         = True
+   ENABLE_FINETUNING  = False
+   SCALING_BUDGETS    = []
+   N_EVAL_RUNS        = 1
+   EVAL_TEXT_SAMPLES  = [8]
+   EVAL_AUDIO_SAMPLES = [3]
+   SOTA_FILE          = ""
+   FORCE_RERUN        = False
+   ```
+9. **Run Step 8** — debug run (~40–60 min; strategy enumeration runs multiple audio passes)
+10. **Run Steps 9, 10, 11** — verify the audio strategy comparison table appears in the report.
+
+### Phase 3 — Full paper run
+
+11. **Edit & run Step 7** — full settings:
+    ```python
+    PAPER_MODE         = "audio"
+    DEBUG_MODE         = False
+    ENABLE_FINETUNING  = False       # set True to also fine-tune each audio path (optional)
+    SCALING_BUDGETS    = []
+    N_EVAL_RUNS        = 3
+    EVAL_TEXT_SAMPLES  = [100, 200, 300]
+    EVAL_AUDIO_SAMPLES = [30,  75,  100]
+    SOTA_FILE          = "sota/paper3_audio/sota_results.csv"
+    FORCE_RERUN        = False
+    ```
+12. **Run Step 8** — full experiments (~2–4 h on T4; audio strategy enumeration multiplies inference passes)
+13. **Run Step 9** — consolidate metrics
+14. **Run Step 10** — generate results report
+15. **Run Step 11** — download ZIP
+
+> **Optional fine-tuning run:** Set `ENABLE_FINETUNING = True` and re-run Steps 7–8 to add "fine-tuned + audio strategy" rows to the comparison tables. This doubles runtime but strengthens the paper's claims.
+
+### Outputs for the paper
+
+| File in ZIP | Paper section |
+|---|---|
+| `consolidated_metrics/audio_metrics.csv` | Strategy comparison table (BLEU per strategy × language) |
+| `consolidated_metrics/text_metrics.csv` | Text-MT ceiling (gold transcript → English) |
+| `*/tables/audio_strategy*.md` | Per-strategy per-language breakdown |
+| `*/plots/audio_strategy*.png` | Strategy comparison bar charts |
+| `*/plots/duration_distribution*.png` | Audio duration / silence-ratio EDA figures |
+| `papers/audio/results_report.md` | Strategy recommendation, discussion |
+
+### If the session disconnects mid-run
+
+1. Re-run Steps 1–4
+2. Skip Steps 5 and 6
+3. In Step 7, comment out completed experiments
+4. Re-run Steps 8–11

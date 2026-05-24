@@ -176,3 +176,99 @@ PAPER_MODE        = "adaptation"
 ENABLE_FINETUNING = True
 SOTA_FILE         = "sota/paper2_adaptation/references.yaml"
 ```
+
+---
+
+## Experiment Steps
+
+**Research question:** How much does LoRA fine-tuning improve zero-shot baselines? How does adaptation efficiency scale with training data size?
+
+### Which experiments to run
+
+FLEURS only — fine-tuning requires a training split and African-Celtic is the evaluation domain, not the training domain:
+
+| Experiment | Model | Dataset | Languages |
+|---|---|---|---|
+| `FLEURS__SeamlessM4Tv2` | SeamlessM4T-v2 + LoRA | FLEURS | Igbo, Yoruba, Swahili |
+| `FLEURS__WhisperNLLB` | Whisper + NLLB + LoRA | FLEURS | Yoruba, Hausa, Swahili |
+
+> African-Celtic can be added as a supplementary cross-domain evaluation after the main FLEURS run.
+
+### Phase 1 — One-time setup (do once, reuse across all sessions)
+
+Open `run_on_colab.ipynb` on Google Colab.
+
+1. **Set runtime** → Runtime → Change runtime type → **T4 GPU**
+2. **Run Step 1** — mount Google Drive
+3. **Run Step 2** — clone the repository
+4. **Run Step 3** — install dependencies (~3–5 min)
+5. **Edit & run Step 4** — set cache paths:
+   ```python
+   EXPERIMENTS       = ["FLEURS__SeamlessM4Tv2", "FLEURS__WhisperNLLB"]
+   HF_CACHE_DIR      = "/content/drive/MyDrive/LinguoMT-AfricaS2T/hf_cache"
+   DATASET_CACHE_DIR = "/content/drive/MyDrive/LinguoMT-AfricaS2T/dataset_cache"
+   MAX_CACHED_PAIRS  = 300
+   ```
+6. **Run Step 5** — download models to Drive (~45–60 min first time, < 1 min after)
+7. **Run Step 6** — build dataset sample cache (~10–15 min first time, < 5 sec after)
+
+### Phase 2 — Smoke test (always do this before the full run)
+
+8. **Edit & run Step 7** — debug settings:
+   ```python
+   PAPER_MODE         = "adaptation"
+   DEBUG_MODE         = True
+   ENABLE_FINETUNING  = True
+   FINETUNING_METHOD  = "lora"
+   SCALING_BUDGETS    = [50]        # single small budget to confirm fine-tuning runs
+   N_EVAL_RUNS        = 1
+   EVAL_TEXT_SAMPLES  = [8]
+   EVAL_AUDIO_SAMPLES = [3]
+   SOTA_FILE          = ""
+   FORCE_RERUN        = False
+   ```
+9. **Run Step 8** — debug run (~45–60 min; fine-tuning adds time even in debug mode)
+10. **Run Steps 9, 10, 11** — verify before/after tables appear in the report.
+
+### Phase 3 — Full paper run
+
+11. **Edit & run Step 7** — full settings:
+    ```python
+    PAPER_MODE         = "adaptation"
+    DEBUG_MODE         = False
+    ENABLE_FINETUNING  = True
+    FINETUNING_METHOD  = "lora"          # lora (T4 compatible) | adapter | full (A100 only)
+    SCALING_BUDGETS    = [100, 500, 1000, 0]   # 0 = full training split
+    N_EVAL_RUNS        = 3
+    EVAL_TEXT_SAMPLES  = [100, 200, 300]
+    EVAL_AUDIO_SAMPLES = [30,  75,  100]
+    SOTA_FILE          = "sota/paper2_adaptation/sota_results.csv"
+    FORCE_RERUN        = False
+    ```
+12. **Run Step 8** — full experiments (~4–6 h on T4; each scaling budget is a full fine-tuning pass)
+13. **Run Step 9** — consolidate metrics
+14. **Run Step 10** — generate results report
+15. **Run Step 11** — download ZIP
+
+> **Fine-tuning method note:** Use `"lora"` on T4 (free Colab). Switch to `"full"` only on Colab Pro A100 (~24 GB VRAM required). `"adapter"` is an intermediate option if LoRA is unstable.
+
+### Outputs for the paper
+
+| File in ZIP | Paper section |
+|---|---|
+| `consolidated_metrics/text_metrics.csv` | Before/after BLEU comparison table |
+| `consolidated_metrics/asr_metrics.csv` | Before/after WER comparison table |
+| `*/tables/scaling_curve*.md` | Data scaling learning curves |
+| `*/tables/adaptation_summary*.md` | Adaptation gain per language |
+| `*/plots/scaling_curve*.png` | Learning curve figures |
+| `papers/adaptation/results_report.md` | Full discussion, efficiency analysis |
+
+### If the session disconnects mid-run
+
+Fine-tuning checkpoints are saved to Drive. On reconnect:
+
+1. Re-run Steps 1–4
+2. Skip Steps 5 and 6
+3. In Step 7, comment out completed experiments
+4. Set `FORCE_RERUN = False` — the framework will resume from saved checkpoints
+5. Re-run Steps 8–11

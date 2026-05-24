@@ -180,3 +180,102 @@ One row per system × language × architecture × metric. Flat fields — no lis
 PAPER_MODE = "cascade"
 SOTA_FILE  = "sota/paper4_cascade/references.yaml"
 ```
+
+---
+
+## Experiment Steps
+
+**Research question:** When does cascade (Whisper ASR → NLLB MT) outperform end-to-end (SeamlessM4T-v2), and vice versa? What is the ASR WER break-even point?
+
+### Which experiments to run
+
+Both FLEURS experiments — the cascade vs E2E comparison requires both architectures on the same dataset:
+
+| Experiment | Architecture | Dataset | Languages |
+|---|---|---|---|
+| `FLEURS__SeamlessM4Tv2` | End-to-end | FLEURS | Igbo, Yoruba, Swahili |
+| `FLEURS__WhisperNLLB` | Cascade | FLEURS | Yoruba, Hausa, Swahili |
+
+The framework automatically runs three additional analyses when `PAPER_MODE = "cascade"`:
+- **Oracle cascade** — NLLB MT on gold transcripts (no ASR errors) → cascade upper bound
+- **Error propagation** — controlled WER noise injected into transcripts → BLEU drop curve
+- **Break-even WER** — linear regression finds the ASR quality threshold where cascade ≈ E2E
+
+### Phase 1 — One-time setup (do once, reuse across all sessions)
+
+Open `run_on_colab.ipynb` on Google Colab.
+
+1. **Set runtime** → Runtime → Change runtime type → **T4 GPU**
+2. **Run Step 1** — mount Google Drive
+3. **Run Step 2** — clone the repository
+4. **Run Step 3** — install dependencies (~3–5 min)
+5. **Edit & run Step 4** — set cache paths:
+   ```python
+   EXPERIMENTS       = ["FLEURS__SeamlessM4Tv2", "FLEURS__WhisperNLLB"]
+   HF_CACHE_DIR      = "/content/drive/MyDrive/LinguoMT-AfricaS2T/hf_cache"
+   DATASET_CACHE_DIR = "/content/drive/MyDrive/LinguoMT-AfricaS2T/dataset_cache"
+   MAX_CACHED_PAIRS  = 300
+   ```
+6. **Run Step 5** — download models to Drive (~45–60 min first time, < 1 min after)
+7. **Run Step 6** — build dataset sample cache (~10–15 min first time, < 5 sec after)
+
+### Phase 2 — Smoke test (always do this before the full run)
+
+8. **Edit & run Step 7** — debug settings:
+   ```python
+   PAPER_MODE         = "cascade"
+   DEBUG_MODE         = True
+   ENABLE_FINETUNING  = False
+   SCALING_BUDGETS    = []
+   N_EVAL_RUNS        = 1
+   EVAL_TEXT_SAMPLES  = [8]
+   EVAL_AUDIO_SAMPLES = [3]
+   SOTA_FILE          = ""
+   FORCE_RERUN        = False
+   ```
+9. **Run Step 8** — debug run (~40–50 min)
+10. **Run Steps 9, 10, 11** — verify E2E vs cascade table and error propagation curve appear in the report.
+
+### Phase 3 — Full paper run
+
+11. **Edit & run Step 7** — full settings:
+    ```python
+    PAPER_MODE         = "cascade"
+    DEBUG_MODE         = False
+    ENABLE_FINETUNING  = False
+    SCALING_BUDGETS    = []
+    N_EVAL_RUNS        = 3
+    EVAL_TEXT_SAMPLES  = [100, 200, 300]
+    EVAL_AUDIO_SAMPLES = [30,  75,  100]
+    SOTA_FILE          = "sota/paper4_cascade/sota_results.csv"
+    FORCE_RERUN        = False
+    ```
+12. **Run Step 8** — full experiments (~2–3 h on T4)
+13. **Run Step 9** — consolidate metrics
+14. **Run Step 10** — generate results report
+15. **Run Step 11** — download ZIP
+
+> **Optional — latency and VRAM profiling:** After the main run, open a terminal in Colab and run:
+> ```bash
+> python papers/paper4_cascade/run_cascade_analysis.py
+> ```
+> This measures median inference latency (ms) and peak VRAM (MB) per architecture and adds a hardware comparison table to the report.
+
+### Outputs for the paper
+
+| File in ZIP | Paper section |
+|---|---|
+| `consolidated_metrics/text_metrics.csv` | E2E vs cascade BLEU table |
+| `consolidated_metrics/asr_metrics.csv` | Intermediate ASR WER (cascade component) |
+| `*/tables/oracle_cascade*.md` | Oracle ceiling: cascade with perfect ASR |
+| `*/tables/error_propagation*.md` | BLEU drop vs injected WER |
+| `*/tables/breakeven*.md` | Break-even WER per language |
+| `*/plots/error_propagation*.png` | Error propagation curve figures |
+| `papers/cascade/results_report.md` | Architectural recommendation, discussion |
+
+### If the session disconnects mid-run
+
+1. Re-run Steps 1–4
+2. Skip Steps 5 and 6
+3. In Step 7, comment out the completed experiment
+4. Re-run Steps 8–11
