@@ -38,7 +38,7 @@ def create_run_dirs(
     base_root: Path | None = None,
     script_path: Path | None = None,
 ) -> OutputDirs:
-    ts   = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    ts   = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
     slug = f"{ts}_{model_slug}_{dataset_slug}" + ("_debug" if debug_mode else "")
 
     if base_root is not None:
