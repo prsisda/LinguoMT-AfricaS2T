@@ -272,7 +272,7 @@ dev_cache = DatasetCache(
     dataset_id=DATASET_ID, adapter_type=get_adapter_type(DATASET_ID),
     language_configs=lang_cfgs, split=SPLIT,
     max_pairs=MAX_CACHED_PAIRS if DATASET_CACHE_DIR else max_dev_pairs,
-    max_scan_rows=20000 if DEBUG_MODE else 50000,
+    max_scan_rows=50000 if DATASET_CACHE_DIR else (20000 if DEBUG_MODE else 50000),
     cache_dir=Path(DATASET_CACHE_DIR) / Path(__file__).parent.parent.name if DATASET_CACHE_DIR else Path(__file__).parent.parent / "cache",
     force_rerun=FORCE_RERUN,
 )
