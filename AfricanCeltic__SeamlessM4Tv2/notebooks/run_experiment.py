@@ -173,6 +173,9 @@ SCALING_BUDGETS   = []
 # Set to persist model and dataset downloads across sessions (e.g. on Drive).
 # Patched automatically by run_on_colab.ipynb — set "" for ephemeral cache.
 HF_CACHE_DIR      = ""
+# Pre-built dataset sample cache directory (from Step 6 in run_on_colab.ipynb).
+# Patched automatically by run_on_colab.ipynb — set "" to build cache locally.
+DATASET_CACHE_DIR = ""
 # ─────────────────────────────────────────────────────────────────────────────
 MODEL_ID          = "facebook/seamless-m4t-v2-large"
 DATASET_ID        = "McGill-NLP/african_celtic_dataset"
@@ -267,7 +270,7 @@ dev_cache = DatasetCache(
     language_configs=lang_cfgs, split=SPLIT,
     max_pairs=max_dev_pairs,
     max_scan_rows=20000 if DEBUG_MODE else 50000,
-    cache_dir=Path(__file__).parent.parent / "cache",
+    cache_dir=Path(DATASET_CACHE_DIR) / Path(__file__).parent.parent.name if DATASET_CACHE_DIR else Path(__file__).parent.parent / "cache",
     force_rerun=FORCE_RERUN,
 )
 dev_cache.build(monitor)
