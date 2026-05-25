@@ -152,7 +152,7 @@ DATASET_NAME      = "FLEURS"
 EXPERIMENT_FAMILY = "FLEURS__SeamlessM4Tv2_Large"
 SPLIT             = "validation"
 TRAIN_SPLIT       = "train"
-MANUAL_LANGUAGES  = ["igbo", "yoruba", "swahili"]   # Hausa excluded: hau not in SeamlessM4T S2TT language list
+MANUAL_LANGUAGES  = ["igbo", "yoruba", "swahili", "amharic", "zulu", "wolof"]
 SEED              = 42
 
 # ── Publication settings ──────────────────────────────────────────────────────
