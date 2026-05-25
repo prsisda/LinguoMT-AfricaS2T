@@ -12,7 +12,7 @@ from datasets import load_dataset, Audio as HFAudio
 
 def _load_no_torchcodec(dataset_id: str, config: str, split: str):
     """Load a streaming dataset with audio decoding disabled (avoids torchcodec/FFmpeg)."""
-    ds = load_dataset(dataset_id, config, split=split, streaming=True, trust_remote_code=False)
+    ds = load_dataset(dataset_id, config, split=split, streaming=True)
     try:
         ds = ds.cast_column("audio", HFAudio(decode=False))
     except Exception:
