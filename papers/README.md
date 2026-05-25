@@ -13,6 +13,13 @@ A journal series investigating automatic speech recognition and speech-to-text t
     - [Text machine translation](#text-machine-translation)
     - [Cascade pipeline](#cascade-pipeline)
     - [NLLB language codes for target languages](#nllb-language-codes-for-target-languages)
+  - [Generating the paper draft from Colab outputs](#generating-the-paper-draft-from-colab-outputs)
+    - [Step 1 — Download experiment outputs from Colab](#step-1--download-experiment-outputs-from-colab)
+    - [Step 2 — Copy outputs into the repo](#step-2--copy-outputs-into-the-repo)
+    - [Step 3 — Extract results into results.csv](#step-3--extract-results-into-resultscsv)
+    - [Step 4 — Fill the paper draft](#step-4--fill-the-paper-draft)
+    - [Step 5 — Review and complete the draft](#step-5--review-and-complete-the-draft)
+    - [Step 6 — Regenerate after re-running experiments](#step-6--regenerate-after-re-running-experiments)
   - [Papers](#papers)
     - [Paper 1 — LinguoMT: Benchmark](#paper-1-linguomt-benchmark)
     - [Paper 2 — LinguoMT-Adapt: PEFT Fine-Tuning](#paper-2-linguomt-adapt-peft-fine-tuning)
@@ -135,6 +142,102 @@ papers/
 2. Set script config from `config.yaml` and run experiments
 3. Run `python papers/fill_results.py paper1_benchmark` → produces `paper_outline.filled.md`
 4. Fill `[NARRATIVE:key]` sections manually in the filled outline
+
+---
+
+## Generating the paper draft from Colab outputs
+
+This section walks through converting a finished Colab run into a filled paper draft.  
+**Target length:** ≤ 10 pages / ≤ 4 500 words including tables, figures, and references.
+
+### Step 1 — Download experiment outputs from Colab
+
+After the Colab notebook finishes all experiments, run the download cell (Step 11 in `run_on_colab.ipynb`) to zip the outputs and download them:
+
+```python
+# Colab cell — create the archive
+import shutil
+shutil.make_archive("/content/colab_outputs", "zip", "/content/outputs")
+```
+
+Then in the Colab sidebar open **Files**, right-click `colab_outputs.zip`, and select **Download**.
+
+### Step 2 — Copy outputs into the repo
+
+Unzip the archive locally and copy each experiment folder into `results/<paper_id>/from_colab/`:
+
+```
+results/
+└── paper1_benchmark/
+    └── from_colab/
+        ├── AfricanCeltic__SeamlessM4Tv2/   ← copy from colab_outputs/
+        ├── AfricanCeltic__WhisperNLLB/
+        ├── FLEURS__SeamlessM4Tv2/
+        └── FLEURS__WhisperNLLB/
+```
+
+Each experiment folder must contain a run directory named `<mode>_full/` (e.g. `full_full/`) with at minimum:
+
+| File | Contents |
+|------|----------|
+| `text_metrics.csv` | BLEU, spBLEU, ChrF per language and direction |
+| `asr_metrics.csv` | WER, CER per language |
+| `audio_metrics.csv` | Audio S2TT scores (if applicable) |
+
+> **Note:** `results/**/from_colab/` is git-ignored. Do not commit raw Colab output files.
+
+### Step 3 — Extract results into results.csv
+
+```bash
+python papers/extract_results.py paper1_benchmark
+```
+
+This scans all `from_colab/<experiment>/<mode>_full/` folders, maps metrics to standard result keys
+(e.g. `fleurs_seamless.yoruba.bleu`, `ac_whisper.igbo.wer`), and writes:
+
+```
+results/paper1_benchmark/results.csv
+```
+
+Run with `--all` to process every paper at once.
+
+### Step 4 — Fill the paper draft
+
+```bash
+python papers/fill_results.py paper1_benchmark
+```
+
+This reads `results.csv` and `papers/paper1_benchmark/baselines.csv`, substitutes all `[RESULT:key]`
+and `[BASELINE:key]` placeholders in the master template, and writes:
+
+```
+papers/paper1_benchmark/paper_draft_filled.md
+```
+
+Placeholders with no matching result remain as `[TBD]`.
+
+### Step 5 — Review and complete the draft
+
+Open `papers/paper1_benchmark/paper_draft_filled.md` and do the following:
+
+1. **Fill `[NARRATIVE:key]` sections** — these require human interpretation: analysis of score trends,
+   discussion of why models succeed or fail per language, limitations.
+2. **Replace remaining `[TBD]` markers** — results from experiments that have not run yet; re-run
+   Steps 3–4 once the missing experiments complete.
+3. **Check the length target:**
+   ```bash
+   wc -w papers/paper1_benchmark/paper_draft_filled.md
+   ```
+   Aim for ≤ 4 500 words. Trim table rows or merge sections if the count is higher.
+4. **Do not edit `paper_draft.md`** — it is the master template; only `paper_draft_filled.md` is the
+   working document.
+
+### Step 6 — Regenerate after re-running experiments
+
+If you re-run any experiment and copy new output folders in, repeat Steps 3–4.  
+Write final narrative edits directly in `paper_draft_filled.md` only **after** all experiments are
+complete — running `fill_results.py` again will overwrite `paper_draft_filled.md` and lose any
+manually written text.
 
 ---
 
