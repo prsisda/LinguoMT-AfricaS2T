@@ -83,9 +83,10 @@ DEBUG_MODE        = True
 # FAST_MODE = True forces DEBUG_MODE = True regardless of the setting above.
 # Use as a shortcut when you just want to re-enter the pipeline quickly.
 FAST_MODE         = False
-# True → skip audio evaluation steps in debug runs to save time.
-# False → run audio evaluation in all modes.
-SKIP_AUDIO_DEBUG  = True
+# False → audio eval runs in all modes, including DEBUG_MODE (recommended).
+# True  → skips audio in DEBUG_MODE; audio_metrics_all.csv will be missing
+#          from the consolidated output if DEBUG_MODE is also True.
+SKIP_AUDIO_DEBUG  = False
 # True → delete and rebuild the dataset cache even if one already exists.
 # False → reuse the existing cache (saves 5–15 min on re-runs). Only set True
 #         if the dataset has changed or you suspect a corrupted cache file.
