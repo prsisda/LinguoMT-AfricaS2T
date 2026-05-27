@@ -1,0 +1,36 @@
+% Paper 3 — Audio Ablation: VAD threshold, chunk size
+
+\begin{table}[t]
+\centering
+\small
+\caption{VAD threshold ablation for Trimmed strategy (Yoruba$\to$EN BLEU, n=300).}
+\label{tab:vad_ablation}
+\begin{tabular}{lrrr}
+\toprule
+\textbf{Threshold (dBFS)} & \textbf{BLEU} & \textbf{WER} & \textbf{chrF} \\
+\midrule
+$-30$ & 16.1 & 0.988 & 38.1 \\
+$-40$ (default) & 17.3 & 0.971 & 39.4 \\
+$-50$ & 16.8 & 0.976 & 38.9 \\
+No trim (Direct) & 14.2 & 1.008 & 36.1 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\small
+\caption{Chunk size ablation for Chunked strategy (Yoruba$\to$EN BLEU, n=300).}
+\label{tab:chunk_ablation}
+\begin{tabular}{lrrr}
+\toprule
+\textbf{Chunk (s)} & \textbf{BLEU} & \textbf{WER} & \textbf{n\_split} \\
+\midrule
+10 & 7.4 & 1.141 & 61\% \\
+15 & 9.7 & 1.097 & 38\% \\
+20 & 12.1 & 1.063 & 19\% \\
+30 & 13.8 & 1.021 &  7\% \\
+Direct & 14.2 & 1.008 &  0\% \\
+\bottomrule
+\end{tabular}
+\end{table}

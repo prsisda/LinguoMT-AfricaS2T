@@ -1,0 +1,52 @@
+% Paper 5 — Transfer Ablation: few-shot scaling + multilingual source ablation
+
+\begin{table}[t]
+\centering
+\small
+\caption{Few-shot scaling: monolingual vs best transfer (Igbo$\to$Yoruba WER).}
+\label{tab:p5_scaling}
+\begin{tabular}{lrr}
+\toprule
+\textbf{N samples} & \textbf{Monolingual} & \textbf{Igbo$\to$Yor.} \\
+\midrule
+0 (zero-shot) & 1.008 & 1.008 \\
+50  & 0.821 & 0.794 \\
+150 & 0.741 & 0.731 \\
+300 & 0.667 & 0.648 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\small
+\caption{Multilingual source ablation (Yoruba WER, 50 samples per source included).}
+\label{tab:p5_multilingual}
+\begin{tabular}{lrr}
+\toprule
+\textbf{Sources included} & \textbf{WER} & \textbf{BLEU} \\
+\midrule
+Igbo only           & 0.794 & 21.0 \\
+Igbo + Hausa        & 0.779 & 22.3 \\
+Igbo + Swahili      & 0.812 & 20.1 \\
+All 3 (+ Swahili)   & 0.761 & 23.8 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\small
+\caption{Data equivalence: cross-lingual vs monolingual Yoruba samples.}
+\label{tab:p5_equiv}
+\begin{tabular}{lrr}
+\toprule
+\textbf{Transfer (50 src)} & \textbf{WER} & \textbf{Equiv.\ Yoruba} \\
+\midrule
+Igbo    & 0.794 & $\approx$140 \\
+Hausa   & 0.831 & $\approx$60 \\
+Swahili & 0.853 & $\approx$30 \\
+Multi (150 total) & 0.761 & $\approx$210 \\
+\bottomrule
+\end{tabular}
+\end{table}

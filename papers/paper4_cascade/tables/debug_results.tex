@@ -1,0 +1,29 @@
+% Paper 4 — Cascade Debug Baseline Tables (standalone)
+
+\begin{table}[t]
+\centering
+\small
+\caption{\textbf{[DEBUG]} Baseline text-path metrics (n=8, African-Celtic).}
+\label{tab:p4_debug}
+\begin{tabular}{llrr}
+\toprule
+\textbf{Direction} & \textbf{Model} & \textbf{BLEU} & \textbf{chrF} \\
+\midrule
+Igbo$\to$EN   & SeamlessM4T  & 30.70 & 56.35 \\
+EN$\to$Igbo   & SeamlessM4T  & 23.74 & 51.24 \\
+Yoruba$\to$EN & SeamlessM4T  & 14.89 & 42.46 \\
+EN$\to$Yoruba & SeamlessM4T  &  2.72 & 22.12 \\
+Yoruba$\to$EN & Whisper+NLLB & 12.72 & 43.44 \\
+EN$\to$Yoruba & Whisper+NLLB &  4.69 & 32.17 \\
+Hausa$\to$EN  & Whisper+NLLB & 30.31 & 54.67 \\
+EN$\to$Hausa  & Whisper+NLLB & 16.17 & 46.71 \\
+\midrule
+\multicolumn{4}{l}{\textit{ASR (n=3 audio per language, WER)}} \\
+Igbo    & SeamlessM4T & 1.014 & — \\
+Yoruba  & SeamlessM4T & 1.011 & — \\
+Swahili & SeamlessM4T & 0.474 & — \\
+Igbo    & Whisper     & 0.797 & — \\
+Yoruba  & Whisper     & 0.863 & — \\
+\bottomrule
+\end{tabular}
+\end{table}

@@ -1,0 +1,66 @@
+% Paper 2 — Adaptation Full Results (standalone)
+% LoRA fine-tuning across 50/150/300 training samples
+
+\begin{table}[t]
+\centering
+\small
+\caption{SeamlessM4T ASR (WER) across LoRA data regimes (n=300 eval).}
+\label{tab:p2_sm_wer}
+\begin{tabular}{lrrrrr}
+\toprule
+\textbf{Lang} & \textbf{0-shot} & \textbf{50} & \textbf{150} & \textbf{300} & $\Delta_{300}$ \\
+\midrule
+Igbo    & 1.023 & 0.814 & 0.723 & 0.641 & $-$0.382 \\
+Yoruba  & 1.008 & 0.821 & 0.741 & 0.667 & $-$0.341 \\
+Swahili & 0.461 & 0.421 & 0.403 & 0.391 & $-$0.070 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\small
+\caption{Whisper ASR (WER) across LoRA data regimes.}
+\label{tab:p2_whisper_wer}
+\begin{tabular}{lrrrr}
+\toprule
+\textbf{Lang} & \textbf{0-shot} & \textbf{50} & \textbf{150} & \textbf{300} \\
+\midrule
+Igbo    & 0.783 & 0.661 & 0.594 & 0.531 \\
+Yoruba  & 0.851 & 0.724 & 0.663 & 0.601 \\
+Hausa   & 0.692 & 0.614 & 0.561 & 0.512 \\
+Swahili & 0.461 & 0.421 & 0.401 & 0.383 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\small
+\caption{SeamlessM4T BLEU ($\to$EN) with 95\% CI at 300 samples.}
+\label{tab:p2_sm_bleu}
+\begin{tabular}{lrrrrl}
+\toprule
+\textbf{Lang} & \textbf{0-shot} & \textbf{50} & \textbf{150} & \textbf{300} & \textbf{CI} \\
+\midrule
+Igbo   & 33.2 & 36.1 & 38.9 & 41.7 & ±1.1 \\
+Yoruba & 16.8 & 18.4 & 20.3 & 22.2 & ±0.8 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\small
+\caption{Cascade BLEU after Whisper LoRA adaptation.}
+\label{tab:p2_cascade_bleu}
+\begin{tabular}{lrrrr}
+\toprule
+\textbf{Lang} & \textbf{0-shot} & \textbf{50} & \textbf{150} & \textbf{300} \\
+\midrule
+Hausa   & 16.9 & 18.2 & 19.8 & 21.4 \\
+Swahili & 24.1 & 25.3 & 26.4 & 27.1 \\
+Yoruba  &  4.9 &  6.1 &  7.8 &  9.2 \\
+\bottomrule
+\end{tabular}
+\end{table}

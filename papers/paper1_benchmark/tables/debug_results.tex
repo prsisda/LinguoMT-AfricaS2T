@@ -1,0 +1,52 @@
+% Paper 1 — Debug Results Tables (standalone)
+% Values from colab_last_run_debug (n=8 text, n=3 audio per language)
+
+\begin{table}[t]
+\centering
+\small
+\caption{African-Celtic text translation — DEBUG (n=8).}
+\label{tab:debug_ac_text}
+\begin{tabular}{llrr}
+\toprule
+\textbf{Direction} & \textbf{Model} & \textbf{BLEU} & \textbf{chrF} \\
+\midrule
+\multirow{2}{*}{Igbo$\to$EN}
+  & SeamlessM4T  & 30.70 & 49.23 \\
+  & Whisper+NLLB &  2.72 & 18.14 \\
+\midrule
+\multirow{2}{*}{Yoruba$\to$EN}
+  & SeamlessM4T  & 14.89 & 34.81 \\
+  & Whisper+NLLB &  4.69 & 21.87 \\
+\midrule
+Hausa$\to$EN   & Whisper+NLLB & 16.17 & 37.52 \\
+Swahili$\to$EN & SeamlessM4T  & 12.72 & 32.16 \\
+Swahili$\to$EN & Whisper+NLLB & 23.74 & 45.31 \\
+EN$\to$Igbo    & SeamlessM4T  & 30.31 & 44.07 \\
+EN$\to$Yoruba  & SeamlessM4T  &  2.72 & 18.94 \\
+EN$\to$Hausa   & Whisper+NLLB & 16.81 & 36.94 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\small
+\caption{ASR results — DEBUG (n=3 audio per language).}
+\label{tab:debug_asr}
+\begin{tabular}{llrr}
+\toprule
+\textbf{Language} & \textbf{Model} & \textbf{WER} & \textbf{CER} \\
+\midrule
+\multirow{2}{*}{Igbo}
+  & SeamlessM4T  & 1.014 & 0.762 \\
+  & Whisper      & 0.797 & 0.591 \\
+\midrule
+\multirow{2}{*}{Yoruba}
+  & SeamlessM4T  & 1.011 & 0.748 \\
+  & Whisper      & 0.863 & 0.632 \\
+\midrule
+Swahili & SeamlessM4T & 0.474 & 0.341 \\
+Hausa   & Whisper     & 0.681 & 0.512 \\
+\bottomrule
+\end{tabular}
+\end{table}

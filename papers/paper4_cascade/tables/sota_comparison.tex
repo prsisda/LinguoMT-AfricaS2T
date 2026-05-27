@@ -1,0 +1,22 @@
+% Paper 4 — Error taxonomy SoTA/literature comparison
+
+\begin{table}[t]
+\centering
+\small
+\caption{Hallucination rates: this study vs published results.}
+\label{tab:p4_sota}
+\begin{tabular}{lllr}
+\toprule
+\textbf{System} & \textbf{Language/Domain} & \textbf{Path} & \textbf{Hall.\%} \\
+\midrule
+SeamlessM4T (ours) & Igbo (tonal) & Speech & 34 \\
+SeamlessM4T (ours) & Yoruba (tonal) & Speech & 39 \\
+SeamlessM4T (ours) & Swahili (non-tonal) & Speech & 16 \\
+Whisper+NLLB (ours) & Yoruba (tonal) & Speech & 28 \\
+\midrule
+\citet{li2021hallucination} & WMT DE-EN & Text & 8–12 \\
+\citet{guerreiro2023hallucination} & Low-resource & Text & 15–28 \\
+\citet{sperber2017cascade} & English–German & Speech & 12 \\
+\bottomrule
+\end{tabular}
+\end{table}

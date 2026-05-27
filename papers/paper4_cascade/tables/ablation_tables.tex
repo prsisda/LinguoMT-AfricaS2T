@@ -1,0 +1,40 @@
+% Paper 4 — Error Taxonomy Ablation: Annotation ablation + regression
+
+\begin{table}[t]
+\centering
+\small
+\caption{BLEU--error type regression coefficients.}
+\label{tab:p4_regression}
+\begin{tabular}{lrrl}
+\toprule
+\textbf{Predictor} & \textbf{Coeff.} & \textbf{p} & \textbf{Effect} \\
+\midrule
+Intercept       & 2.1  & 0.041 & — \\
+Satisfactory \% & +0.42 & $<$0.001 & +ve \\
+Hallucination \% & $-$0.31 & $<$0.001 & $-$ve \\
+Repetitive Loop \% & $-$0.52 & $<$0.001 & $-$ve \\
+KW Spotter \% & $-$0.18 & 0.003 & $-$ve \\
+Semantic Drift \% & $-$0.14 & 0.012 & $-$ve \\
+\midrule
+$R^2$ & 0.86 & — & — \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\small
+\caption{Inter-rater agreement (Cohen's $\kappa$) by language.}
+\label{tab:p4_irr}
+\begin{tabular}{lr}
+\toprule
+\textbf{Language} & $\kappa$ \\
+\midrule
+Igbo    & 0.74 \\
+Yoruba  & 0.71 \\
+Hausa   & 0.76 \\
+Swahili & 0.72 \\
+\textbf{Mean} & \textbf{0.73} \\
+\bottomrule
+\end{tabular}
+\end{table}

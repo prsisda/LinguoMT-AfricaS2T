@@ -1,0 +1,28 @@
+% Paper 5 — Transfer Debug Results (standalone)
+
+\begin{table}[t]
+\centering
+\small
+\caption{\textbf{[DEBUG]} Zero-shot baselines and URIEL scores (n=8 text).}
+\label{tab:p5_debug}
+\begin{tabular}{llrr}
+\toprule
+\textbf{Direction} & \textbf{Model} & \textbf{BLEU} & \textbf{chrF} \\
+\midrule
+Igbo$\to$EN   & SeamlessM4T  & 30.70 & 56.35 \\
+EN$\to$Igbo   & SeamlessM4T  & 23.74 & 51.24 \\
+Yoruba$\to$EN & SeamlessM4T  & 14.89 & 42.46 \\
+EN$\to$Yoruba & SeamlessM4T  &  2.72 & 22.12 \\
+Yoruba$\to$EN & Whisper+NLLB & 12.72 & 43.44 \\
+Hausa$\to$EN  & Whisper+NLLB & 30.31 & 54.67 \\
+\midrule
+\multicolumn{4}{c}{\textit{URIEL phonological similarity (lang2vec)}} \\
+\midrule
+\multicolumn{2}{l}{Yoruba -- Igbo}    & \multicolumn{2}{r}{0.7515} \\
+\multicolumn{2}{l}{Yoruba -- Hausa}   & \multicolumn{2}{r}{0.7217} \\
+\multicolumn{2}{l}{Igbo -- Hausa}     & \multicolumn{2}{r}{0.6779} \\
+\multicolumn{2}{l}{Yoruba -- Swahili} & \multicolumn{2}{r}{0.6432} \\
+\multicolumn{2}{l}{Igbo -- Swahili}   & \multicolumn{2}{r}{0.6248} \\
+\bottomrule
+\end{tabular}
+\end{table}

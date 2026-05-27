@@ -1,0 +1,59 @@
+% Paper 4 — Cascade Full Results: Error Distributions (standalone)
+
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{3pt}
+\caption{Error category distribution, text path (\%, n=300 per language).}
+\label{tab:p4_text_errors}
+\begin{tabular}{llrrrrrr}
+\toprule
+\textbf{Lang} & \textbf{Mdl} & \textbf{Sat} & \textbf{Par} & \textbf{Dft} & \textbf{KWS} & \textbf{Hal} & \textbf{Lop} \\
+\midrule
+Igbo   & SM  & 41 & 18 & 21 &  9 &  8 &  3 \\
+Yoruba & SM  & 28 & 12 & 34 & 14 &  9 &  3 \\
+Swahili& SM  & 36 & 19 & 24 & 11 &  8 &  2 \\
+Yoruba & W+N & 22 &  8 & 31 & 18 & 16 &  5 \\
+Hausa  & W+N & 48 & 17 & 19 &  8 &  6 &  2 \\
+Swahili& W+N & 44 & 21 & 18 &  9 &  6 &  2 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{3pt}
+\caption{Error category distribution, speech path (\%, n=300 per language).}
+\label{tab:p4_speech_errors}
+\begin{tabular}{llrrrrrr}
+\toprule
+\textbf{Lang} & \textbf{Mdl} & \textbf{Sat} & \textbf{Par} & \textbf{Dft} & \textbf{KWS} & \textbf{Hal} & \textbf{Lop} \\
+\midrule
+Igbo   & SM  & 11 &  5 & 18 & 10 & 34 & 22 \\
+Yoruba & SM  &  9 &  3 & 14 & 11 & 39 & 24 \\
+Swahili& SM  & 28 & 12 & 21 & 14 & 16 &  9 \\
+Yoruba & W+N &  8 &  3 & 18 & 31 & 28 & 12 \\
+Hausa  & W+N & 21 &  9 & 19 & 28 & 17 &  6 \\
+Swahili& W+N & 31 & 13 & 18 & 22 & 11 &  5 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\small
+\caption{Text path vs speech path BLEU and Satisfactory rate.}
+\label{tab:p4_path_gap}
+\begin{tabular}{llrrrr}
+\toprule
+\textbf{Lang} & \textbf{Mdl} & \textbf{Text BLEU} & \textbf{Spch BLEU} & \textbf{$\Delta$BLEU} & \textbf{$\Delta$Sat\%} \\
+\midrule
+Igbo   & SM  & 33.2 &  5.8 & $-$27.4 & $-$30 \\
+Yoruba & SM  & 16.8 &  5.7 & $-$11.1 & $-$19 \\
+Swahili& SM  & 14.1 &  7.4 & $-$6.7  & $-$8  \\
+Hausa  & W+N & 16.9 &  8.2 & $-$8.7  & $-$27 \\
+Swahili& W+N & 24.1 & 11.4 & $-$12.7 & $-$13 \\
+\bottomrule
+\end{tabular}
+\end{table}

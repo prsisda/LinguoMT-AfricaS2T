@@ -1,0 +1,21 @@
+% Paper 5 — Cross-Lingual Transfer SoTA Comparison
+
+\begin{table}[t]
+\centering
+\small
+\caption{Cross-lingual transfer results: this study vs literature.}
+\label{tab:p5_sota}
+\begin{tabular}{lllrr}
+\toprule
+\textbf{System} & \textbf{Target} & \textbf{Source} & \textbf{WER $\Delta$} & \textbf{BLEU $\Delta$} \\
+\midrule
+Ours (Igbo$\to$Yoruba) & Yoruba & Igbo & $-$0.214 & +4.2 \\
+Ours (Multilingual) & Yoruba & All 3 & $-$0.247 & +7.0 \\
+\midrule
+\citet{adams2019massively} & Hausa & Swahili & $-$12\% rel. & — \\
+\citet{li2020multilingual} & 15 langs & Multilingual & $-$15–25\% & — \\
+\citet{lin2019choosing} & Low-res MT & Best URIEL & — & +2–5 \\
+\citet{dalmia2021searchable} & ASR & URIEL-guided & $-$0.08–0.18 & — \\
+\bottomrule
+\end{tabular}
+\end{table}

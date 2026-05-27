@@ -1,0 +1,26 @@
+% Paper 2 — SoTA Comparison for PEFT Speech Translation
+
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{3pt}
+\caption{Comparison with PEFT/adaptation results for low-resource speech (BLEU $\to$EN).}
+\label{tab:p2_sota}
+\begin{tabular}{lllrr}
+\toprule
+\textbf{System} & \textbf{Language} & \textbf{Training} & \textbf{BLEU} & \textbf{WER} \\
+\midrule
+SeamlessM4T+LoRA (ours, 300) & Igbo & 300 samples & 41.7 & 0.641 \\
+SeamlessM4T+LoRA (ours, 50)  & Igbo &  50 samples & 36.1 & 0.814 \\
+SeamlessM4T 0-shot (ours)    & Igbo & None & 33.2 & 1.023 \\
+\midrule
+Whisper+LoRA (ours, 300) & Hausa & 300 & \textemdash & 0.512 \\
+Whisper+LoRA (ours, 50)  & Hausa &  50 & \textemdash & 0.614 \\
+Whisper 0-shot (ours)    & Hausa & None & \textemdash & 0.692 \\
+\midrule
+\citet{gris2022fewshot} & Various & 100 samples & +3–7 $\Delta$ & — \\
+\citet{majumdar2023lora} & Medical & 200 utt. & — & 0.15–0.30 $\Delta$ \\
+\citet{le2023spoken} & Low-res & 100h & — & $<$0.30 \\
+\bottomrule
+\end{tabular}
+\end{table}

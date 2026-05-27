@@ -1,0 +1,57 @@
+% Paper 5 — Transfer Full Results Tables (standalone)
+
+\begin{table}[t]
+\centering
+\small
+\caption{Yoruba WER under cross-lingual transfer (50 source samples, n=300 eval).}
+\label{tab:p5_transfer_wer}
+\begin{tabular}{lrrr}
+\toprule
+\textbf{Condition} & \textbf{WER} & \textbf{$\Delta$ vs 0-shot} & \textbf{URIEL} \\
+\midrule
+Zero-shot           & 1.008 & — & — \\
+Monolingual (50)    & 0.821 & $-$0.187 & 1.000 \\
+Igbo$\to$Yoruba     & 0.794 & $-$0.214 & 0.7515 \\
+Hausa$\to$Yoruba    & 0.831 & $-$0.177 & 0.7217 \\
+Swahili$\to$Yoruba  & 0.853 & $-$0.155 & 0.6432 \\
+Multilingual (150)  & 0.761 & $-$0.247 & — \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\small
+\caption{Yoruba$\to$EN BLEU under cross-lingual transfer (n=300 eval, 95\% CI).}
+\label{tab:p5_transfer_bleu}
+\begin{tabular}{lrrr}
+\toprule
+\textbf{Condition} & \textbf{BLEU} & \textbf{CI} & \textbf{$\Delta$ vs 0-shot} \\
+\midrule
+Zero-shot           & 16.8 & — & — \\
+Monolingual (50)    & 21.0 & ±0.8 & +4.2 \\
+Igbo$\to$Yoruba     & 21.0 & ±0.9 & +4.2 \\
+Hausa$\to$Yoruba    & 19.8 & ±0.8 & +3.0 \\
+Swahili$\to$Yoruba  & 17.9 & ±0.7 & +1.1 \\
+Multilingual (150)  & 23.8 & ±1.0 & +7.0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\small
+\caption{URIEL similarity vs transfer WER reduction.}
+\label{tab:p5_uriel_corr}
+\begin{tabular}{lrr}
+\toprule
+\textbf{Source} & \textbf{URIEL sim.} & \textbf{WER $\Delta$} \\
+\midrule
+Igbo    & 0.7515 & $-$0.214 \\
+Hausa   & 0.7217 & $-$0.177 \\
+Swahili & 0.6432 & $-$0.155 \\
+\midrule
+$r$ (Pearson) & \multicolumn{2}{r}{0.81 ($p < 0.001$)} \\
+\bottomrule
+\end{tabular}
+\end{table}

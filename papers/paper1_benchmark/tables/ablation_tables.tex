@@ -1,0 +1,39 @@
+% Paper 1 — Ablation Tables: Audio Preprocessing Strategies
+% Source: paper3 audio strategy analysis applied to benchmark context
+
+\begin{table}[t]
+\centering
+\small
+\caption{Audio preprocessing strategy ablation (SeamlessM4T, Igbo$\to$EN, \dataAC{}).}
+\label{tab:audio_ablation}
+\begin{tabular}{lrrr}
+\toprule
+\textbf{Strategy} & \textbf{BLEU} & \textbf{WER} & \textbf{chrF} \\
+\midrule
+Direct (baseline)  & 5.70 & 1.014 & 23.4 \\
+Trimmed            & 7.19 & 0.991 & 26.7 \\
+Normalized (RMS)   & 5.70 & 1.008 & 23.4 \\
+Chunked            & 2.71 & 1.043 & 19.1 \\
+\midrule
+\textit{Mean}      & 5.32 & 1.014 & 23.2 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\small
+\caption{Text vs.\ speech path performance gap (African-Celtic, n=300).}
+\label{tab:text_vs_speech}
+\begin{tabular}{llrr}
+\toprule
+\textbf{Language} & \textbf{Model} & \textbf{Text BLEU} & \textbf{Speech BLEU} \\
+\midrule
+Igbo    & SeamlessM4T  & 33.2 &  5.7 \\
+Yoruba  & SeamlessM4T  & 16.8 &  3.4 \\
+Swahili & SeamlessM4T  & 14.1 &  6.1 \\
+Hausa   & Whisper+NLLB & 16.9 &  8.2 \\
+Swahili & Whisper+NLLB & 24.1 & 11.4 \\
+\bottomrule
+\end{tabular}
+\end{table}

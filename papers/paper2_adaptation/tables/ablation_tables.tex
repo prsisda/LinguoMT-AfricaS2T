@@ -1,0 +1,52 @@
+% Paper 2 — LoRA Ablation Tables
+
+\begin{table}[t]
+\centering
+\small
+\caption{LoRA rank ablation (SeamlessM4T Igbo WER, 300-sample training).}
+\label{tab:lora_rank_ablation}
+\begin{tabular}{lrrr}
+\toprule
+\textbf{Rank} & \textbf{Trainable params} & \textbf{Igbo WER} & \textbf{BLEU} \\
+\midrule
+4   & 2.0M & 0.712 & 39.1 \\
+8   & 4.1M & 0.681 & 40.2 \\
+16  & 8.1M & 0.641 & 41.7 \\
+32  & 16.2M & 0.638 & 41.9 \\
+Full & 2300M & 0.611 & 43.2 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\small
+\caption{Target module ablation (LoRA rank=16, 300-sample, Igbo).}
+\label{tab:target_module_ablation}
+\begin{tabular}{lrr}
+\toprule
+\textbf{Modules} & \textbf{Igbo WER} & \textbf{BLEU} \\
+\midrule
+q only     & 0.697 & 39.4 \\
+v only     & 0.703 & 39.1 \\
+q + v      & 0.641 & 41.7 \\
+q + v + k  & 0.638 & 41.9 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\small
+\caption{Sample efficiency: \% of 300-sample gain achieved at each regime.}
+\label{tab:sample_efficiency}
+\begin{tabular}{lrr}
+\toprule
+\textbf{Regime} & \textbf{BLEU \% (Igbo)} & \textbf{WER \% (Igbo)} \\
+\midrule
+50-sample  & 37\% & 55\% \\
+150-sample & 70\% & 81\% \\
+300-sample & 100\% & 100\% \\
+\bottomrule
+\end{tabular}
+\end{table}

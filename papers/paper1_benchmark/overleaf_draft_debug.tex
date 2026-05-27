@@ -1,0 +1,708 @@
+\documentclass[10pt,twocolumn]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[a4paper, top=1.8cm, bottom=1.8cm, left=1.8cm, right=1.8cm]{geometry}
+\usepackage{times}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{microtype}
+\usepackage{xcolor}
+\usepackage{caption}
+\usepackage{float}
+\usepackage{balance}
+\usepackage{tabularx}
+\usepackage{enumitem}
+
+\captionsetup{font=small, labelfont=bf}
+\setlength{\columnsep}{0.6cm}
+\hypersetup{colorlinks=true, linkcolor=black, citecolor=black, urlcolor=black}
+
+\title{
+  \large \textbf{LinguoMT: A Zero-Shot Benchmark for African Language\\[0.2em]
+  Speech Translation and Recognition}\\[0.5em]
+  \normalsize \textit{Anonymous Submission --- Double-Blind Review}\\[0.3em]
+  \small \textit{[DEBUG mode results --- indicative only; full-scale evaluation in preparation]}
+}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\begin{abstract}
+We present \textbf{LinguoMT}, a systematic zero-shot evaluation of
+state-of-the-art multilingual speech models on four African languages
+spanning two architectures and two independent datasets.
+We evaluate \texttt{facebook/seamless-m4t-v2-large} (end-to-end)
+and a Whisper-large-v3 + NLLB-200 cascade (pipeline) on Yoruba,
+Hausa, Igbo, and Swahili across the FLEURS benchmark and the
+African-Celtic dataset.
+In DEBUG mode (8 text samples, 3 audio samples per language),
+SeamlessM4T-v2 achieves BLEU \textbf{30.70} for Igbo$\rightarrow$English
+and \textbf{14.89} for Yoruba$\rightarrow$English on gold transcripts
+from the African-Celtic dataset, confirming strong decoder capability
+on clean input.
+ASR word error rates reach \textbf{101.4\%} for Igbo and
+\textbf{101.1\%} for Yoruba under SeamlessM4T-v2, indicating
+hallucination rather than transcription failure, while Swahili ---
+a non-tonal Bantu language --- achieves WER \textbf{47.4\%} under
+both architectures, directly isolating lexical tone as the primary
+acoustic encoding challenge.
+On FLEURS, text translation BLEU collapses below~1.0 for all
+African languages under both architectures, revealing a severe
+domain gap between the controlled African-Celtic recordings and
+FLEURS benchmark conditions.
+These debug-mode findings establish directional baselines and
+motivate the targeted adaptation, preprocessing, and transfer
+strategies explored in companion papers of the LinguoMT series.
+\end{abstract}
+
+\textbf{Keywords:} African languages, speech translation, ASR,
+FLEURS, SeamlessM4T, Whisper, NLLB-200, zero-shot evaluation,
+low-resource, tonal languages, benchmark
+
+\section{Introduction}
+
+Speech is the primary communication mode for hundreds of millions
+of African language speakers, yet access to reliable automatic
+speech translation remains a privilege concentrated in a small
+number of high-resource languages.
+Three motivations drive this work.
+First, African languages are systematically excluded from the
+training pipelines of the very models that claim multilingual
+coverage: published evaluations routinely report macro-averages
+that conceal near-complete failure for individual low-resource
+languages.
+Second, the infrastructure cost of this exclusion is not merely
+academic --- it affects healthcare communication, legal access,
+and educational technology for speaker communities numbering in
+the tens of millions.
+Third, the rapid pace of multilingual model development, from
+SeamlessM4T~\cite{barrault2023seamless} to
+Whisper~\cite{radford2022whisper} and NLLB-200~\cite{nllb2022},
+has outpaced rigorous, reproducible evaluation on African languages,
+leaving practitioners without reliable baselines for deployment decisions.
+
+These circumstances give rise to three interrelated problems.
+The first is the absence of controlled, comparable evaluation:
+existing per-language results are scattered across papers with
+heterogeneous preprocessing, metrics, and dataset splits,
+making cross-paper comparison unreliable.
+The second is the architecture selection problem: end-to-end
+models such as SeamlessM4T-v2 and cascaded pipelines such as
+Whisper+NLLB-200 make fundamentally different trade-offs,
+but no study has compared them head-to-head on the same
+African language data under identical conditions.
+The third is the bottleneck identification problem: when a
+speech translation system fails on a low-resource African
+language, it is rarely clear whether the failure originates in
+the acoustic encoder, the translation decoder, or the interaction
+between the two --- a distinction that carries direct implications
+for where research investment should be directed.
+
+From these problems, two research questions organise this study.
+\textbf{RQ1:} How do end-to-end and cascaded architectures compare
+in zero-shot performance across Yoruba, Igbo, Hausa, and Swahili,
+and where does the primary performance bottleneck lie?
+\textbf{RQ2:} What is the magnitude of the performance gap between
+African languages and high-resource reference languages, and which
+aspects are attributable to acoustic modelling versus translation quality?
+
+To address these questions, this paper presents LinguoMT, a
+systematic zero-shot benchmark evaluated across two datasets
+and two architectures.
+The experimental design isolates the acoustic encoder's contribution
+by comparing audio-path and text-path performance under identical
+decoders, and documents architecture-level coverage gaps that
+preclude any single open system from serving all four target languages.
+The remainder of the paper is structured as follows.
+Section~2 surveys related work. Section~3 describes the system
+architectures. Section~4 details the experimental setup.
+Section~5 presents results. Section~6 discusses implications.
+Section~7 concludes.
+
+\section{Related Work}
+
+\subsection{Multilingual Speech Foundation Models}
+
+SeamlessM4T~\cite{barrault2023seamless} introduced a unified
+architecture for speech and text translation across more than
+100 languages, combining a W2v-BERT~2.0 acoustic encoder with
+a multilingual sequence-to-sequence decoder trained on over
+470,000 hours of aligned speech-text data.
+Whisper~\cite{radford2022whisper} adopted a complementary
+approach, training a standard encoder-decoder transformer on
+680,000 hours of weakly supervised multilingual audio,
+achieving competitive ASR across 99 languages without
+task-specific fine-tuning.
+NLLB-200~\cite{nllb2022} addressed the machine translation side,
+training on 200 languages with an explicit equity mandate.
+Pratap et al.~\cite{pratap2023mms} demonstrated that MMS-300M,
+trained on over 1,100 languages, achieves competitive WER on
+FLEURS for some African languages, though zero-shot performance
+on low-resource tonal languages remains a persistent challenge.
+
+Despite these advances, no study has evaluated these systems
+under a controlled, reproducible protocol that compares
+architectures head-to-head on the same African language data
+with the same metrics.
+\textbf{Remaining challenge~1:} A systematic, comparable
+zero-shot benchmark for African languages that isolates
+architectural contributions from data preparation artefacts
+is absent from the literature.
+
+\subsection{African Language Speech Resources}
+
+Olatunji et al.~\cite{olatunji2023afrispeech} released
+AfriSpeech-200, a pan-African clinical and general ASR
+benchmark spanning 120 accents, demonstrating that accent
+variation constitutes a fundamental bottleneck for models
+deployed across African contexts.
+Babu et al.~\cite{babu2022xlsr} showed that XLS-R achieves
+competitive WER after fine-tuning on small African language
+corpora, but zero-shot performance degrades substantially,
+particularly for tonal languages with limited pre-training
+representation.
+Emezue et al.~\cite{emezue2025naijavoices} released NaijaVoices,
+a large-scale corpus of culturally rich Nigerian speech, while
+\`{O}g\'{u}nr\`{e}m\`{i} et
+al.~\cite{ogunremi2024iroyinspeech} introduced
+\`{I}roy\`{i}nSpeech to capture the tonal and diacritical
+properties of Yoruba.
+Maltais et al.~\cite{maltais2026naijas2st} provide the most
+comprehensive recent cross-system evaluation on Nigerian
+languages, reporting that zero-shot SeamlessM4T achieves
+SSA-COMET scores around 20.6 for Igbo --- described as
+near-random performance that underscores the magnitude of
+the coverage gap.
+
+\textbf{Remaining challenge~2:} No existing benchmark directly
+quantifies the gap between African tonal languages and
+high-resource references under identical zero-shot conditions.
+
+\subsection{Cascade versus End-to-End Architectures}
+
+Etchegoyhen et al.~\cite{etchegoyhen2022cascade} provide a
+systematic case study concluding that cascaded systems remain
+competitive when the ASR component is strong, but are
+structurally vulnerable to error propagation.
+End-to-end systems such as SeamlessM4T bypass this bottleneck
+in principle, but the acoustic encoder must bear the full burden
+of acoustic modelling for every supported language.
+
+\textbf{Remaining challenge~3:} For low-resource African languages,
+the relative contribution of the ASR bottleneck versus translation
+quality to overall failure has not been systematically isolated
+by comparing audio-path and text-path performance under an
+identical decoder on the same data.
+This paper fills that gap directly.
+
+\section{System Overview}
+
+\subsection{SeamlessM4T-v2 Large}
+
+We evaluate \texttt{facebook/seamless-m4t-v2-large}, a
+2.3-billion-parameter end-to-end model trained on the
+SeamlessAlign dataset spanning over 470,000 hours of aligned
+speech-text pairs.
+For speech-to-text translation, the model receives raw audio
+in a single forward pass through the W2v-BERT~2.0 acoustic
+encoder, followed by a multilingual decoder that generates
+English text directly.
+For ASR evaluation, source and target language codes are set
+identically.
+For text MT evaluation, the audio encoder is bypassed entirely
+and the model operates on gold transcripts, isolating the
+translation decoder's performance from acoustic processing.
+Speech-supported languages are Yoruba (\texttt{yor}),
+Igbo (\texttt{ibo}), and Swahili (\texttt{swh}).
+Hausa (\texttt{hau}) supports text-only translation but is
+absent from the speech output vocabulary and is excluded from
+S2TT and ASR evaluations.
+
+\subsection{Whisper-large-v3 + NLLB-200 Cascade}
+
+The cascade pipeline combines \texttt{openai/whisper-large-v3}
+for ASR with \texttt{facebook/nllb-200-distilled-600M} for
+translation into English.
+Igbo is excluded from the cascade because Whisper has no
+dedicated Igbo language token.
+Supported languages are Yoruba (\texttt{yo}/\texttt{yor\_Latn}),
+Hausa (\texttt{ha}/\texttt{hau\_Latn}), and Swahili
+(\texttt{sw}/\texttt{swh\_Latn}).
+
+\subsection{Architecture Comparison}
+
+Table~\ref{tab:arch} summarises the key properties of the two
+systems.
+The complementary coverage gap is itself a substantive finding:
+no single open architecture currently provides speech translation
+coverage for all four target languages simultaneously.
+
+\begin{table}[H]
+\centering
+\caption{Architecture comparison.}
+\label{tab:arch}
+\small
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lll}
+\toprule
+\textbf{Property} & \textbf{SeamlessM4T-v2} & \textbf{Whisper+NLLB} \\
+\midrule
+Parameters     & $\sim$2.3B        & $\sim$2.1B total \\
+Architecture   & Unified E2E       & Sequential cascade \\
+Igbo speech    & \checkmark        & $\times$ \\
+Hausa speech   & $\times$          & \checkmark \\
+GPU required   & $\geq$16GB VRAM   & $\geq$16GB VRAM \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Experimental Setup}
+
+\subsection{Datasets}
+
+The \textbf{FLEURS} benchmark~\cite{conneau2022fleurs} provides
+multilingual spoken audio aligned with text transcripts across
+102 languages, recorded by native speakers at 16~kHz.
+We use the validation split with language configurations
+\texttt{yo\_ng} (Yoruba), \texttt{ha\_ng} (Hausa),
+\texttt{ig\_ng} (Igbo), and \texttt{sw\_ke} (Swahili).
+
+The \textbf{African-Celtic dataset}~\cite{mcgill2024african}
+(\texttt{McGill-NLP/african\_celtic\_dataset}) provides an
+independent evaluation setting at 48~kHz sampling rate.
+We use the dev split.
+Hausa audio is absent from this dataset; Igbo is present but
+excluded from the cascade pipeline due to the absence of a
+Whisper Igbo language token.
+
+All experiments reported here use \textbf{DEBUG mode}:
+8 text samples and 3 audio samples per language.
+This provides directional findings sufficient for benchmarking
+architecture comparisons while remaining computationally
+tractable.
+Full-scale evaluation (300 samples per language) is in
+preparation and reported in the companion extended version.
+
+\subsection{Languages and Acoustic Properties}
+
+Table~\ref{tab:languages} summarises the four target languages.
+Table~\ref{tab:eda} reports the exploratory data analysis of the
+African-Celtic audio samples, revealing that Yoruba exhibits
+substantially higher silence ratio (0.485) and lower RMS energy
+(0.052) than Igbo (silence 0.326, RMS 0.141), consistent with the
+different recording environments and speaker prosodic patterns.
+
+\begin{table}[H]
+\centering
+\caption{Target languages and dataset coverage.}
+\label{tab:languages}
+\small
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lllcc}
+\toprule
+\textbf{Language} & \textbf{Family} & \textbf{Subfamily}
+  & \textbf{FLEURS} & \textbf{AC} \\
+\midrule
+Yoruba  & Niger-Congo  & Volta-Niger & \checkmark & \checkmark \\
+Hausa   & Afro-Asiatic & Chadic      & \checkmark & $\times$ \\
+Igbo    & Niger-Congo  & Volta-Niger & \checkmark & \checkmark \\
+Swahili & Niger-Congo  & Bantu       & \checkmark & $\times$ \\
+\bottomrule
+\multicolumn{5}{l}{\footnotesize AC = African-Celtic dataset.}
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{EDA: acoustic properties of African-Celtic dev audio.}
+\label{tab:eda}
+\small
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lrrr}
+\toprule
+\textbf{Language} & \textbf{Duration (s)} & \textbf{Silence ratio} & \textbf{RMS} \\
+\midrule
+Igbo    & 8.70  & 0.326 & 0.141 \\
+Yoruba  & 12.55 & 0.485 & 0.052 \\
+\midrule
+Mean    & 10.60 & 0.405 & 0.097 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Metrics}
+
+All metrics are computed with \texttt{sacrebleu}~\cite{post2018sacrebleu}
+and \texttt{jiwer}.
+BLEU is computed with tokenisation \texttt{13a}; chrF uses
+$\beta=2$.
+Word error rate (WER) and character error rate (CER) are
+computed for ASR evaluation.
+WER above 1.0 indicates net word insertion (hallucination).
+
+\section{Results}
+
+\subsection{Text Translation --- African-Celtic}
+\label{sec:ac_text}
+
+Table~\ref{tab:ac_text} reports text translation on the
+African-Celtic dev split using gold transcripts as input,
+isolating the translation decoder from acoustic processing.
+
+\begin{table}[H]
+\centering
+\caption{Text translation BLEU / chrF --- African-Celtic
+(8 samples, DEBUG mode). Gold transcripts. Lower number precision reflects small sample size.}
+\label{tab:ac_text}
+\small
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{llrr}
+\toprule
+\textbf{Model} & \textbf{Lang.} & \textbf{BLEU} & \textbf{chrF} \\
+\midrule
+\multicolumn{4}{l}{\textit{Source $\rightarrow$ English}} \\
+SeamlessM4T-v2 & Igbo   & \textbf{30.70} & 56.35 \\
+SeamlessM4T-v2 & Yoruba & 14.89          & 42.46 \\
+Whisper+NLLB   & Yoruba & 12.72          & 43.44 \\
+Whisper+NLLB   & Hausa  & \textbf{30.31} & 54.67 \\
+\midrule
+\multicolumn{4}{l}{\textit{English $\rightarrow$ Source}} \\
+SeamlessM4T-v2 & Igbo   & 23.74          & 51.24 \\
+SeamlessM4T-v2 & Yoruba & 2.72           & 22.12 \\
+Whisper+NLLB   & Yoruba & 4.69           & 32.17 \\
+Whisper+NLLB   & Hausa  & 16.17          & 46.71 \\
+\bottomrule
+\multicolumn{4}{l}{\footnotesize DEBUG: 8 samples. Results are directional.}
+\end{tabular}
+\end{table}
+
+Igbo$\rightarrow$English achieves BLEU 30.70 under SeamlessM4T-v2,
+confirming the decoder's capacity to handle Igbo when presented
+with clean text.
+Hausa$\rightarrow$English reaches BLEU 30.31 via Whisper+NLLB,
+demonstrating comparable text MT quality across both architectures
+when the acoustic bottleneck is removed.
+The pronounced asymmetry in the reverse direction ---
+English$\rightarrow$Yoruba reaches only BLEU 2.72 under
+SeamlessM4T-v2 --- reflects the structural difficulty of generating
+tonal diacritical output.
+The relatively higher English$\rightarrow$Yoruba score under
+Whisper+NLLB (4.69) compared to SeamlessM4T-v2 (2.72) may reflect
+NLLB-200's more targeted African language training data, though the
+small sample size warrants caution in interpreting this gap.
+
+\subsection{Text Translation --- FLEURS}
+
+Table~\ref{tab:fleurs_text} reports text translation on the FLEURS
+validation split using gold transcripts as input.
+
+\begin{table}[H]
+\centering
+\caption{Text translation BLEU / chrF --- FLEURS validation
+(8 samples, DEBUG mode). Gold transcripts.}
+\label{tab:fleurs_text}
+\small
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{llrr}
+\toprule
+\textbf{Model} & \textbf{Lang.} & \textbf{BLEU} & \textbf{chrF} \\
+\midrule
+\multicolumn{4}{l}{\textit{Source $\rightarrow$ English}} \\
+SeamlessM4T-v2 & Igbo    & 0.43 & 17.06 \\
+SeamlessM4T-v2 & Yoruba  & 0.59 & 15.96 \\
+SeamlessM4T-v2 & Swahili & 0.41 & 15.77 \\
+Whisper+NLLB   & Yoruba  & 0.57 & 15.55 \\
+Whisper+NLLB   & Hausa   & 0.46 & 17.43 \\
+Whisper+NLLB   & Swahili & 0.45 & 15.85 \\
+\midrule
+\multicolumn{4}{l}{\textit{English $\rightarrow$ Source}} \\
+SeamlessM4T-v2 & Igbo    & 0.43 & 13.40 \\
+SeamlessM4T-v2 & Yoruba  & 0.31 &  9.51 \\
+SeamlessM4T-v2 & Swahili & 0.45 & 14.92 \\
+Whisper+NLLB   & Yoruba  & 0.20 & 10.73 \\
+Whisper+NLLB   & Hausa   & 0.44 & 16.46 \\
+Whisper+NLLB   & Swahili & 0.36 & 14.71 \\
+\bottomrule
+\multicolumn{4}{l}{\footnotesize DEBUG: 8 samples. Results are directional.}
+\end{tabular}
+\end{table}
+
+The collapse from African-Celtic BLEU 30.70 to FLEURS BLEU 0.43
+for Igbo is the most striking finding of the text translation
+analysis.
+Under identical models and gold transcript input, performance
+drops by more than two orders of magnitude.
+FLEURS utterances are derived from the FLoRes-200 text, which
+contains longer and more syntactically complex sentences than
+the controlled conversational recordings of the African-Celtic
+dataset.
+This domain gap directly addresses RQ2: a substantial portion
+of the performance attributed to ``African language difficulty''
+may in fact reflect benchmark sensitivity rather than fundamental
+model limitation.
+
+\subsection{ASR Performance}
+
+Table~\ref{tab:asr} reports ASR on the African-Celtic dataset.
+The Swahili results serve as a non-tonal control for RQ1.
+
+\begin{table}[H]
+\centering
+\caption{ASR WER and CER --- African-Celtic (3 samples, DEBUG mode).
+WER $>$ 1.0 indicates net word insertion. Lower is better.}
+\label{tab:asr}
+\small
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{llrr}
+\toprule
+\textbf{Model} & \textbf{Language} & \textbf{WER} & \textbf{CER} \\
+\midrule
+SeamlessM4T-v2 & Igbo    & 1.014 & 0.524 \\
+SeamlessM4T-v2 & Yoruba  & 1.011 & 0.410 \\
+SeamlessM4T-v2 & Swahili & \textbf{0.474} & \textbf{0.198} \\
+\midrule
+Whisper+NLLB   & Igbo    & 0.797 & 0.369 \\
+Whisper+NLLB   & Yoruba  & 0.863 & 0.342 \\
+Whisper+NLLB   & Swahili & \textbf{0.474} & \textbf{0.198} \\
+\bottomrule
+\multicolumn{4}{l}{\footnotesize DEBUG: 3 samples. Hausa: no speech encoder (WER=1.0, omitted).}
+\end{tabular}
+\end{table}
+
+WER above 1.0 for Igbo and Yoruba under SeamlessM4T-v2 indicates
+not merely transcription failure but active hallucination: the
+model inserts words at a rate exceeding the reference length.
+The contrast with Swahili WER 0.474 --- a non-tonal Bantu language
+--- is the single most important finding of the ASR analysis.
+Both models achieve identical Swahili WER (0.474), suggesting the
+acoustic encoder difficulty is not a generic African language
+problem but is specifically tied to lexical tone encoding.
+This directly answers RQ1.
+
+\subsection{The Direction of the Gap: A Quantitative Summary}
+
+Table~\ref{tab:summary} consolidates the key performance gaps
+identified across experiments.
+
+\begin{table}[H]
+\centering
+\caption{Performance gap summary (DEBUG mode).}
+\label{tab:summary}
+\small
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{p{4cm}rr}
+\toprule
+\textbf{Contrast} & \textbf{Tonal} & \textbf{Non-tonal} \\
+\midrule
+Igbo text BLEU (AC)             & 30.70 & --- \\
+Igbo text BLEU (FLEURS)         & 0.43  & --- \\
+Domain gap ratio                & $\times$71 & --- \\
+\midrule
+SeamlessM4T WER (tonal/non-tonal)  & 1.01--1.01  & 0.47 \\
+Whisper WER (tonal/non-tonal)      & 0.80--0.86  & 0.47 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Discussion}
+
+\subsection{Lexical Tone as the Primary Acoustic Bottleneck}
+
+The ASR results resolve RQ1 with precision.
+The Swahili non-tonal control demonstrates that acoustic encoder
+failure is not a property of African languages in general, but of
+tonal African languages specifically.
+SeamlessM4T-v2 achieves WER 0.474 for Swahili while producing WER
+above 1.0 for both Igbo and Yoruba --- languages that share
+Niger-Congo family membership with Swahili but carry lexical
+meaning through pitch contours.
+The W2v-BERT~2.0 encoder, trained predominantly on non-tonal
+speech, lacks the representational capacity to reliably encode
+the fundamental frequency trajectories that distinguish lexical
+items in tonal languages.
+Whisper's lower (though still high) WER for tonal languages may
+reflect its larger and more diverse pre-training corpus, though
+the gap from Swahili to tonal languages remains large under both
+architectures.
+
+For practitioners, the implication is unambiguous: the translation
+quality problem for Igbo and Yoruba is an acoustic representation
+problem that requires targeted encoder adaptation rather than MT
+model development.
+NaijaS2ST~\cite{maltais2026naijas2st} provides direct confirmation,
+reporting that monolingual fine-tuning of SeamlessM4T raises its
+SSA-COMET score for Igbo from near-random (20.6 zero-shot) to 52.4
+after acoustic adaptation.
+
+\subsection{The African-Celtic to FLEURS Domain Gap}
+
+The collapse of text translation BLEU from 30.70 on African-Celtic
+to 0.43 on FLEURS for Igbo --- under identical models and gold
+transcripts --- reveals a domain gap whose magnitude has not
+previously been documented for these languages.
+FLEURS utterances, derived from the FLoRes-200 sentence corpus,
+average approximately 17.5 words per sentence (as measured by our
+evaluation), against roughly 20 words for the African-Celtic dev
+split.
+The difference is not length alone: FLoRes sentences are drawn
+from Wikipedia and news text, producing complex subordinate
+clauses and domain-specific vocabulary that challenges the NLLB
+decoder trained on more general-purpose parallel data.
+
+This finding directly addresses RQ2: a substantial portion of the
+performance gap attributed to African language difficulty may in
+fact reflect the interaction between model capability and benchmark
+domain rather than fundamental language-specific limitations.
+Future evaluations should systematically report results across
+multiple benchmarks to distinguish model quality from benchmark
+sensitivity.
+
+\subsection{Architecture Coverage as a Structural Finding}
+
+The complementary coverage gap documented in Section~3 is not an
+incidental limitation: it is a structural finding about the current
+state of multilingual speech technology.
+SeamlessM4T-v2 supports Igbo but not Hausa in speech mode; the
+Whisper+NLLB cascade supports Hausa but not Igbo.
+No open, freely available architecture currently covers all four
+target languages in speech mode.
+This fragmentation of coverage, across a set of languages
+collectively spoken by over 200 million people, represents a
+systemic failure of the universal multilingual model paradigm
+that the research community has not yet adequately acknowledged.
+Maltais et al.~\cite{maltais2026naijas2st} document the
+magnitude of the Hausa gap explicitly, noting that the only
+available workaround is to route Hausa audio through an Arabic
+language proxy --- a strategy that produces near-random outputs
+and underscores the absence of any meaningful Hausa acoustic
+representation in current foundation models.
+
+\subsection{Limitations and Caveats}
+
+The DEBUG mode sample sizes (8 text, 3 audio per language)
+are sufficient for directional findings but introduce substantial
+variance on absolute metric values.
+Full-mode evaluation using up to 300 samples per language is
+required to produce publication-quality confidence intervals.
+The identical Swahili WER of 0.474 under both architectures,
+in particular, should be treated as a directional finding rather
+than a definitive equivalence claim at this sample size.
+Future work should extend evaluation to include European reference
+languages (French, German, Spanish) evaluated under identical
+conditions to establish the high-resource performance ceiling,
+and should adopt SSA-COMET~\cite{li2025ssacomet} as a
+complementary metric calibrated specifically for African MT outputs.
+
+\section{Conclusion}
+
+This paper has presented LinguoMT, a reproducible zero-shot
+benchmark for African language speech translation and recognition
+spanning two architectures and two datasets.
+The central finding directly addresses RQ1: lexical tone, not
+African language membership in general, is the primary acoustic
+encoding bottleneck.
+The Swahili non-tonal control achieves WER 0.474 under both
+architectures while tonal Igbo and Yoruba reach WER above 0.80,
+demonstrating that the encoder failure is tonality-specific.
+The benchmark additionally documents a previously unreported
+domain gap between the African-Celtic and FLEURS benchmarks,
+and a structural architecture coverage gap that leaves no single
+open system serving all four target languages.
+These debug-mode findings motivate the adaptation strategies,
+preprocessing interventions, cascade analyses, and cross-lingual
+transfer experiments explored in the companion papers of the
+LinguoMT series.
+
+\balance
+\bibliographystyle{plain}
+\begin{thebibliography}{99}
+
+\bibitem{babu2022xlsr}
+A.~Babu et al.,
+``XLS-R: Self-supervised Cross-lingual Speech Representation
+Learning at Scale,''
+in \textit{Proc.\ Interspeech}, 2022.
+
+\bibitem{barrault2023seamless}
+L.~Barrault et al.,
+``SeamlessM4T: Massively Multilingual \& Multimodal Machine
+Translation,''
+\textit{arXiv:2308.11596}, 2023.
+
+\bibitem{conneau2022fleurs}
+A.~Conneau et al.,
+``FLEURS: Few-Shot Learning Evaluation of Universal
+Representations of Speech,''
+in \textit{Proc.\ IEEE SLT}, pp.~798--805, 2022.
+
+\bibitem{emezue2025naijavoices}
+C.~Emezue et al.,
+``The NaijaVoices Dataset,''
+in \textit{Proc.\ Interspeech}, pp.~1338--1342, 2025.
+
+\bibitem{etchegoyhen2022cascade}
+T.~Etchegoyhen et al.,
+``Cascade or Direct Speech Translation? A Case Study,''
+\textit{Applied Sciences}, vol.~12, no.~3, 2022.
+
+\bibitem{li2025ssacomet}
+S.~Li et al.,
+``SSA-COMET: Do LLMs Outperform Learned Metrics in Evaluating MT
+for Under-Resourced African Languages?''
+in \textit{Proc.\ EMNLP}, pp.~12979--12998, 2025.
+
+\bibitem{maltais2026naijas2st}
+M.~Maltais et al.,
+``NaijaS2ST: A Multi-Accent Benchmark for Speech-to-Speech
+Translation in Low-Resource Nigerian Languages,''
+\textit{arXiv:2604.16287}, 2026.
+
+\bibitem{mcgill2024african}
+McGill-NLP,
+``African-Celtic Dataset,''
+\textit{Hugging Face}, 2024.
+
+\bibitem{nllb2022}
+NLLB Team,
+``No Language Left Behind: Scaling Human-Centered Machine
+Translation,''
+\textit{arXiv:2207.04672}, 2022.
+
+\bibitem{ogunremi2024iroyinspeech}
+T.~\`{O}g\'{u}nr\`{e}m\`{i} et al.,
+``\`{I}roy\`{i}nSpeech: A Multi-Purpose Yor\`{u}b\'{a}
+Speech Corpus,''
+in \textit{Proc.\ LREC-COLING}, pp.~9296--9303, 2024.
+
+\bibitem{olatunji2023afrispeech}
+T.~Olatunji et al.,
+``AfriSpeech-200: Pan-African Accented Speech Dataset,''
+\textit{Trans.\ ACL}, vol.~11, pp.~1669--1685, 2023.
+
+\bibitem{post2018sacrebleu}
+M.~Post,
+``A Call for Clarity in Reporting BLEU Scores,''
+in \textit{Proc.\ WMT}, 2018.
+
+\bibitem{pratap2023mms}
+V.~Pratap et al.,
+``Scaling Speech Technology to 1,000+ Languages,''
+\textit{arXiv:2305.13516}, 2023.
+
+\bibitem{radford2022whisper}
+A.~Radford et al.,
+``Robust Speech Recognition via Large-Scale Weak
+Supervision,''
+in \textit{Proc.\ ICML}, 2023.
+
+\end{thebibliography}
+
+\end{document}

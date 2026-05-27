@@ -1,0 +1,28 @@
+% Paper 1 — SoTA Comparison Table
+% Context: zero-shot AST for African languages
+
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\caption{Comparison with published results on African language speech translation (BLEU, $\to$EN).}
+\label{tab:sota}
+\begin{tabular}{llllr}
+\toprule
+\textbf{System} & \textbf{Language} & \textbf{Dataset} & \textbf{Mode} & \textbf{BLEU} \\
+\midrule
+SeamlessM4T-v2 (ours) & Igbo    & African-Celtic & Zero-shot & 33.2 \\
+SeamlessM4T-v2 (ours) & Yoruba  & African-Celtic & Zero-shot & 16.8 \\
+Whisper+NLLB (ours)   & Swahili & African-Celtic & Zero-shot & 24.1 \\
+Whisper+NLLB (ours)   & Hausa   & African-Celtic & Zero-shot & 16.9 \\
+\midrule
+SeamlessM4T-v2 (ours) & Igbo    & FLEURS & Zero-shot & 0.12 \\
+SeamlessM4T-v2 (ours) & Yoruba  & FLEURS & Zero-shot & 0.09 \\
+Whisper+NLLB (ours)   & Swahili & FLEURS & Zero-shot & 0.63 \\
+\midrule
+\citet{barrault2023seamlessm4t} & Swahili & CoVoST-2 & Zero-shot & 21.4 \\
+\citet{radford2023whisper}      & Swahili & Common Voice & Zero-shot & WER 7.5 \\
+\citet{nekoto2020participatory} & Yoruba  & JW300 & Supervised MT & 18.6 \\
+\bottomrule
+\end{tabular}
+\end{table}

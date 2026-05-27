@@ -1,0 +1,55 @@
+% Paper 3 — Audio Full Results (standalone)
+% n=300 audio per language per strategy
+
+\begin{table}[t]
+\centering
+\small
+\caption{SeamlessM4T BLEU by audio strategy (n=300, $\to$EN).}
+\label{tab:p3_full_bleu}
+\begin{tabular}{lrrrr}
+\toprule
+\textbf{Language} & \textbf{Direct} & \textbf{Trimmed} & \textbf{Norm.} & \textbf{Chunked} \\
+\midrule
+Igbo    &  5.8 &  5.4 &  5.9 &  4.1 \\
+Yoruba  & 14.2 & 17.3 & 14.4 &  9.7 \\
+Swahili &  8.1 &  8.6 &  8.2 &  6.9 \\
+\midrule
+Mean    &  9.4 & 10.4 &  9.5 &  6.9 \\
+$\Delta$ & — & +1.0 & +0.1 & $-$2.5 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\small
+\caption{Whisper+NLLB BLEU by audio strategy (n=300, resampling applied).}
+\label{tab:p3_cascade_bleu}
+\begin{tabular}{lrrrr}
+\toprule
+\textbf{Language} & \textbf{Direct} & \textbf{Trimmed} & \textbf{Norm.} & \textbf{Chunked} \\
+\midrule
+Yoruba  &  5.2 &  6.3 &  5.4 &  3.8 \\
+Hausa   & 17.8 & 18.9 & 18.1 & 14.2 \\
+Swahili & 24.6 & 25.9 & 24.8 & 21.3 \\
+\midrule
+Mean    & 15.9 & 17.0 & 16.1 & 13.1 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\small
+\caption{SeamlessM4T WER by audio strategy (n=300).}
+\label{tab:p3_full_wer}
+\begin{tabular}{lrrrr}
+\toprule
+\textbf{Language} & \textbf{Direct} & \textbf{Trimmed} & \textbf{Norm.} & \textbf{Chunked} \\
+\midrule
+Igbo    & 1.023 & 0.994 & 1.019 & 1.041 \\
+Yoruba  & 1.008 & 0.971 & 1.003 & 1.097 \\
+Swahili & 0.461 & 0.449 & 0.458 & 0.491 \\
+\bottomrule
+\end{tabular}
+\end{table}

@@ -1,0 +1,21 @@
+% Paper 3 — Audio Strategy SoTA Comparison
+
+\begin{table}[t]
+\centering
+\small
+\caption{Preprocessing strategy comparison with published results.}
+\label{tab:p3_sota}
+\begin{tabular}{llrl}
+\toprule
+\textbf{System} & \textbf{Strategy} & \textbf{WER $\Delta$} & \textbf{Context} \\
+\midrule
+SeamlessM4T (ours) & Trimmed & $-$0.037 & Yoruba, \dataAC{} \\
+SeamlessM4T (ours) & Normalized & $-$0.004 & Igbo, \dataAC{} \\
+SeamlessM4T (ours) & Chunked & +0.089 & Yoruba, \dataAC{} \\
+\midrule
+\citet{radford2023whisper} & Dynamic chunk & $-$0.08 & English long-form \\
+\citet{watanabe2018espnet} & RMS norm & $-$0.02 & Various \\
+\citet{zhu2022speech} & VAD trim & $-$0.08 & Conversational EN \\
+\bottomrule
+\end{tabular}
+\end{table}

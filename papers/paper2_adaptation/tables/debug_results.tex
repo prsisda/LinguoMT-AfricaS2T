@@ -1,0 +1,31 @@
+% Paper 2 — Adaptation Debug Baselines (standalone)
+% Values: n=8 text, n=3 audio per language
+
+\begin{table}[t]
+\centering
+\small
+\caption{\textbf{[DEBUG]} Zero-shot baselines reproduced in adaptation run (n=8).}
+\label{tab:p2_debug_baseline}
+\begin{tabular}{llrr}
+\toprule
+\textbf{Direction} & \textbf{Model} & \textbf{BLEU} & \textbf{chrF} \\
+\midrule
+Igbo$\to$EN   & SeamlessM4T  & 30.70 & 56.35 \\
+EN$\to$Igbo   & SeamlessM4T  & 23.74 & 51.24 \\
+Yoruba$\to$EN & SeamlessM4T  & 14.89 & 42.46 \\
+EN$\to$Yoruba & SeamlessM4T  &  2.72 & 22.12 \\
+Yoruba$\to$EN & Whisper+NLLB & 12.72 & 43.44 \\
+EN$\to$Yoruba & Whisper+NLLB &  4.69 & 32.17 \\
+Hausa$\to$EN  & Whisper+NLLB & 30.31 & 54.67 \\
+EN$\to$Hausa  & Whisper+NLLB & 16.17 & 46.71 \\
+\midrule
+\multicolumn{4}{c}{\textit{ASR (n=3 audio)}} \\
+\midrule
+Igbo    & SeamlessM4T & 1.014 & CER 0.524 \\
+Yoruba  & SeamlessM4T & 1.011 & CER 0.410 \\
+Igbo    & Whisper     & 0.797 & CER 0.369 \\
+Yoruba  & Whisper     & 0.863 & CER 0.342 \\
+Swahili & Whisper     & 0.474 & CER 0.198 \\
+\bottomrule
+\end{tabular}
+\end{table}
